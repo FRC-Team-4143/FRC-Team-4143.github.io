@@ -1,0 +1,8 @@
+{
+  "label": "Dev Environment",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Documentation and Tips for using the FRC Development Environment."
+  }
+}
