@@ -31,8 +31,6 @@ const config = {
   projectName: 'FRC-Team-4143.github.io', // Usually your repo name.
   trailingSlash: false,
 
-  deploymentBranch: 'gh-pages', // The branch that GitHub pages will deploy from.
-
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
 

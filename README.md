@@ -19,11 +19,4 @@ npm run build
 ```
 
 ## Deployment
-
-To build and run the site online, type the below into termainal. This should be run from the `main` branch since it will deploy that content to the `gh-pages` branch. The `gh-pages` branch is the content displayed for the site.
-
-THIS WILL UPDATE THE CONTENT ON THE SITE!
-
-```bash
-npm run deploy
-```
+The site will auto deploy new content when there is a push/merge on `main`. Ensure your content builds before merging to main.
