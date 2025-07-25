@@ -11,6 +11,7 @@ import mergeTree from '@site/static/img/software/dev_env/git/merge-tree.png';
 
 # Version Control with Git and GitHub
 
+<hr style="border: none; background-color: lightgray; height: 5px;">
 
 ## Git
 We use a tool called *git* for version control. This allows us to take "snapshots" of our code at a given time and save it for development documentation, reference, and backups. Git is a very powerful tool, but can be confusing and difficult to master. It also allows for simultaneous development across peers which is very helpful when multiple people are working on the same project.
@@ -21,6 +22,8 @@ Make sure to read our documentation for a short brief, but I would recommend usi
 
 ### Repos
 A project that is tracked by git is called a *repository* or frequently shortened to *repo*. A repo is the file structure containing all the "code" used for the project. It also contains all git tracking information. It needs to know about all the [commits](#commits) and [branches](#branches) being made by all developers on the project to correctly update your local copy. Each programming project should live in its own repo. All of your robot projects are their own repo. We also several other repos for generic projects like this website!
+<hr style="border: none; background-color: lightgray; height: 1px;">
+
 
 ### Commits
 The snapshots of your repo at a given moment of development is called a commits. Commits are a unique point in development that show the state of all tracked files in your repo. They are uniquely assigned a SHA, which is a long string of alpha-numeric characters. Something like `2c37172285088188fc6e7f100bc204fc4d6c446f` or `7a02abb2d621edc25a11c5869d9e6cb792c92580`. As you can see those are definitely unique, but not very helpful if we are trying to figure how what state the repo was in for that given commit. Luckily our buddy [Linus Torvalds](https://en.wikipedia.org/wiki/Linus_Torvalds) had that in mind and allowed us to attach a "commit message" to describe what the state of the repo was in for that given commit. For quick reference commits can also be abbreviated to the first 7 characters of the SHA, so `2c37172` or `7a02abb`. This is useful for quickly referencing commits in your code and documentation.
@@ -52,6 +55,7 @@ Once you have staged everything you want included in your commit you can check t
 git commit
 ```
 This will open an editor to allow you to write you commit message. Remember what we talked about, short, but informative. After the commit is complete feel free to check the `git log` again to see your new commit.
+<hr style="border: none; background-color: lightgray; height: 1px;">
 
 ### Branches
 Branches are a way to create a separate line of development in your repo. This is useful for developing new features or fixing bugs without affecting the main line of development. The main branch is usually called `main` or `master`, but you can create as many branches as you want. Each branch has its own commits and can be merged back into the main branch when the development is complete. You can checkout a branch in your repo and it will update your working directory with the latest commit in that branch.
@@ -72,6 +76,8 @@ Branches allows us to work as a team without stepping on each other's toes. If y
 
 Below is an example of a branch tree. As you can see there are two branches made from the main branch. Each branch has its own commits and can be merged back into the main branch when the development is complete. The branch names are also short and to the point, but still give a good idea what was changed in the branch.
 <img src={branchTree} alt="Commit Tree with Branches" />
+<hr style="border: none; background-color: lightgray; height: 1px;">
+
 
 ### Merge
 As you can see in the image above there is a point where the two branches merge back into the main branch. This is called a merge. Merges are used to combine the changes from one branch into another. This is useful when you have completed a feature or fixed a bug and want to bring those changes back into the main branch.
@@ -87,6 +93,8 @@ You can merge any branch into your currently checked out branch using the follow
 ```bash
 git merge NEW_CONTENT_BRANCH_NAME
 ```
+<hr style="border: none; background-color: lightgray; height: 1px;">
+
 
 ### Push and Pull
 While everything we have talked about has been in the local space, git allows us to establish a remote. This is a "cloud" instance of the repo that can be accessed by all members of the project, not just on a single computer. Our remote is setup through GitHub.
@@ -108,5 +116,7 @@ Git can get very nasty if you try to do the following
 
 It is very important that you pull before a work session to ensure your local repo is up to date with the remote repo. There are ways to fix it if this occurs, but will likely require help from a mentor, unless you are a git wizard 🧙.
 :::
+<hr style="border: none; background-color: lightgray; height: 5px;">
+
 
 ## GitHub
