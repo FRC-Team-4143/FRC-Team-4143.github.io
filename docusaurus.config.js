@@ -10,8 +10,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'MARS/WARS Software Docs',
-  tagline: 'Software documentation for the MARS/WARS software develop',
+  title: 'MARS/WARS Docs',
+  tagline: 'Documentation for the MARS/WARS robotics team',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -20,7 +20,7 @@ const config = {
   },
 
   // Set the production url of your site here
-  url: 'https://software.marswars.org',
+  url: 'https://frc-team-4143.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -44,6 +44,23 @@ const config = {
     locales: ['en'],
   },
 
+  // Plugins
+  plugins: [
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        language: ["en"],
+        indexDocs: true,
+        indexPages: true,
+        docsRouteBasePath: '/docs',
+        searchResultLimits: 8,
+        searchResultContextMaxLength: 50,
+        explicitSearchResultPath: true,
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
@@ -51,28 +68,6 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-        },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
-        theme: {
-          customCss: './src/css/custom.css',
         },
       }),
     ],
@@ -81,20 +76,50 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      // Set the color mode configuration
+      colorMode: {
+        defaultMode: 'dark',
+        respectPrefersColorScheme: true
+      },
+      // Setup the navbar with links to the sidebars
+      // The sidebarId corresponds to the keys in sidebars.js
+      // The label is what will be displayed in the navbar
+      // The position can be 'left', 'right', or 'bottom'
       navbar: {
         title: 'Home',
         logo: {
-          alt: 'My Site Logo',
+          alt: 'MARS/WARS Logo',
           src: 'img/mw_logo.png',
         },
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'docsSidebar',
+            sidebarId: 'softwareSidebar',
             position: 'left',
-            label: 'Docs',
+            label: 'Software',
+          },
+          {
+            type: 'docSidebar',
+            sidebarId: 'designSidebar',
+            position: 'left',
+            label: 'Design',
+          },
+          {
+            type: 'docSidebar',
+            sidebarId: 'businessServicesSidebar',
+            position: 'left',
+            label: 'Business Services',
+          },
+          // adds sight seach to the navbar
+          {
+            type: 'search',
+            position: 'right',
+          },
+          // GitHub link
+          {
+            href: 'https://github.com/FRC-Team-4143/FRC-Team-4143.github.io',
+            label: 'GitHub',
+            position: 'right',
           },
         ],
       },
@@ -102,6 +127,12 @@ const config = {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
       },
+      docs: {
+        sidebar: {
+          autoCollapseCategories: true, // Automatically collapse categories in the sidebar
+          hideable: true, // Allow users to hide the sidebar
+        },
+      }
     }),
 };
 

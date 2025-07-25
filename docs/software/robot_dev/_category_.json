@@ -1,0 +1,9 @@
+{
+  "label": "Robot Development",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Instructions and Examples for programming a FRC Robot."
+  },
+  "collapsed": true
+}
