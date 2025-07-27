@@ -42,6 +42,14 @@ const config = {
     locales: ['en'],
   },
 
+  themes: [
+    '@docusaurus/theme-mermaid'
+  ],
+
+  markdown: {
+    mermaid: true,
+  },
+
   // Plugins
   plugins: [
     [
@@ -130,7 +138,10 @@ const config = {
           autoCollapseCategories: true, // Automatically collapse categories in the sidebar
           hideable: true, // Allow users to hide the sidebar
         },
-      }
+      },
+      mermaid: {
+        theme: {light: 'base', dark: 'dark'},
+      },
     }),
 };
 

@@ -2,16 +2,16 @@
 title: Git and GitHub
 description: How to use git and GitHub to manage our software projects.
 hide_table_of_contents: true
-sidebar_position: 2
+sidebar_position: 1
 ---
 
-import commitTree from '@site/static/img/software/dev_env/git/commit-tree.png';
-import branchTree from '@site/static/img/software/dev_env/git/branch-tree.png';
-import mergeTree from '@site/static/img/software/dev_env/git/merge-tree.png';
+import gitStatus from '@site/static/img/software/dev_env/git/git-status.jpg';
+import gitAdd from '@site/static/img/software/dev_env/git/git-add.jpg';
 
 # Version Control with Git and GitHub
+Since we are a software team, we need to be able to track our code and changes made to it. This is where version control comes in. Version control is a system that allows us to track changes made to our code over time. It allows us to go back to previous versions of our code, see who made changes, and collaborate with other developers.
 
-<hr style="border: none; background-color: lightgray; height: 5px;"/>
+We also need a way to track what everyone is working on so we can prioritize tasks and ensure that everyone is on the same page. This is where GitHub comes in. GitHub is a web-based platform that allows us to host our code and collaborate with other developers. It provides a user-friendly interface for managing our code and tracking changes made to it.
 
 ## Git
 We use a tool called *git* for version control. This allows us to take "snapshots" of our code at a given time and save it for development documentation, reference, and backups. Git is a very powerful tool, but can be confusing and difficult to master. It also allows for simultaneous development across peers which is very helpful when multiple people are working on the same project.
@@ -22,7 +22,6 @@ Make sure to read our documentation for a short brief, but I would recommend usi
 
 ### Repos
 A project that is tracked by git is called a *repository* or frequently shortened to *repo*. A repo is the file structure containing all the "code" used for the project. It also contains all git tracking information. It needs to know about all the [commits](#commits) and [branches](#branches) being made by all developers on the project to correctly update your local copy. Each programming project should live in its own repo. All of your robot projects are their own repo. We also several other repos for generic projects like this website!
-<hr style="border: none; background-color: lightgray; height: 1px;"/>
 
 
 ### Commits
@@ -30,8 +29,20 @@ The snapshots of your repo at a given moment of development is called a commits.
 
 Good version control practice is to commit frequently, but not after every line of code. Think about the big picture. Did I just complete a small development task? Did I just fix a bug? Did I just create the structure for a new feature? If so you should probably commit. The idea is that your commits act as breadcrumbs and could show your development process. 500+ line commits don't help anyone and can make it more difficult to figure out what you actually changed. A good rule of thumb is if you can't summarize your changes in less than 52 characters, your commit is too big.
 
-Below is an example of a simple commit tree. Each commit is represented by a circle with a commit message associated with it. As you can see, the commit messages are short and to the point, but still give a good idea what was changed in the commit. They are also frequent enough to show the development process, but not so frequent that they are overwhelming.
-<img src={commitTree} alt="Commit Tree" />
+```mermaid
+---
+title: Example Commit Tree
+---
+gitGraph BT:
+   commit
+   commit
+   commit
+   commit
+   commit
+   commit
+
+```
+
 Its not a pretty as our lovely custom made graphic above, but you can run the following command to see a similar tree for your repo.
 ```bash
 git log --graph --oneline --decorate --all
@@ -41,12 +52,15 @@ All new changes made to your repo are considered unstaged until manually staged 
 ```bash
 git status
 ```
+<img src={gitStatus} alt="git status command" width="500"/>
 
 To create a commit first we need to stage changes from our working directory that we want included.  You can stage files you want included in your commit using the following command.
 ```bash
 git add FILE_TO_STAGE_NAME
 ```
-:::info
+<img src={gitAdd} alt="git add command" width="500"/>
+
+:::tip
 There are shortcuts to stage multiple files at a time, but I will leave that to you to discover.
 :::
 
@@ -55,7 +69,6 @@ Once you have staged everything you want included in your commit you can check t
 git commit
 ```
 This will open an editor to allow you to write you commit message. Remember what we talked about, short, but informative. After the commit is complete feel free to check the `git log` again to see your new commit.
-<hr style="border: none; background-color: lightgray; height: 1px;"/>
 
 ### Branches
 Branches are a way to create a separate line of development in your repo. This is useful for developing new features or fixing bugs without affecting the main line of development. The main branch is usually called `main` or `master`, but you can create as many branches as you want. Each branch has its own commits and can be merged back into the main branch when the development is complete. You can checkout a branch in your repo and it will update your working directory with the latest commit in that branch.
@@ -74,9 +87,26 @@ git checkout -b NEW_BRANCH_NAME
 
 Branches allows us to work as a team without stepping on each other's toes. If you are working on a new feature, you can create a branch for that feature and work on it without affecting the main branch. When you are done, you can merge your changes back into the main branch and everyone else can pull those changes down to their local copy of the repo.
 
-Below is an example of a branch tree. As you can see there are two branches made from the main branch. Each branch has its own commits and can be merged back into the main branch when the development is complete. The branch names are also short and to the point, but still give a good idea what was changed in the branch.
-<img src={branchTree} alt="Commit Tree with Branches" />
-<hr style="border: none; background-color: lightgray; height: 1px;"/>
+Below is an example of a branch tree. As you can see there are two branches made from the main branch. Each branch has its own commits. The branch names are also short and to the point, but still give a good idea what was changed in the branch.
+```mermaid
+---
+title: Example Branching Commit Tree
+---
+gitGraph BT:
+   commit
+   commit
+   branch shooter-sub
+   commit
+   commit
+   commit
+   checkout main
+   commit
+   branch pickup-sub
+   commit
+   commit
+   checkout main
+   commit
+```
 
 
 ### Merge
@@ -86,14 +116,37 @@ When you merge a branch, git will try to automatically combine the changes from 
 
 Merges can be done in several ways, but the most common is to use a pull request. A pull request is a way to propose changes to a repo and have them reviewed by other developers before they are merged into the main branch. This is a good way to ensure that the changes are correct and do not break anything in the main branch. You can start a pull request from GitHub and have your peers review your changes before merging. You can merge branches directly in the command line, but it is recommended to use a pull request for larger changes or when working with a team.
 
-Below show a simple merge between two branches. The *shooter* branch is merged back into the *main* branch.
-<img src={mergeTree} alt="Commit Tree with Merge" />
+Below show a merge between several branches. The *shooter-sub* branch is merged back into the *main* branch. Then the *pickup-sub* branch is merged back into the *main* branch. This is a common workflow when working on a team and allows for easy collaboration and development.
+```mermaid
+---
+title: Example Branching (with merges) Commit Tree
+---
+gitGraph BT:
+   commit
+   commit
+   branch shooter-sub
+   commit
+   commit
+   commit
+   checkout main
+   commit
+   branch pickup-sub
+   commit
+   commit
+   checkout main
+   commit
+   merge shooter-sub
+   commit
+   merge pickup-sub
+   commit
+   checkout shooter-sub
+   commit
+```
 
 You can merge any branch into your currently checked out branch using the following command. This will merge the content from `NEW_CONTENT_BRANCH_NAME` onto your current branch.
 ```bash
 git merge NEW_CONTENT_BRANCH_NAME
 ```
-<hr style="border: none; background-color: lightgray; height: 1px;"/>
 
 
 ### Push and Pull
@@ -116,7 +169,6 @@ Git can get very nasty if you try to do the following
 
 It is very important that you pull before a work session to ensure your local repo is up to date with the remote repo. There are ways to fix it if this occurs, but will likely require help from a mentor, unless you are a git wizard 🧙.
 :::
-<hr style="border: none; background-color: lightgray; height: 5px;"/>
 
 
 ## GitHub
