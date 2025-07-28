@@ -1,0 +1,9 @@
+{
+  "label": "Control Concepts",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Control Theory and concepts for physical systems"
+  },
+  "collapsed": true
+}

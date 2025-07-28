@@ -1,6 +1,6 @@
 {
-  "label": "Development Tools",
-  "position": 2,
+  "label": "Software Tools",
+  "position": 1,
   "link": {
     "type": "generated-index",
     "description": "Documentation and Tips for using the FRC Development Tools."

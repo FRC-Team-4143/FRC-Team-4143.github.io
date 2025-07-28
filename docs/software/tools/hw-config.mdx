@@ -1,0 +1,45 @@
+---
+title: Hardware Configurators
+description: How to setup and configure motor controllers, sensors, and other hardware for an FRC robot.
+hide_table_of_contents: true
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Hardware Configurators
+Each vendor has their own software and process to setup their hardware before it can be used. There are a few common vendors we used below each with instructions on how to configure their hardware to be able to interface with it in our robot code.
+
+<Tabs>
+    <TabItem value="general" label="General 🧰" default>
+    ## Generic FRC Hardware
+    Hardware that we typically use that is generic across all robots includes:
+        - [roboRIO 2 - NI](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/roborio2-imaging.html)
+        - [roboRIO 1 - NI](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/imaging-your-roborio.html)
+        - [VH109 FRC Radio - Vivid Hosting](https://frc-radio.vivid-hosting.net/overview/programming-your-radio-at-home)
+    </TabItem>
+    <TabItem value="ctre" label="CTRE 🐔">
+    ## Cross the Road Electronics
+    Hardware that we typically use from CTRE includes:
+        - TalonSRX
+        - [TalonFX](https://v6.docs.ctr-electronics.com/en/latest/docs/hardware-reference/talonfx/index.html)
+        - [TalonFXS](https://v6.docs.ctr-electronics.com/en/latest/docs/hardware-reference/talonfxs/index.html)
+        - [CANCoder](https://v6.docs.ctr-electronics.com/en/latest/docs/hardware-reference/cancoder/index.html)
+        - [Pigeon 2.0](https://v6.docs.ctr-electronics.com/en/latest/docs/hardware-reference/pigeon2/index.html)
+
+    All CTRE devices are configured through the [Tuner X](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html) application.
+    </TabItem>
+    <TabItem value="rev" label="REV ⚙️">
+    ## REV Robotics
+    Hardware that we typically use from REV includes:
+        - [SparkMAX](https://docs.revrobotics.com/brushless/spark-max/overview)
+        - [SparkFLEX](https://docs.revrobotics.com/brushless/spark-flex/overview)
+        - [Power Distribution Hub](https://docs.revrobotics.com/ion-control/pdh/overview)
+    </TabItem>
+    <TabItem value="pwf" label="PWF ☢️">
+    ## Playing with Fusion
+    Hardware we typically use from PWF includes:
+        - [CAN TOF Sensor](https://www.playingwithfusion.com/productview.php?pdid=96&srsltid=AfmBOoousfpN-KCGxjvtirn6ySc9kqbQOXRCp1HBE1Lr27P25vWSUAC3)
+    </TabItem>
+</Tabs>
