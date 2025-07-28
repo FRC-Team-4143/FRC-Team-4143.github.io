@@ -1,6 +1,6 @@
 ---
-title: Git and GitHub
-description: How to use git and GitHub to manage our software projects.
+title: Git
+description: How to use git to manage our software projects.
 hide_table_of_contents: false
 sidebar_position: 1
 ---
@@ -8,10 +8,8 @@ sidebar_position: 1
 import gitStatus from '@site/static/img/software/tools/git/git-status.jpg';
 import gitAdd from '@site/static/img/software/tools/git/git-add.jpg';
 
-# Version Control with Git and GitHub
+# Version Control with Git
 Since we are a software team, we need to be able to track our code and changes made to it. This is where version control comes in. Version control is a system that allows us to track changes made to our code over time. It allows us to go back to previous versions of our code, see who made changes, and collaborate with other developers.
-
-We also need a way to track what everyone is working on so we can prioritize tasks and ensure that everyone is on the same page. This is where GitHub comes in. GitHub is a web-based platform that allows us to host our code and collaborate with other developers. It provides a user-friendly interface for managing our code and tracking changes made to it.
 
 ## Git
 We use a tool called *git* for version control. This allows us to take "snapshots" of our code at a given time and save it for development documentation, reference, and backups. Git is a very powerful tool, but can be confusing and difficult to master. It also allows for simultaneous development across peers which is very helpful when multiple people are working on the same project.
@@ -106,7 +104,7 @@ gitGraph BT:
 ### Merge
 Merges are used to combine the changes from one branch into another. This is useful when you have completed a feature or fixed a bug and want to bring those changes back into the main branch. When you merge a branch, git will try to automatically combine the changes from both branches. If there are no conflicts, the merge will be successful and the changes will be applied to the main branch. If there are conflicts, git will prompt you to resolve them before completing the merge.
 
-Merges can be done in several ways, but the most common is to use a [pull request](#pull-requests). A pull request is a way to propose changes to a repo and have them reviewed by other developers before they are merged into the main branch. This is a good way to ensure that the changes are correct and do not break anything in the main branch. You can start a pull request from GitHub and have your peers review your changes before merging. You can merge branches directly in the command line, but it is recommended to use a pull request for larger changes or when working with a team.
+Merges can be done in several ways, but the most common is to use a pull request. A pull request is a way to propose changes to a repo and have them reviewed by other developers before they are merged into the main branch. This is a good way to ensure that the changes are correct and do not break anything in the main branch. You can start a pull request from GitHub and have your peers review your changes before merging. You can merge branches directly in the command line, but it is recommended to use a pull request for larger changes or when working with a team. Read more about this [here](github.mdx).
 
 Below show a merge between several branches. The *shooter-sub* branch is merged back into the *main* branch. Then the *pickup-sub* branch is merged back into the *main* branch. This is a common workflow when working on a team and allows for easy collaboration and development.
 ```mermaid
@@ -161,58 +159,3 @@ Git can get very nasty if you try to do the following
 
 It is very important that you pull before a work session to ensure your local repo is up to date with the remote repo. There are ways to fix it if this occurs, but will likely require help from a mentor, unless you are a git wizard 🧙.
 :::
-
-
-## GitHub
-GitHub is a web-based platform that allows us to host our code and collaborate with other developers. It provides a user-friendly interface for managing our code and tracking changes made to it. GitHub also allows us to create pull requests, which are a way to propose changes to a repo and have them reviewed by other developers before they are merged into the main branch.
-
-We have a GitHub organization for our team, which is where all of our repos are hosted. You can find our organization at [FRC-Team-4143](https://github.com/FRC-Team-4143). When you push or pull changes to a repo, you are sending to one of the repos in our organization.
-
-### Clone
-If the project you are going to work on is already hosted on GitHub you can clone the repo to your local machine. This will create a local copy of the repo that you can work on. You can clone a repo using the following command.
-```bash
-git clone REPO_URL
-```
-:::info
-You can find the repo URL on the GitHub page for the repo. There are two options, HTTPS and SSH. If you are not sure which one to use, use the HTTPS option. If you are using SSH, make sure you have your SSH key setup with GitHub. For example using this projects repo as an example the REPO_URL may either be
-   - SSH_URL: `git@github.com:FRC-Team-4143/FRC-Team-4143.github.io.git`
-   - HTTPS_URL: `https://github.com/FRC-Team-4143/FRC-Team-4143.github.io.git`
-::::
-This will create a new directory with the same name as the repo and download all of the files in the repo to that directory. You can then navigate to that directory and start working on the code.
-
-### Pull Requests
-A Pull Request (PR) is a way to propose changes to a repo and have them reviewed by other developers before they are merged into the main branch. This is a good way to ensure that the changes are correct and do not break anything in the main branch. You can create a pull request from GitHub and have your peers review your changes before merging.
-
-You can create a pull request by going to the GitHub page for the repo and clicking on the "Pull requests" tab. From there, you can click on the "New pull request" button and select the branch you want to into your selected target branch. You can then add a title and description for your pull request and submit it for review. The PR will show all the changes made in that branch and allow your peers or mentors to review your changes before merging. They can leave comments, request changes, or approve the pull request. Once the pull request is approved, you can merge it into the target branch.
-
-Some PRs even have automated checks that will run to ensure that the code is correct and does not break anything. This is a good way to catch errors before they are merged into the main branch.
-
-### Issues / Tasks
-Issues are a way to track tasks and bugs in a repo. They allow us to create a list of tasks that need to be completed and assign them to team members. Issues can be created from the GitHub page for the repo and can be assigned to team members. You can also add labels and comments to issues to help organize them.
-
-We like to use issues to track the progress of our projects and see what each team member has been working on. This allows us to prioritize tasks and ensure that everyone is on the same page. They are typically assigned a "Story Point" value to indicate how long the task will take to complete. They are also typically given a label to indicate what type of task it is. Some of our labels include:
- - `bug`: A bug that needs to be fixed
- - `auto feature`: New auto routines or changes to the auto framework
- - `documentation`: Improvements or additions to the documentation
- - `robot feature`: New robot code feature
- - `tools`: Update or interfacing with FRC tools
- - And many more!
-
-You should try to update the comments or status of any issues you worked on. This allows us to see the progress on any given issue and offer help if needed.
-
-### Project Board
-The issues are attached to a repo, but can be added to a project board. The project boards allows for us to organize our issues and tasks into a [kanban](https://kanbantool.com/kanban-board-examples) style board. This gives everyone on the team a quick overview of what tasks are being worked on, what tasks are completed, and what tasks are still in progress. You can see our project board used for off-season projects at [Offseason Projects](https://github.com/orgs/FRC-Team-4143/projects/6).
-
-Each issue is sorted into a column based on its status. The columns in our typical project template are:
-   - `Backlog`: Issues that are not yet ready to be worked on
-      - These could be issues that are not fully defined, need more information, or are waiting on another task to be completed
-   - `Ready`: Issues that need to be worked on
-      - These are issues that are ready to be worked on and have all the information needed to complete them
-   - `In Progress`: Issues that are currently being worked on
-      - These are issues that are currently being worked on by a team member
-   - `In Review`: Issues that are ready for review or testing
-      - These are issues that have been completed and are ready for review or testing by another team member. Typically this is where you would create a pull request to merge your changes.
-   - `Done`: Issues that have been completed
-      - These are issues that have been completed and merged into a parent branch. They are typically closed after they have been merged.
-
-Make sure you assign yourself to any issues you are working on. This allows us to see who is working on what and helps us prioritize tasks. You can also assign issues to other team members if you think they would be a good fit for the task.
