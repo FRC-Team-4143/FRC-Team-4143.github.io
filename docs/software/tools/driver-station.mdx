@@ -15,18 +15,18 @@ You can quickly identify the enabled status of the robot looking at the RSL (Rob
 
 The robot can only be enabled by the Driver Station (unless connected to an FMS).
 
-::::tip[Keyboard Shortcuts]
+:::tip[Keyboard Shortcuts]
 - `[ + ] + \` - Enable the robot
 - `Enter` - Disable the robot
 - `Space` - Emergency Stop
     - This will require the roboRIO to be rebooted to enable the robot
 - `Backspace` - A Stop
     - This will only work while in practice mode
-::::
+:::
 
-::::danger[WARN WHEN YOU ENABLE]
+:::danger[WARN WHEN YOU ENABLE]
 Ensure you warn anyone nearby when enabling the robot. The robot is dangerous and can easily hurt someone.
-::::
+:::
 
 ## Operating Modes
 There are 4 different operating modes that can be selected from the Driver Station.
@@ -39,7 +39,7 @@ This mode can be used to simulate a match. You can define the length of each mat
 ### Test
 This mode is similar to TeleOperated, but can be reference in robot code to enable or disable specific actions. We typically lock tuning behavior behind this mode.
 
-::::danger[SELECT THE RIGHT MODE]
+:::danger[SELECT THE RIGHT MODE]
 Ensure you select the right operation mode before enabling the robot. You do not want to enable the robot in auto when you intend teleop.
-::::
+:::
 

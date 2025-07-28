@@ -13,9 +13,9 @@ Each vendor has their own software and process to setup their hardware before it
 
 There are very few settings that need changed in the configuration applications, but you can change almost everything on the device. Typically we only change the CAN ids from the applications. The tools are also allow for simple manual control (for prototyping) or seeing device telemetry. They are also used to update the device firmware.
 
-::::note
+:::note
 We try to set most settings in code that way we can enforce and ensure the devices are always configured correctly.
-::::
+:::
 
 <Tabs>
     <TabItem value="general" label="General 🧰" default>
@@ -29,9 +29,9 @@ We try to set most settings in code that way we can enforce and ensure the devic
         The two different roboRIOs have different imaging processes as listed below. The device has both firmware and a software application image. The firmware updates are rare, but there is a yearly season image release.
         - [Imaging the RIO - roboRIO 2](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/roborio2-imaging.html)
         - [Imaging the RIO - roboRIO](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/imaging-your-roborio.html)
-        ::::danger[AVOID THE ORIGINAL RIO]
+        :::danger[AVOID THE ORIGINAL RIO]
         Avoid using the original roboRIO since it has barely enough memory to run modern FRC code. Only use it for simple applications like test benches or small project robots.
-        ::::
+        :::
 
         You can debug an information on the RIOs by opening a hosted webserver at `10.41.43.2` in any browser on the robots network. If you are connected over USB you can try `172.22.11.2`
 
@@ -66,9 +66,9 @@ We try to set most settings in code that way we can enforce and ensure the devic
 
     <TabItem value="rev" label="REV ⚙️">
     ## REV Robotics
-    ::::warn[CTRE Devices are Preferred]
+    :::warn[CTRE Devices are Preferred]
     We tend to try to limit REV devices on the robot to attempt to run a common motor controller ecosystem. Sometimes there is no other option and a REV device is the best for a given situation.
-    ::::
+    :::
     Hardware that we typically use from REV includes:
         - [SPARK MAX](https://docs.revrobotics.com/brushless/spark-max/overview)
         - [SPARK Flex](https://docs.revrobotics.com/brushless/spark-flex/overview)
@@ -89,9 +89,9 @@ We try to set most settings in code that way we can enforce and ensure the devic
     - [Updating Device Firmware - PDH](https://docs.revrobotics.com/rev-hardware-client/ion/power-distribution-hub/updating-a-power-distribution-hub)
     - [Viewing Device Telemetry](https://docs.revrobotics.com/rev-hardware-client/ion/telemetry)
 
-    ::::warning[Update Your Parameters]
+    :::warning[Update Your Parameters]
     Make sure to press `Persist Parameters` after making any device changes for them to stay across power cycle!
-    ::::
+    :::
     </TabItem>
 
     <TabItem value="pwf" label="PWF ☢️">
@@ -102,8 +102,8 @@ We try to set most settings in code that way we can enforce and ensure the devic
     There is not much configuration required for the PWF TOF sensor. It doesn't even require an external application. Once the library has been added to the robot project and a sensor has been added in code it will force a webserver to launch on the robot network. This webserver allow for changing the CAN id of the device and blinking the LED for identification.
 
     You can reach the webserver by entering `10.41.43.2:5812` into a web browser on the robot network. If you are connected to the RIO via usb you can also try `172.22.11.2:5812`.
-    ::::tip[Not on a 4143 Robot?]
+    :::tip[Not on a 4143 Robot?]
     Ensure the address matches the roboRIOs and the port is `5812`
-    ::::
+    :::
     </TabItem>
 </Tabs>
