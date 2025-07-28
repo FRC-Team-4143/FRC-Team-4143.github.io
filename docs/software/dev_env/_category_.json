@@ -1,9 +1,9 @@
 {
-  "label": "Development Environment",
+  "label": "Development Tools",
   "position": 2,
   "link": {
     "type": "generated-index",
-    "description": "Documentation and Tips for using the FRC Development Environment."
+    "description": "Documentation and Tips for using the FRC Development Tools."
   },
   "collapsed": true
 }
