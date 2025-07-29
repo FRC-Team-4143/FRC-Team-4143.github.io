@@ -15,10 +15,10 @@ import dsShortTiming from '@site/static/img/software/tools/driver-station/driver
 The Driver Station is the primary operator interface with the robot. It can be opened on a laptop connected to the robot network. It is used to enable/disable the robot along with transmit the joystick inputs to the robot to be used in robot code. This is a simple overview of the Driver Station, but more documentation can be found [here](https://docs.wpilib.org/en/stable/docs/software/driverstation/driver-station.html).
 
 ## Enabling and Disabling
-The robot will boot up to an disabled state. The robot code is still running, but all motor outputs are disabled so nothing will move. Sensors will still update. Once the robot is enabled motor outputs will be enabled.
+The robot will boot up to an disabled state. The robot code is still running, but all motor outputs are disabled so nothing will move, but sensors will still update. Once the robot is enabled motor outputs will be enabled and them may be recieeing a command from a default subsystem action.
 
 :::danger[WARN WHEN YOU ENABLE]
-Ensure you warn anyone nearby when enabling the robot. The robot is dangerous and can easily hurt someone.
+Ensure you warn anyone nearby when enabling the robot. The robot is dangerous and can easily hurt someone. You don't have to be touching the controller to make the robot move. Some robots go to a powered idle state when enabled.
 :::
 
 You can quickly identify the enabled status of the robot looking at the RSL (Robot Signal Light). Flashing is enabled and solid is disabled. The robot can only be enabled by the Driver Station (unless connected to an FMS). The robot can be enabled and disabled by pressing the green enable and red disable button.
