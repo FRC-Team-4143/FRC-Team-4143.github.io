@@ -1,7 +1,7 @@
 ---
 title: VSCode
 description: Tips and basics for using VSCode for an FRC project.
-hide_table_of_contents: false
+hide_table_of_contents: true
 sidebar_position: 3
 ---
 
@@ -12,7 +12,7 @@ VSCode is a lightweight development editor that can be equipped with plugins to 
 If you forgot all of the git commands, there is no need to worry. VSCode has built-in control for git with a friendly user interface. You can access this by clicking on the Source Control icon in the left sidebar, or by pressing `Ctrl + Shift + G - G`. This will show you all of the changes you have made to your code, and allow you to stage, commit, and push your changes to the remote repository.
 
 Most of the complex git commands are hidden in a sub menu that you can access by clicking on the three dots in the top right corner of the Source Control panel. This will show you options to create branches, merge branches, and more. The typical workflow process should be doable fully in the GUI panel, by staging the files you want to commit with the `+` button, writing a commit message in the input box at the top, and then clicking on the checkmark to commit your changes. You can then push your changes to the remote repository by clicking on the `Sync Changes` menu and selecting. `Sync Changes` will both pull and push changes to the remote repository.
-:::warning[Avoid `Sync Changes`]
+:::warning[Avoid Sync Changes]
 Be careful when using the `Sync Changes` button, as it will pull changes from the remote repository and merge them with your local changes. If there are any conflicts, you will need to resolve them before you can push your changes.
 
 It is recommended you avoid the `Sync Changes` button because it can preform something you are not expecting. It is best practice to explicitly select the ***Push*** or ***Pull*** option from the submenu.

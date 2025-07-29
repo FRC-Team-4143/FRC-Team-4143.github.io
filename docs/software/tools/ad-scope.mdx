@@ -5,11 +5,14 @@ hide_table_of_contents: true
 sidebar_position: 7
 ---
 
+import adScope from '@site/static/img/software/tools/ad-scope/ad-scope.png';
+
 # Advantage Scope
+<img src={adScope} width="800"/>
 Advantage Scope (AdScope) is an advanced telemetry and log viewing tool developed by FRC Team 6328 [^1]. They have excellent documentation available [here](https://docs.advantagescope.org/). This page should act only as a quick reference for common actions and you should check their official documentation for more in depth instructions. The documentation is also available offline in the application.
 
 ## Log Files as Source
-AdScope can also interpret `.wpilog`, `.hoot`, and `.dslog` log files that are recorded on the robot during testing/matches. You can open any of these log files from the clicking `File` > `Open Log(s)...` within the menu bar.
+AdScope can also interpret `.wpilog`, `.hoot`, and `.dslog` log files that are recorded on the robot during testing/matches. You can open any of these log files from the clicking `File` > `Open Log(s)...` within the menu bar. This will launch a file selection for you to pick a log to load. You can also download the logs from the robot remotely using `File` > `Download Logs...`, but you need to make sure your settings are configured to connect to the robot.
 
 See [Managing Log Files](https://docs.advantagescope.org/getting-started/manage-files) for more.
 
@@ -28,7 +31,7 @@ There are a bunch of different tabs that you can select from to display differen
 - [🦀 Swerve](https://docs.advantagescope.org/tab-reference/swerve)
 - [📉 Line Graph](https://docs.advantagescope.org/tab-reference/swerve)
 
-:::tip Tab Layout Template
+:::info Tab Layout Template
 Throughout the season we try to keep an updated template for different AdScope usages. This can include a tuning template, a match review template, and even a showcase template.
 
 You can load or save to these templates with `File` > `Import Layout...` and `File` > `Export Layout` respectively.
@@ -37,11 +40,11 @@ You can load or save to these templates with `File` > `Import Layout...` and `Fi
 ## Custom Assets
 You can also setup custom assets to fully visualize our robot in AdScope. This is very helpful for simulation and math replay because it can give you an idea of what the robot was doing without have to look at a bunch of states. However it is not easy and it will take a little bit of time to setup. Its recommended to use our [2025 robot project](https://github.com/FRC-Team-4143/mainbot-2025/tree/develop/layouts/adscope-assets) as reference when setting it up. You can also reference the official AdScope doc for [Custom Assets](https://docs.advantagescope.org/more-features/custom-assets) and [3D Components](https://docs.advantagescope.org/tab-reference/3d-field#3d-components).
 
-:::info
+:::info[Looking for a fast solution?]
 If you just need the rough geometry for your robot I would recommend attempting to implement a [WPILib Mechanism](https://docs.advantagescope.org/tab-reference/3d-field#mechanisms--components). This is much simpler and faster approach.
 :::
 
-[^1]: Cole is a 6328 fanboy
+[^1]: Mr. Hunt is a 6328 fanboy
 
 
 
