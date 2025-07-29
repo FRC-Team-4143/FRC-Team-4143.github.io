@@ -4,3 +4,42 @@ description: Overview of variables and common data types.
 hide_table_of_contents: true
 sidebar_position: 2
 ---
+
+# Variables and Datatypes
+Variables are a core concept in any programming language. Think of them as a container to store a single piece of data. You need to define what type of data you will put into the container and give it a name. Variables should be named to easily identify what they contain.
+
+### Declaring a Variable
+You can create a variable with out assigned a value to it. You would do this is you plan on using it, but do not have a value to assign at creation. The syntax is `[type] [name]` which can be seen is examples below.
+```java
+int team_number;
+double pi;
+boolean robot_is_on;
+String message;
+```
+:::warning[Always assign a default value]
+It can be dangerous leaving a variable unassigned at creation. You may no that you can't read it until it has a value, but if other developers are unaware they may read from it before its assigned. This can cause the code to error or crash.
+:::
+
+### Assigning a Variable
+When you define a variable you are assigning it a value to store. The syntax for this is `[name] = [value]` which can be seen in examples below.
+```java
+team_number = 4143;
+pi = 3.14;
+robot_is_on = true;
+message = "I am a string!";
+```
+:::tip[Declaring and Assigning]
+You can actually declare and assign a value to a variable in a single line. This is the preferred process since it will ensure the variable has a default value at the start of the program. This is done with the syntax `[type] [name] = [value]`.
+```java
+int team_number = 4143
+```
+:::
+
+### Datatypes
+You have seen a few of them already in the examples above, but there are plenty of datatypes in Java. A datatype is the type of data that will be referenced and in this case stored in our variables. Below is a list of a few common types that we use in our robot programs.
+| Datatype | Description | Example |
+|--|--|--|
+| `int` | A non-decimal number | `int team_number = 4143;` |
+| `double` | A decimal number | `double pi = 3.14;` |
+| `boolean` | A value that is either true or false | `boolean robot_is_on = true;` |
+| `String` | A list of characters (a.k.a. text) *note the capitalization in `String`| `String message = "I am a string!";` |
