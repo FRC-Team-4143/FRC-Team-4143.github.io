@@ -5,13 +5,24 @@ hide_table_of_contents: true
 sidebar_position: 5
 ---
 
+import dsFullDefault from '@site/static/img/software/tools/driver-station/driver-station-full-default.png';
+import dsShortEnable from '@site/static/img/software/tools/driver-station/driver-station-short-enable.png';
+import dsShortModes from '@site/static/img/software/tools/driver-station/driver-station-short-modes.png';
+import dsShortTiming from '@site/static/img/software/tools/driver-station/driver-station-short-timing.png';
+
 # FRC Driver Station
+<img src={dsFullDefault} width="1200"/>
 The Driver Station is the primary operator interface with the robot. It can be opened on a laptop connected to the robot network. It is used to enable/disable the robot along with transmit the joystick inputs to the robot to be used in robot code. This is a simple overview of the Driver Station, but more documentation can be found [here](https://docs.wpilib.org/en/stable/docs/software/driverstation/driver-station.html).
 
 ## Enabling and Disabling
 The robot will boot up to an disabled state. The robot code is still running, but all motor outputs are disabled so nothing will move. Sensors will still update. Once the robot is enabled motor outputs will be enabled.
 
-You can quickly identify the enabled status of the robot looking at the RSL (Robot Signal Light). Flashing is enabled and solid is disabled. The robot can only be enabled by the Driver Station (unless connected to an FMS).
+:::danger[WARN WHEN YOU ENABLE]
+Ensure you warn anyone nearby when enabling the robot. The robot is dangerous and can easily hurt someone.
+:::
+
+You can quickly identify the enabled status of the robot looking at the RSL (Robot Signal Light). Flashing is enabled and solid is disabled. The robot can only be enabled by the Driver Station (unless connected to an FMS). The robot can be enabled and disabled by pressing the green enable and red disable button.
+<img src={dsShortEnable} width="400"/>
 
 :::tip[Keyboard Shortcuts]
 - `[ + ] + \` - Enable the robot
@@ -22,18 +33,16 @@ You can quickly identify the enabled status of the robot looking at the RSL (Rob
     - This will only work while in practice mode
 :::
 
-:::danger[WARN WHEN YOU ENABLE]
-Ensure you warn anyone nearby when enabling the robot. The robot is dangerous and can easily hurt someone.
-:::
-
 ## Operating Modes
 There are 4 different operating modes that can be selected from the Driver Station.
+<img src={dsShortModes} width="400"/>
 - ***TeleOperated***
     - This mode will be normal robot functionality. It has no time limit and is typically operation for testing or quick practice.
 - ***Autonomous***
     - This mode will only execute code within the autonomous section of the robot code. It has no time limit.
 - ***Practice***
     - This mode can be used to simulate a match. You can define the length of each match segment and the Driver Station will handle the enable and disable state aligned with the time settings. This is good for full match simulation while practicing or testing autos with a time limit.
+    - <img src={dsShortTiming} width="300"/>
 - ***Test***
     - This mode is similar to TeleOperated, but can be reference in robot code to enable or disable specific actions. We typically lock tuning behavior behind this mode.
 

@@ -9,7 +9,7 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 - Add the `nodejs` direcotry to your PATH enviroment variable.
     - A restart may be required after updating.
     ```bash
-    setx PATH "%PATH%;C:\Path\to\nodejs"
+    set PATH=%PATH%;C:\Path\to\nodejs
     ```
 
 - Install docusaurus
