@@ -2,21 +2,33 @@
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-## Local Development
+## Local Development (Windows)
+- Ensure `Node.js` version is greater than 18.0 (check by running `node -v`)
+    - Install the latest version [here](https://nodejs.org/en/download/).
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+- Add the `nodejs` direcotry to your PATH enviroment variable.
+    - A restart may be required after updating.
+    ```bash
+    setx PATH "%PATH%;C:\Path\to\nodejs"
+    ```
 
-```bash
-npm run serve
-```
+- Install docusaurus
+    ```bash
+    npm install -g docusaurus
+    npm install
+    ```
+- Start the development server
+    - The site can now be viewed with changes made live at `http://localhost:3000/`
+    ```bash
+    npx docusaurus start
+    ```
 
 ## Build
-
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
-```bash
+```bash 
 npm run build
 ```
 
-## Deployment
+## Remote Deployment
 The site will auto deploy new content when there is a push/merge on `main`. Ensure your content builds before merging to main.
