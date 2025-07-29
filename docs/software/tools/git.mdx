@@ -1,7 +1,7 @@
 ---
 title: Git
 description: How to use git to manage our software projects.
-hide_table_of_contents: false
+hide_table_of_contents: true
 sidebar_position: 1
 ---
 
@@ -42,18 +42,18 @@ gitGraph BT:
 
 ```
 Its not a pretty as our lovely custom made graphic above, but you can run the following command to see a similar tree for your repo.
-```bash
+```git
 git log --graph --oneline --decorate --all
 ```
 
 All new changes made to your repo are considered unstaged until manually staged into your commit index. Staged changes will be added to your next commit. You can see the current staged status of your changes by running the command below.
-```bash
+```git
 git status
 ```
 <img src={gitStatus} alt="git status command" width="500"/>
 
 To create a commit first we need to stage changes from our working directory that we want included.  You can stage files you want included in your commit using the following command.
-```bash
+```git
 git add FILE_TO_STAGE_NAME
 ```
 <img src={gitAdd} alt="git add command" width="500"/>
@@ -63,7 +63,7 @@ There are shortcuts to stage multiple files at a time, but I will leave that to 
 :::
 
 Once you have staged everything you want included in your commit you can check the staged status again with `git status` to ensure everything looks correct. If everything is as expected you can create a commit with the following command.
-```bash
+```git
 git commit
 ```
 This will open an editor to allow you to write you commit message. Remember what we talked about, short, but informative. After the commit is complete feel free to check the `git log` again to see your new commit.
@@ -72,11 +72,11 @@ This will open an editor to allow you to write you commit message. Remember what
 Branches are a way to create a separate line of development in your repo. This is useful for developing new features or fixing bugs without affecting the main line of development. The main branch is usually called `main` or `master`, but you can create as many branches as you want. Each branch has its own commits and can be merged back into the main branch when the development is complete. You can checkout a branch in your repo and it will update your working directory with the latest commit in that branch.
 
 You can select what branch your working directory is currently on using the following command.
-```bash
+```git
 git checkout BRANCH_NAME
 ```
 If you need to create a new branch, it will start at the current commit of the branch you are on. You can then make changes and commit them to the new branch without affecting the main branch. If you are starting development on a new feature or bug fix you can also create your own branch. The command below will create a branch with its parent commit/branch being what you currently have checked out in your working directory.
-```bash
+```git
 git checkout -b NEW_BRANCH_NAME
 ```
 
@@ -134,7 +134,7 @@ gitGraph BT:
 ```
 
 You can merge any branch into your currently checked out branch using the following command. This will merge the content from `NEW_CONTENT_BRANCH_NAME` onto your current branch.
-```bash
+```git
 git merge NEW_CONTENT_BRANCH_NAME
 ```
 
@@ -143,12 +143,12 @@ git merge NEW_CONTENT_BRANCH_NAME
 While everything we have talked about has been in the local space, git allows us to establish a remote. This is a "cloud" instance of the repo that can be accessed by all members of the project, not just on a single computer. Our remote is setup through GitHub.
 
 Once your branch is in a state that you want to push it to remote for either storage or for other developers to use you can ***PUSH*** ⬆️ your changes to your defined remote.
-```bash
+```git
 git push
 ```
 
 If another developer has commit to the branch you are using from another computer you will need to make sure to ***PULL*** ⬇️ their changes into your working directory.
-```bash
+```git
 git pull
 ```
 

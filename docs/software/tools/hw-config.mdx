@@ -17,6 +17,7 @@ There are very few settings that need changed in the configuration applications,
 We try to set most settings in code that way we can enforce and ensure the devices are always configured correctly.
 :::
 
+Below is reference and tips for each of the primary hardware vendors that we frequently use. Cycle through the different tabs to see the unique setup instructions for each.
 <Tabs>
     <TabItem value="general" label="General 🧰" default>
     ## Generic FRC Hardware
@@ -52,6 +53,7 @@ We try to set most settings in code that way we can enforce and ensure the devic
         - [CANCoder](https://v6.docs.ctr-electronics.com/en/latest/docs/hardware-reference/cancoder/index.html)
         - [Pigeon 2.0](https://v6.docs.ctr-electronics.com/en/latest/docs/hardware-reference/pigeon2/index.html)
         - [CANivore](https://v6.docs.ctr-electronics.com/en/stable/docs/canivore/canivore-intro.html)
+
     All CTRE devices are configured through the [Tuner X](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html) application. It is likely already installed so you can just use Windows search, but there are instructions to install [here](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html#what-is-phoenix-tuner-x). You can launch Tuner X and connect over the robot network to see all the CTRE devices on the RIO or CANivore CAN bus.
 
     CTRE provides excellent documentation for interfacing with their devices over the tool and how to set it up. Below are some quick links to the more common actions you would preform in Tuner X, but you can also see their entire documentation [here](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html).
@@ -74,6 +76,7 @@ We try to set most settings in code that way we can enforce and ensure the devic
         - [SPARK Flex](https://docs.revrobotics.com/brushless/spark-flex/overview)
         - [Power Distribution Hub](https://docs.revrobotics.com/ion-control/pdh/overview)
             - This device can run without REVLib and is typically used on all FRC robots.
+
     All REV devices are configured through the [REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client) application. It is likely already installed so you can just use Windows search, but there are instructions to install [here](https://docs.revrobotics.com/rev-hardware-client/gs/install). This tool requires being physically connected to a REV device on the robot through a USB-C cable. You should be able to see all devices that share the same CAN bus as the device you plugged into.
 
     REV provides documentation for interfacing with their devices over the tool and how to set it up. Below are some quick links to the more common actions you would preform in the REV Hardware Client, but you can also see their entire documentation [here](https://docs.revrobotics.com/rev-hardware-client).
