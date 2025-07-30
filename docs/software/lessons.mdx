@@ -8,26 +8,28 @@ sidebar_position: 10
 MARS/WARS has been around since 2012 and we have learned a lot of things about what makes a robot good and what make a robot bad. Some of it comes from how it is programmed. This list is meant to act as a updated document with the mistakes or tips we have learned.
 
 ### Controls
-- ***Start with the simplest control system and increase complexity as needed.***
-    - In years past we have focused on advanced controls using kinematics and spline control. This ends up eating a large portion of development time and can be avoided with simpler control concepts. ***(2025 - REEFSCAPE)***
-- ***Attempt to make all subsystem actions in a state machine.***
-    - A state machine for each subsystem can help control exactly what the robot is doing at a given point it time. It gives us control over how it transfers between each state and what each state does. ***(2025 - REEFSCAPE)***
-- ***Design the robot to work as automated as possible.***
-    - This helps with both diver assist and auto integration, which greatly speeds up development when it comes time for auto and tuning. ***(2025 - REEFSCAPE)***
+- ***Start with the simplest control system and increase complexity as needed.***[^1]
+    - In years past we have focused on advanced controls using kinematics and spline control. This ends up eating a large portion of development time and can be avoided with simpler control concepts.
+- ***Attempt to make all subsystem actions in a state machine.***[^1]
+    - A state machine for each subsystem can help control exactly what the robot is doing at a given point it time. It gives us control over how it transfers between each state and what each state does.
+- ***Design the robot to work as automated as possible.***[^1]
+    - This helps with both diver assist and auto integration, which greatly speeds up development when it comes time for auto and tuning.
 
 ### Commands
-- ***Do not use commands for basic tele-op actions.***
+- ***Do not use commands for basic tele-op actions.***[^1]
     - Commands can get complicated and preform actions outside of the default subsystem loop. They also get more complicated as subsystem requirements are introduced since it can force the robot to preform actions with being explicitly told to do so. ***(2025 REEFSCAPE)***
-- ***Do not use subsystem default commands***
-    - Default commands are a command that runs when no other command is active that requires a given subsystem. This can lead to the robot preforming actions without being explicitly told and can make adding new behaviors more complex. ***(2025 - REEFSCAPE)***
-- ***Commands should only be used for controller buttons and auto.***
-    - Commands are the easiest way to interface with buttons and should be setup to just active a robot state and nothing more. ***(2025 - REEFSCAPE)***
-    - Auto can get more complex so commands may come in useful, but once again they should ideally only be used to set a robot state and nothing more. ***(2025 - REEFSCAPE)***
+- ***Do not use subsystem default commands.***[^1]
+    - Default commands are a command that runs when no other command is active that requires a given subsystem. This can lead to the robot preforming actions without being explicitly told and can make adding new behaviors more complex.
+- ***Commands should only be used for controller buttons and auto.***[^1]
+    - Commands are the easiest way to interface with buttons and should be setup to just active a robot state and nothing more.
+    - Auto can get more complex so commands may come in useful, but once again they should ideally only be used to set a robot state and nothing more.
 
 ### Operation
-- ***Attempt to make the robot as simple to control as possible.***
-    - Actions can be blended together or desired actions can be assumed by robot state. The less buttons and complexity the driver has to worry about the more they can focus on game strategy. ***(2025 - REEFSCAPE)***
+- ***Attempt to make the robot as simple to control as possible.***[^1]
+    - Actions can be blended together or desired actions can be assumed by robot state. The less buttons and complexity the driver has to worry about the more they can focus on game strategy.
 
 ### Development
-- ***Do not sleep on the importance of auto integration time.***
-    - Having an elite auto takes lots of tuning down to the quarter second. We need to ensure we put priority on auto tuning time over QOL robot features. ***(2025 - REEFSCAPE)***
+- ***Do not sleep on the importance of auto integration time.***[^1]
+    - Having an elite auto takes lots of tuning down to the quarter second. We need to ensure we put priority on auto tuning time over QoL robot features.
+
+[^1]: Learned in ***2025 REFFSCAPE***
