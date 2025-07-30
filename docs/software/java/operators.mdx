@@ -9,6 +9,90 @@ sidebar_position: 3
 Operators are symbols used to preform data manipulation and assignment. They allow us to preform math with our variables and change what values are stored in them. Operators only work with a specific types. For examples you cant multiple a `String`.
 
 ## Arithmetic
+Arithmetic operators allow us to preform math operations with variables and numbers. Below is a list of the basic operators. You can see most operators are compatible with all number datatypes, but `String` is only compatible with the `+` operator. They should all do what you expect from our 2nd grade math class. The only thing that may be unique is the modulo operator `%`. This is used to calculate the remainder of dividing the two numbers.
+
+<table>
+<tr>
+{/* Column Titles */}
+<td> **Operator** </td>
+<td> **Description** </td>
+<td> **Compatible Datatypes** </td>
+<td> **Example** </td>
+</tr>
+<tr>
+{/* + operator */}
+<td style={{textAlign: 'center', fontSize: 25}}> `+` </td>
+<td> Addition </td>
+<td > `int`, `double`, `String` </td>
+<td>
+```java
+1 + 1 = 2
+1.5 + 1.0 = 2.5
+"MARS" + "WARS" = "MARSWARS"
+```
+</td>
+</tr>
+<tr>
+{/* - operator */}
+<td style={{textAlign: 'center', fontSize: 25}}> `-` </td>
+<td> Subtraction </td>
+<td> `int`, `double` </td>
+<td>
+```java
+2 - 1 = 0
+2.5 - 0.5 = 2.0
+```
+</td>
+</tr>
+{/* * operator */}
+<tr>
+<td style={{textAlign: 'center', fontSize: 25}}> `*` </td>
+<td> Multiplication </td>
+<td> `int`, `double` </td>
+<td>
+```java
+9 * 3 = 27
+15 * 0.5 = 7.5
+```
+</td>
+</tr>
+{/* / operator */}
+<tr>
+<td style={{textAlign: 'center', fontSize: 25}}> `/` </td>
+<td> Division </td>
+<td> `int`, `double` </td>
+<td>
+```java
+9 / 3 = 3
+8.0 / 3.0 = 2.6666
+```
+</td>
+</tr>
+{/* % operator */}
+<tr>
+<td style={{textAlign: 'center', fontSize: 25}}> `%` </td>
+<td> Modulo </td>
+<td> `int`, `double` </td>
+<td>
+```java
+10 % 3 = 1
+8.5 % 3.0 = 2.5
+```
+</td>
+</tr>
+</table>
+
+:::warning Data truncation
+Be careful when preforming math between and an `int` and a `double`. You can not store decimal precision data in an `int` datatype. Any decimal precision will be truncated.
+```java
+int i = 5;
+double d = 0.5;
+
+int product = i * i; // product = 25
+int product = i * d; // product = 2
+double product = i * d; // product = 2.5
+```
+:::
 
 ## Assignment
 You should be familiar with the `=` operator by now, but there are several more assignment operators that we can use in our code.
@@ -17,72 +101,68 @@ Below is a table which shows most of the available assignment operators.
 <table>
 <tr>
 {/* Column Titles */}
-<td> Operator </td>
-<td> Description </td>
-<td> Example </td>
-<td> Equivalent Expression </td>
+<td> **Operator** </td>
+<td> **Description** </td>
+<td> **Example** </td>
+<td> **Equivalent Expression** </td>
 </tr>
 <tr>
 {/* = operator */}
-<td> `=` </td>
+<td style={{textAlign: 'center', fontSize: 25}}> `=` </td>
 <td> Assignment </td>
-<td> Assigns a value (right side) to a variable (left side) </td>
-<td> `int x = 0;` </td>
-<td> `int x = 0;` </td>
+<td>
+```java
+int x = 0;
+// Assigns a value (right side) to a variable (left side) </td>
+```
+</td>
+<td > `int x = 0;` </td>
 </tr>
 <tr>
 {/* += operator */}
-<td> `+=` </td>
+<td style={{textAlign: 'center', fontSize: 25}}> `+=` </td>
 <td> Addition Assignment </td>
 <td>
-
 ```java
 int x = 1;
 x += 1; // x is now 2
 ```
-
 </td>
 <td> `x = x + 1;` </td>
 </tr>
 {/* -= operator */}
 <tr>
-<td> `-=` </td>
+<td style={{textAlign: 'center', fontSize: 25}}> `-=` </td>
 <td> Subtraction Assignment </td>
 <td>
-
 ```java
 double x = 3.14;
 x -= 0.14;  // x is now 3.0
 ```
-
 </td>
 <td> `x = x - 0.14;` </td>
 </tr>
 {/* *= operator */}
 <tr>
-<td> *= </td>
+<td style={{textAlign: 'center', fontSize: 25}}> `*=` </td>
 <td>Multiplication Assignment </td>
 <td>
-
 ```java
 int x = 2;
 x *= 6;  // x is now 12
 ```
-
 </td>
 <td> `x = x * 6;` </td>
 </tr>
 {/* /= operator */}
 <tr>
-<td> `/=` </td>
+<td style={{textAlign: 'center', fontSize: 25}}> `/=` </td>
 <td> Division Assignment </td>
 <td>
-
 ```java
 int x = 9;
 x /= 3;  // x is now 3
 ```
-
 </td>
 <td> `x = x / 3;` </td>
 </tr>
