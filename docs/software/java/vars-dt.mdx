@@ -8,8 +8,8 @@ sidebar_position: 2
 # Variables and Datatypes
 Variables are a core concept in any programming language. Think of them as a container to store a single piece of data. You need to define what type of data you will put into the container and give it a name. Variables should be named to easily identify what they contain.
 
-### Declaring a Variable
-You can create a variable with out assigned a value to it. You would do this is you plan on using it, but do not have a value to assign at creation. The syntax is `[type] [name]` which can be seen is examples below.
+## Declaring a Variable
+You can create a variable without assigning a value to it. You would do this is you plan on using it, but do not have a value to assign at creation. The syntax is `[type] [name]` which can be seen is examples below.
 ```java
 int team_number;
 double pi;
@@ -17,10 +17,10 @@ boolean robot_is_on;
 String message;
 ```
 :::warning[Always assign a default value]
-It can be dangerous leaving a variable unassigned at creation. You may no that you can't read it until it has a value, but if other developers are unaware they may read from it before its assigned. This can cause the code to error or crash.
+It can be dangerous leaving a variable unassigned at creation. You may know that you can't read it until it has a value, but if other developers are unaware and may read from it before its assigned. This can cause the code to error or crash.
 :::
 
-### Assigning a Variable
+## Assigning a Variable
 When you define a variable you are assigning it a value to store. The syntax for this is `[name] = [value]` which can be seen in examples below.
 ```java
 team_number = 4143;
@@ -35,11 +35,77 @@ int team_number = 4143
 ```
 :::
 
-### Datatypes
+## Datatypes
 You have seen a few of them already in the examples above, but there are plenty of datatypes in Java. A datatype is the type of data that will be referenced and in this case stored in our variables. Below is a list of a few common types that we use in our robot programs.
-| Datatype | Description | Example |
-|--|--|--|
-| `int` | A non-decimal number | `int team_number = 4143;` |
-| `double` | A decimal number | `double pi = 3.14;` |
-| `boolean` | A value that is either true or false | `boolean robot_is_on = true;` |
-| `String` | A list of characters (a.k.a. text) *note the capitalization in `String`| `String message = "I am a string!";` |
+<table>
+<tr>
+{/* Column Titles */}
+<td> **Datatype** </td>
+<td> **Description** </td>
+<td> **Example** </td>
+</tr>
+<tr>
+{/* int */}
+<td style={{textAlign: 'center', fontSize: 20}}> `int` </td>
+<td> A non-decimal number </td>
+<td>
+```java
+int team_number = 4143;
+```
+</td>
+</tr>
+<tr>
+{/* double */}
+<td style={{textAlign: 'center', fontSize: 20}}> `double` </td>
+<td> A decimal number </td>
+<td>
+```java
+double pi = 3.1415
+```
+</td>
+</tr>
+<tr>
+{/* boolean */}
+<td style={{textAlign: 'center', fontSize: 20}}> `boolean` </td>
+<td> A value that is either true or false </td>
+<td>
+```java
+boolean robot_is_on = true;
+```
+</td>
+</tr>
+<tr>
+{/* String */}
+<td style={{textAlign: 'center', fontSize: 20}}> `String` </td>
+<td> A list of characters (a.k.a. text) *note the capitalization in `String` </td>
+<td>
+```java
+String message = "I am a string!";
+```
+</td>
+</tr>
+</table>
+
+## Enums
+If we wanted to create our own "datatype" with a fixed set of values we can create a `enum`. This is a special data type that allows for the definition of a fixed set of named values. We may want to use these to represent a system state or mode.
+```java
+enum STATE {
+    IDLE,
+    SCORE,
+    HOME,
+    TRAVELING_UP,
+    TRAVELING_DOWN
+}
+```
+A variable can be created to store a type of your custom `enum`. You can then reference the members of the enum for assignments and conditions. Think about how a `double` datatype can only represent a decimal number and must be compared to decimal numbers. It doesn't make sense to compare a `double` to a `String` because there is no meaningful comparison between `3.14` and `robot`. The same applies for our `enum`. You can see an example below of how it might be used.
+```java
+STATE current_state = STATE.IDLE;
+
+if(current_state == STATE.SCORE){
+    // Do scoring action!
+}
+```
+Sure we could use `ints` to represent our states where 0 is `IDLE`, 1 is `SCORE`, 2 is `HOME`..., but this makes our code easier to understand and much more readable to a unfamiliar developer.
+:::tip Under the Hood
+The above "use `ints` to represent our states" comment is actually what the enum is doing under the hood. You can actually use an enum to represent anything you would like. Check out our [2025 robot code](https://github.com/FRC-Team-4143/mainbot-2025/blob/develop/src/main/java/frc/lib/ElevatorTargets.java) where we use it to store elevator targets including all of the height/angle information. This gave us an easy way to organize and reference all of our elevator target throughout the code.
+:::

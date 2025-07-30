@@ -9,35 +9,97 @@ sidebar_position: 10
 
 ## Comments
 - All methods should be commented following java doc styling. Make sure to include any parameters or return members. Example is show below:
-```java
-/**
- * Calculates the chassis traveled distance based on provided speed and duration
- *
- * @param speed current chassis speed (m/s)
- * @param time duration of travel (s)
- *
- * @return traveled distance (m)
- */
-double calculateDistance(double speed, double time){
-    return speed * time;
-}
-```
+    ```java
+    /**
+     * Calculates the chassis traveled distance based on provided speed and duration
+     *
+     * @param speed current chassis speed (m/s)
+     * @param time duration of travel (s)
+     *
+     * @return traveled distance (m)
+     */
+    double calculateDistance(double speed, double time){
+        return speed * time;
+    }
+    ```
 
 ## Variables
 - All variables should be named using `snake_case`. Examples are shown below:
     ```java
-    double current_elevator_position
-    int final_counter
-    boolean is_enabled
-    float error
+    double current_elevator_position;
+    int final_counter;
+    boolean is_enabled;
+    float error;
     ```
 - Variables belonging to a class ***(or members)*** should have a trailing underscore `_`. Examples are shown below:
     ```java
-    double current_elevator_position_
-    int final_counter_
-    boolean is_enabled_
-    float error_
+    double current_elevator_position_;
+    int final_counter_;
+    boolean is_enabled_;
+    float error_;
     ```
+- Variables that are constant should be named using `SCREAMING_SNAKE_CASE`. The should also use the `final` and `static` modifiers to prevent accidental updates and multiple instances. Examples are shown below:
+    ```java
+    static final double ELEVATOR_HOME_POSITION;
+    static final int COUNTER_RESET;
+    static final boolean IS_MOTOR_INVERTED;
+    static final float I_TERM_ERROR_MAX;
+    ```
+
+## Enums
+- Both the Enum name and the fields should be named using `SCREAMING_SNAKE_CASE`. Example shown below:
+    ```java
+    enum STATE {
+        IDLE,
+        SCORE,
+        HOME,
+        TRAVELING_UP,
+        TRAVELING_DOWN
+    }
+    ```
+
+## Methods / Functions
+- Methods should be named using `lowerCamelCase`. Examples are shown below:
+    ```java
+    void setElevatorVoltage(double volts){
+        motor.set(volts);
+    }
+
+    int getElevatorVoltage(){
+        return volts;
+    }
+    ```
+- Methods that are just updating or returning members should prefix with `set` or `get` Examples shown below:
+    ```java
+    double target = 0;
+
+    void setTarget(double value){
+        target = value;
+    }
+
+    double getTarget(){
+        return target;
+    }
+    ```
+- The opening curly brace `{` for a method should be on the same line as the method signature. Examples shown below:
+    ```java
+    // This is correct formatting
+    void doThisThing(){
+        // Method code here
+    }
+
+    // Do not do this, this is incorrect formatting
+    void dontDoThisThing()
+    {
+        // Method code here
+    }
+    ```
+    :::info Single line methods
+    This is only ok when a method is a single line
+    ```java
+    double getThatThing(){ return that_thing; }
+    ```
+    :::
 
 ## Loops
 - Never use `while` loops
