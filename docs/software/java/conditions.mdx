@@ -9,9 +9,9 @@ sidebar_position: 4
 Conditions are fundamental to programming. They allow us to preform certain actions based of the state of a program. A condition is defined as a comparison between two values using a comparison operator and enclosed in `()`.
 
 # Comparison Operators
-These operators allow us to compare two values together. Similar to our arithmetic operators you need to think about what comparing two datatypes mean. You can't use create a condition that compares `"hello"` and `5` because is there is logical comparison between a `String` and an `int`. A condition in java is define as comparison between two values using a comparison operator. The condition must be encompassed in `()`. The syntax for that would look like `([value] [comparison] [value])`.
+These operators allow us to compare two values together. Similar to our arithmetic operators you need to think about what comparing two datatypes mean. You can't use create a condition that compares `"hello"` and `5` because is there is logical comparison between a `String` and an `int`. As stated above a condition in java is defined as comparison between two values using a comparison operator. The condition must be encompassed in `()`. The syntax for that would look like `([value] [comparison] [value])`.
 
-The are a few comparison operators each with their own behavior. Below is a table that shows the avaiable comparison operators, a brief desciption of their function, and a code based example.
+The are a few comparison operators each with their own behavior. Below is a table that shows the available comparison operators, a brief description of their function, and a code based example.
 <table>
 <tr>
 {/* Column Titles */}
@@ -94,14 +94,14 @@ What if we want to make a compound condition? Compare if one conditions is true 
     <tr> <td style={{ color: 'green' }}> true </td> <td style={{ color: 'green' }}> true </td> <td style={{ color: 'green' }}> true </td> </tr>
     </table>
 </div>
-Because our conditions return a `boolean` *(true/false)*, these same logical operators can be used in code to compare conditions with one another. The tables below shows the logical operations available in Java. Remember that each `true` or `false` below can be replace with a condition.
+Because our conditions return a `boolean` *(true/false)*, these same logical operators can be used in code to compare conditions with one another. The tables below shows the logical operations available in Java. Remember that each `true`/`false` below can be replace with a condition.
 
 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'wrap', gap: 20, fontSize: 15}}>
     <table>
     <caption style={{textAlign: 'center', fontSize: 25}}> **NOT** </caption>
     <tr>
     {/* ! operator */}
-    <td style={{textAlign: 'center', fontSize: 25}}> ! </td>
+    <td style={{textAlign: 'center', fontSize: 25}}> `!` </td>
     <td>
     ```java
     !(false) // true
@@ -144,8 +144,59 @@ Because our conditions return a `boolean` *(true/false)*, these same logical ope
     </table>
 </div>
 
-## If Statement
-The mighty `if` statement, a programmers favorite tool. The `if` statement allows you to run a specific section of your code based on a supplied condition. This allows you to create powerful and unique behavior within your code.
+## Condition Logic
+If we want to run different segments of our cond based on the value of a condition we can use an `if` statement. The mighty `if` statement is a programmers favorite tool. It allows you to create powerful and unique behavior within your code.
+
+#### If
+If the condition in the parentheses is true, then the code in the block is run. Otherwise, Java skips over it.
+```java title="Syntax"
+if(<condition>){
+    // Run This Code
+}
+```
+```java title="Code Example"
+int number;
+if((number / 2) == 0){
+    System.out.println("Number is Even");
+}
+```
+#### Else
+You can add `else` statements on to if statements. The code in the `else` block is run if the condition is false
+```java title="Syntax"
+if(<condition>){
+    // Run This Code
+} else {
+    // Run Other Code
+}
+```
+```java title="Code Example"
+int number;
+if((number / 2) == 0){
+    System.out.println("Number is Even");
+} else {
+    System.out.println("Number is Odd");
+}
+```
+
+#### Else If
+If we want to add multiple condition checks to a statement we can use an `else if`. They are checked if the previous statement is false. The code in the `else` block is run all the conditions are false.
+```java title="Syntax"
+if(<condition>){
+    // Run This Code
+} else if (<condition>) {
+    // Run Other Code
+}
+```
+```java title="Code Example"
+int number;
+if(number == 0){
+    System.out.println("Number is Zero");
+} else if((number / 2) == 0){
+    System.out.println("Number is Even");
+} else {
+    System.out.println("Number is Odd");
+}
+```
 
 ## Ternary Operator
 Programmers are lazy. Sometimes even too lazy to write an `if`-`else` statement for a simple condition, that preforms a very small action. Thats why they created the ternary operator `?`. The ternary operator can be added to the end of a condition and allow for quick one line `if-else` statements. The syntax for using it is as follows. `(condition)? <code if true> : <code if false>;` A quick example show its power can be seen below.
