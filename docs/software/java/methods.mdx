@@ -4,3 +4,59 @@ description: Overview of Methods.
 hide_table_of_contents: true
 sidebar_position: 6
 ---
+
+# Methods
+
+<b>Methods</b> are an important programming structure for handling and generalizing more complex tasks.
+You will typically write methods when your code is used over and over with many different inputs, and/or when your code is used across different files of your project.
+
+:::tip Terminology 
+Methods are also referred to as <b>functions</b> in other programming languages like C++ and Python.
+:::
+
+Methods use the following format:
+
+```java 
+modifier static returnType methodName(parameter1Type parameter1, parameter2Type parameter2, ...) {
+    
+}
+```
+
+Let's break this down into a few pieces: `modifier` describes the level of access the method has elsewhere in your code.
+For example, `public` implies that the method can be called anywhere, while `private` implies that the method can only be called by an object with the method declared, (<i>see classes and objects</i>).
+The `static` keyword indicates that the method belongs to a class as opposed to any specific instance of the class.
+The `returnType` defines what type the method outputs.
+The `methodName` gives the method a name.
+Lastly, a method can take in any number of <i>parameters</i>, or inputs to the method.
+These are listed as `parameterType parameterName`, which are respectively the parameter's data type and name with in the method.
+
+```java
+public static int sumPlusThree(int a, int b) {
+    return a + b + 3;
+}
+```
+
+For example, the following method takes in two parameters: and integer `a` and an integer `b`.
+It outputs the sum of `a` and `b` along with a constant value `3`.
+
+:::tip (Extra) Lambda Expressions
+Similar to methods, <b>lambda expressions</b>, (also called <i>lambdas</i>, <i>lambda functions</i>, or <i>arrow functions</i>)
+are a specific type of method that can go unnamed, take in some or no parameters, and produce an output.
+However, they cannot initialize variables or contain statements such as `if` or `for`. These are less commonly used in programming, but can be helpful in specific situations.
+
+```java
+# Form: (type n1, type n2) -> {body of expression} 
+        (int a, int b) -> {a + b};
+```
+
+```java
+ArrayList<Integer> al = new ArrayList<Integer>();
+al.add(1);
+al.add(2);
+al.add(3);
+al.add(4);
+
+al.forEach(n -> n + 2);
+```
+In this case, the lambda expression `n -> n + 2` is being used to add 2 to each element in the ArrayList `al`.
+:::

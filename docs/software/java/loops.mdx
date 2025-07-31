@@ -4,3 +4,68 @@ description: Overview of for and while loops.
 hide_table_of_contents: true
 sidebar_position: 5
 ---
+
+# Loops
+Loops are another fundamental structure to programming. 
+They allow us to repeat operations without copying lines of code over and over again.
+Loops can repeat any number of <b>iterations</b>- the number of times the loop occurs for.
+
+- Ex. 1: "adding 1 to x five times" implies the programmer set the number of iterations to 5.
+
+- Ex. 2: "adding 1 to x until a 6-sided die lands on 1" implies there is no <i>exact</i> number of iterations until the loop ends.
+
+
+Both situations for loops are valuable for different situations, so it's important to know how and when to use them.
+There are three types of loops in Java: `for`, `while`, and `do-while`.
+
+## For
+
+The `for` loop allows for lines of code to be <i>iterated</i> a set number of times:
+
+```java
+for (int i = 0; i <= 6; i++) {
+    System.out.println("Redbird");
+}
+```
+
+In this case, the word "Redbird" gets printed seven times, each on a separate line.
+
+## While
+
+The `while` loop iterates until a boolean condition is met. 
+This allows for more versatility at the cost of more responsibility for making sure the while loop is able to reach its break condition.
+
+:::danger Break Condition
+
+When using `while`-loops, make <b>complete</b> sure that you have a break condition, and that the break condition will be reached by your code.
+Not doing so runs the risk of creating an <b>infinite-while loop</b>, which can leave your programming environment and/or entire computer unresponsive.
+Another common method is to implement a `KeyListener` that exits your program in case you run into a long or unresponsive state.
+If you're running your code through a console or terminal, you can also use `CTRL + C` to exit an active program.
+:::
+
+```java
+int i = 0;
+while (i <= 6) {
+    System.out.println("Iteration #" + i);
+    i++;
+}
+```
+
+In this case, the while-loop prints seven lines in total, and we use the variable `i` to keep track of the total number of iterations.
+Notice the `i++;` line: it's recommended to update your iteration variable at the <i>bottom</i> of your loop for consistency.
+
+## Do-While
+Unlike most programming languages, Java offers a `do-while` loop. This structure runs the code in the block <i>once</i> before checking the condition, and otherwise acts as a `while` loop.
+This is only practical in specific situations, so you'll typically use `for` and `while` for looping.
+Rewriting do-while loops to use while instead is a fair option, since do-while isn't commonplace among all programming languages.
+
+```java
+do {
+    System.out.println("This will run at least once!")
+} while (0 > 1)
+```
+
+:::tip Index Conventions
+It is recommended to reserve the single-letter variables `i, j, k` as indices for loops, as this is the industry standard.
+While any variable name is technically allowed, using anything else makes your code harder to reader by other programmers.
+:::
