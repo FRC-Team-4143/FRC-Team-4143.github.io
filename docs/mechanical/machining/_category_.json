@@ -1,0 +1,9 @@
+{
+    "label": "Machining",
+    "position": 1,
+    "link": {
+      "type": "generated-index",
+      "description": "Best practacices for machining."
+    },
+    "collapsed": true
+  }

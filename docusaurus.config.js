@@ -112,10 +112,17 @@ const config = {
           },
           {
             type: 'docSidebar',
+            sidebarId: 'mechanicalSidebar',
+            position: 'left',
+            label: 'Mechanical',
+          },          
+          {
+            type: 'docSidebar',
             sidebarId: 'businessServicesSidebar',
             position: 'left',
             label: 'Business Services',
           },
+
           // adds sight seach to the navbar
           {
             type: 'search',

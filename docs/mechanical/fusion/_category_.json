@@ -1,0 +1,9 @@
+{
+    "label": "Fusion",
+    "position": 2,
+    "link": {
+      "type": "generated-index",
+      "description": "Best practacices for writing Fusion G-code."
+    },
+    "collapsed": true
+  }
