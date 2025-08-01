@@ -74,14 +74,14 @@ Any code in a method after the `return` will not be run.
 ```java
 ```java
 int sum(int a, int b){
-    int output = a + b
+    int output = a + b;
     return output;
     System.out.println(output); // This code will not run!
 }
 ```
 :::
 :::tip Multiple Returns
-Methods can have multiple `return` statements as long as they are in different "branches" or logic within the code.
+Methods can have multiple `return` statements as long as they are in different "branches" of logic within the code.
 ```java
 boolean isNumberEven(int number){
     if(number / 2 == 0){
