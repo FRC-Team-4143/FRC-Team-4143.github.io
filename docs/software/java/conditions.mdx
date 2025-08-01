@@ -8,7 +8,7 @@ sidebar_position: 4
 # Conditions
 Conditions are fundamental to programming. They allow us to preform certain actions based of the state of a program. A condition is defined as a comparison between two values using a comparison operator and enclosed in `()`.
 
-# Comparison Operators
+## Comparison Operators
 These operators allow us to compare two values together. Similar to our arithmetic operators you need to think about what comparing two datatypes mean. You can't use create a condition that compares `"hello"` and `5` because is there is logical comparison between a `String` and an `int`. As stated above a condition in java is defined as comparison between two values using a comparison operator. The condition must be encompassed in `()`. The syntax for that would look like `([value] [comparison] [value])`.
 
 The are a few comparison operators each with their own behavior. Below is a table that shows the available comparison operators, a brief description of their function, and a code based example.
@@ -147,7 +147,6 @@ Because our conditions return a `boolean` *(true/false)*, these same logical ope
 ## Condition Logic
 If we want to run different segments of our cond based on the value of a condition we can use an `if` statement. The mighty `if` statement is a programmers favorite tool. It allows you to create powerful and unique behavior within your code.
 
-#### If
 If the condition in the parentheses is true, then the code in the block is run. Otherwise, Java skips over it.
 ```java title="Syntax"
 if(<condition>){
@@ -160,7 +159,6 @@ if((number / 2) == 0){
     System.out.println("Number is Even");
 }
 ```
-#### Else
 You can add `else` statements on to if statements. The code in the `else` block is run if the condition is false
 ```java title="Syntax"
 if(<condition>){
@@ -177,8 +175,6 @@ if((number / 2) == 0){
     System.out.println("Number is Odd");
 }
 ```
-
-#### Else If
 If we want to add multiple condition checks to a statement we can use an `else if`. They are checked if the previous statement is false. The code in the `else` block is run all the conditions are false.
 ```java title="Syntax"
 if(<condition>){
