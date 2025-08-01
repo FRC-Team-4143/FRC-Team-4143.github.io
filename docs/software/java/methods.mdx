@@ -72,7 +72,6 @@ int output = sum(5, 2)
 :::note Ending the Method
 Any code in a method after the `return` will not be run.
 ```java
-```java
 int sum(int a, int b){
     int output = a + b;
     return output;
@@ -91,4 +90,26 @@ boolean isNumberEven(int number){
     }
 }
 ```
+:::
+
+## Lambdas
+Similar to methods, **lambda expressions**, (also called *lambdas*, *lambda functions*, or *arrow functions*)
+are a specific type of method that can go unnamed, take in some or no parameters, and produce an output.
+However, they cannot initialize variables or contain statements such as `if` or `for`. These are less commonly used in programming, but can be helpful in specific situations.
+
+```java title="Syntax"
+(type n1, type n2) -> {body of expression}
+        (int a, int b) -> {a + b};
+```
+
+```java title="Example"
+ArrayList<Integer> numbers = new ArrayList<Integer>();
+numbers.add(5);
+numbers.add(9);
+numbers.add(8);
+numbers.add(1);
+numbers.forEach( (n) -> { System.out.println(n); } );
+```
+:::info
+Within our robot code we typically try to keep lambdas limited to commands interaction. Interfacing with buttons is typically done with lambdas.
 :::
