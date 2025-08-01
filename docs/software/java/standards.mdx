@@ -58,6 +58,12 @@ sidebar_position: 10
     }
     ```
 
+## Loops
+- Never use `while` loops
+    - They are dangerous in a controls application and could result in a infinite loop if not updated correctly.
+- Iterators for a `for` loops should be used in order of `i`, `j`, and then `k`.
+    - If the iterator is used external to the `for` it should be named something unique to its purpose.
+
 ## Methods / Functions
 - Methods should be named using `lowerCamelCase`. Examples are shown below:
     ```java
@@ -101,8 +107,4 @@ sidebar_position: 10
     ```
     :::
 
-## Loops
-- Never use `while` loops
-    - They are dangerous in a controls application and could result in a infinite loop if not updated correctly.
-- Iterators for a `for` loops should be used in order of `i`, `j`, and then `k`.
-    - If the iterator is used external to the `for` it should be named something unique to its purpose.
+## Classes

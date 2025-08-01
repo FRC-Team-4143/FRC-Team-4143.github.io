@@ -64,9 +64,9 @@ There are shortcuts to stage multiple files at a time, but I will leave that to 
 
 Once you have staged everything you want included in your commit you can check the staged status again with `git status` to ensure everything looks correct. If everything is as expected you can create a commit with the following command.
 ```git
-git commit
+git commit -m "commit message"
 ```
-This will open an editor to allow you to write you commit message. Remember what we talked about, short, but informative. After the commit is complete feel free to check the `git log` again to see your new commit.
+You can add your own commit message in the string after `-m`.  Remember what we talked about, short, but informative. After the commit is complete feel free to check the `git log` again to see your new commit.
 
 ## Branches
 Branches are a way to create a separate line of development in your repo. This is useful for developing new features or fixing bugs without affecting the main line of development. The main branch is usually called `main` or `master`, but you can create as many branches as you want. Each branch has its own commits and can be merged back into the main branch when the development is complete. You can checkout a branch in your repo and it will update your working directory with the latest commit in that branch.
@@ -145,6 +145,11 @@ While everything we have talked about has been in the local space, git allows us
 Once your branch is in a state that you want to push it to remote for either storage or for other developers to use you can ***PUSH*** ⬆️ your changes to your defined remote.
 ```git
 git push
+```
+
+To check if there are any changes on your remote branch that you many not have you can ***FETCH*** any updates to your local repo. The command below will update all your branch references for your local repo and show you any commits you may be missing.
+```git
+git fetch --all
 ```
 
 If another developer has commit to the branch you are using from another computer you will need to make sure to ***PULL*** ⬇️ their changes into your working directory.
