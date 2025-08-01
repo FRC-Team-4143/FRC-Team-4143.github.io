@@ -19,6 +19,9 @@ String message;
 :::warning[Always assign a default value]
 It can be dangerous leaving a variable unassigned at creation. You may know that you can't read it until it has a value, but if other developers are unaware and may read from it before its assigned. This can cause the code to error or crash.
 :::
+:::tip Naming convention
+When naming a variable try to stick to the team naming standard. For a typical variable that is using `snake_case` which is shown in the example above.
+:::
 
 ## Assigning a Variable
 When you define a variable you are assigning it a value to store. The syntax for this is `[name] = [value]` which can be seen in examples below.
@@ -109,3 +112,11 @@ Sure we could use `ints` to represent our states where 0 is `IDLE`, 1 is `SCORE`
 :::tip Under the Hood
 The above "use `ints` to represent our states" comment is actually what the enum is doing under the hood. You can actually use an enum to represent anything you would like. Check out our [2025 robot code](https://github.com/FRC-Team-4143/mainbot-2025/blob/develop/src/main/java/frc/lib/ElevatorTargets.java) where we use it to store elevator targets including all of the height/angle information. This gave us an easy way to organize and reference all of our elevator target throughout the code.
 :::
+
+## Constants
+Variables that are never changed and are used in fundamental calculations / settings are called constants. We can add the `final` keyword in front of the datatype to "lock" the variable. The `final` keyword ensures that changes cannot be made to the variable accidentally. Constants are also typically named using `SCREAMING_SNAKE_CASE`;
+```java
+final double PI = 3.14159265;
+final double WHEEL_BASE = 0.34;
+final int SHOOTER_MOTOR_ID = 10;
+```
