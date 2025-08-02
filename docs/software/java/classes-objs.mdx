@@ -1,11 +1,16 @@
 ---
 title: Classes and Objects
 description: Overview of Classes and Objects.
-hide_table_of_contents: true
+hide_table_of_contents: false
 sidebar_position: 7
 ---
 
 # Classes and Objects
+:::tip Objects are Everywhere
+Understanding classes and objects is vital for writing Java code. It is very important for programming our robot. Motors, sensors, and other components are all represented as objects in our code. We can use classes to define the properties and behaviors of these objects, making it easier to manage and control them.
+
+Some of them we don't even create ourselves. Vendors and WPILib provide classes for us to use. For example, the `MotorController` class is provided by WPILib to control motors on the robot. We can create objects of this class and use its methods to control the motors.
+:::
 Object oriented programming (OOP) is a feature of some programming languages that organizes code around data and objects, instead of strictly logic. Using OOP, we can create blueprints for data with information about an type of object's properties, and we can re-use those blueprints to store characteristics for multiple objects. Overall, OOP is a way of organizing data and functions in a way that is easily reusable and maintainable. Lets compare classes and objects:
 <table>
 <tr>
@@ -21,24 +26,259 @@ Object oriented programming (OOP) is a feature of some programming languages tha
 <tr>
 <td style={{textAlign: 'center', fontSize: 20}}> **Variables** </td>
 <td> *Set of attributes that describe every object* </td>
-<td> *Set of actions that every object can perform* </td>
+<td> *Set of data* </td>
 </tr>
 <tr>
 <td style={{textAlign: 'center', fontSize: 20}}> **Methods** </td>
-<td> *Set of data* </td>
+<td> *Set of actions that every object can perform* </td>
 <td> *Set of actions that it can perform* </td>
 </tr>
 </table>
 
 ## Classes
+Java is a class-based language, meaning that all code must be written inside a class. A class is a blueprint for creating objects, and it defines the properties and behaviors that the objects created from the class will have. Classes can contain variables (also known as fields or attributes) and methods (functions that define the behavior of the class).
+
+Classes are defined using the `class` keyword, followed by the class name. The class name should be descriptive and follow the naming conventions of Java. They should be named using `PascalCase`, which means that the first letter of each word is capitalized. For example, `Robot`, `MotorController`, and `Sensor` are all valid class names.
+```java
+public class ShooterSubsystem {
+   ... // Class code
+}
+```
+:::note 1 Class Per File
+Each java file can only contain one public class, and the name of the file must match the name of the public class. For example, if you have a class named `ShooterSubsystem`, the file should be named `ShooterSubsystem.java`. There can be multiple classes in a single file, but only one can be [public](#-access-modifiers).
+:::
+
+If a variable is defined inside a class, it is called a field or attribute. Fields are used to store data that is associated with the class. We follow a similar naming convention as generic variables, using `trailing_snake_case_` for field names. For example, `motor_speed_`, `sensor_data_`, and `robot_name_` are all valid field names. The trailing underscore is used to differentiate fields from local variables and parameters.
 
 ## Objects
+An object is an instance of a class. It is created from the class blueprint and has its own set of data and methods. If we want to create an object of our class, we need to create a constructor. A constructor is a special method that is called when an object is created. It initializes the object's data and sets up any necessary resources. The constructor has the same name as the class and does not have a return type.
+```java
+public class ShooterSubsystem {
+    // Fields
+    private String subsystem_name_;
+    // Constructor
+    public ShooterSubsystem() {
+        // Initialize data and resources
+    }
+}
+```
+We could then create an object of our class like this:
+```java
+ShooterSubsystem shooter = new ShooterSubsystem();
+```
+If we want to create multiple objects of the same class, we can do so by calling the constructor multiple times. Each object will have its own set of data and methods, but they will all share the same class blueprint.
+```java
+ShooterSubsystem front_shooter = new ShooterSubsystem();
+ShooterSubsystem back_shooter = new ShooterSubsystem();
+```
+You can access the fields and methods of an object using the dot notation. For example, if we have an field `subsystem_name_` of the class `ShooterSubsystem`, we can access its fields and methods like this:
+```java
+front_shooter.subsystem_name_ = "Shooter";
+```
+:::warning[Accessing Fields]
+You should not access fields directly from outside the class. Instead, you should use methods to get and set the values of the fields. This is known as encapsulation, and it helps to protect the data and maintain the integrity of the object. You can create getter and setter methods to access and modify the fields of the class.
+:::
+This is the same notation that we use to access methods of an object. For example, if we have a method `setMotorSpeed(double speed)` in the class `ShooterSubsystem`, we can call it like this:
+```java
+front_shooter.setMotorSpeed(1.0);
+```
+
+Similar to methods, we can also create parameters for our constructors. This allows us to pass in values when creating an object, which can be used to initialize the object's data. With parameters for our constructor, create even more specific objects and increase the reusability of our class.
+```java
+public class ShooterSubsystem {
+    // Fields
+    private String subsystem_name_;
+    // Constructor with parameters
+    public ShooterSubsystem(String name) {
+        subsystem_name_ = name;
+    }
+}
+```
+
+## Example
+Object oriented programming is a powerful tool that allows us to create complex systems with reusable code, but it is typically one of the final things learned in a Java course. We need to have a good understanding of classes and objects because our robot code is heavily based on OOP. Sometimes the hardest part of OOP is understanding why and where to use it. Below is an example of a class that represents a motor controller. It has fields for the motor speed and direction, and methods to set the speed and direction of the motor.
+```java
+public class MotorController {
+    // Fields
+    private double current_motor_speed_;
+    private double target_motor_speed_;
+    private boolean motor_enabled_;
+    private double motor_direction_; // 1.0 for forward, -1.0 for reverse
+
+    // Constructor
+    public MotorController(boolean is_reversed) {
+        // Initialize fields
+        target_motor_speed_ = 0.0;
+        motor_enabled_ = false;
+        motor_direction_ = (is_reversed) ? -1.0 : 1.0; // Set direction based on input
+    }
+
+    // Methods
+    public void setMotorSpeed(double speed) {
+        if (!motor_enabled_) {
+            System.out.println("Motor is not enabled. Cannot set speed.");
+            return;
+        }
+        target_motor_speed_ = speed * motor_direction_; // Apply direction to speed
+    }
+
+    public double getMotorSpeed() {
+        return current_motor_speed_;
+    }
+
+    public void enableMotor() {
+        motor_enabled_ = true;
+    }
+
+    public void disableMotor() {
+        target_motor_speed_ = 0.0;
+        motor_enabled_ = false;
+    }
+}
+```
+As you can see there was a fair amount of code just to control a single motor. We can then create an object of the `MotorController` class and use its methods to control the motor. What if we wanted to create a shooter subsystem that uses two motor controllers? We could create a class for the shooter subsystem that contains two `MotorController` objects and methods to control them. It will allow us to encapsulate the logic for controlling the shooter in one place, making it easier to maintain and understand.
+```java
+// Creating the Objects
+MotorController left_shooter_motor = new MotorController(false);
+MotorController right_shooter_motor = new MotorController(true);
+
+// Enabling the Motors
+left_shooter_motor.enableMotor();
+right_shooter_motor.enableMotor();
+
+// Setting the Motor Speeds
+if(a_button_pressed) {
+    left_shooter_motor.setMotorSpeed(1.0);
+    right_shooter_motor.setMotorSpeed(1.0);
+} else {
+    left_shooter_motor.setMotorSpeed(0.0);
+    right_shooter_motor.setMotorSpeed(0.0);
+}
+
+// Disabling the Motors
+if(b_button_pressed) {
+    left_shooter_motor.disableMotor();
+    right_shooter_motor.disableMotor();
+}
+```
+
 
 ## Access Modifiers
-- static
-- public
-- private
+Access modifiers are keywords that determine the visibility and accessibility of classes, methods, and variables. They control how other parts of the code can interact with them. The most common access modifiers in Java are:
+- `public`: The class, method, or variable can be accessed from anywhere in the code.
+- `private`: The class, method, or variable can only be accessed within the class it is defined in.
+- `protected`: The class, method, or variable can be accessed within the class it is defined in and by subclasses (classes that extend it).
+- `default` (no modifier): The class, method, or variable can be accessed within the same package (a group of related classes).
 
-## Importing Classes
+The access modifier is placed before the class, method, or variable declaration. For example:
+```java
+public class MyClass { // Public class, accessible from anywhere
+    private int my_variable_; // Only accessible within MyClass
+    protected void myMethod() { // Accessible within MyClass and subclasses
+        // Method code
+    }
+}
+```
+We can also use modifiers to control the behavior of methods. For example, we can use the `static` modifier to indicate that a method belongs to the class itself, rather than to an instance of the class. This means that the method can be called without creating an object of the class.
+```java
+public class MathUtils {
+    public static int add(int a, int b) {
+        return a + b;
+    }
+}
+
+// Calling the static method without creating an object
+int sum = MathUtils.add(5, 3);
+```
+
+## Inheritance
+Inheritance is a key feature of object-oriented programming that allows us to create new classes based on existing classes. This allows us to reuse code and create a hierarchy of classes. The new class is called the subclass or derived class, and the existing class is called the superclass or base class. The subclass inherits the fields and methods of the superclass, and can also add its own fields and methods or override the methods of the superclass.
+To create a subclass, we use the `extends` keyword followed by the name of the superclass. For example, if we have a class `Vehicle`, we can create a subclass `Car` like this:
+```java title="Vehicle.java"
+public class Vehicle {
+    int number_of_wheels_;
+    String color_;
+    // Fields and methods of the Vehicle class
+
+    void startEngine() {
+        System.out.println("Starting the engine of the vehicle.");
+    }
+
+    void getNumberOfWheels() {
+        System.out.println("Number of wheels: " + number_of_wheels_);
+    }
+
+    void getColor() {
+        System.out.println("Color: " + color_);
+    }
+}
+```
+```java title="Car.java"
+public class Car extends Vehicle {
+    int number_of_wheels_ = 4;
+    String color_;
+
+    public Car(String color) {
+        this.color_ = color;
+    }
+
+    public void drift(){
+        System.out.println("Drifting the car!");
+    }
+}
+```
+```java title="Motorcycle.java"
+public class Motorcycle extends Vehicle {
+    int number_of_wheels_ = 2;
+    String color_;
+
+    public Motorcycle(String color) {
+        this.color_ = color;
+    }
+
+    public void popWheelie(){
+        System.out.println("Popping a wheelie!");
+    }
+}
+```
+```java title="Main.java"
+// Using the Subclasses
+Car my_car = new Car("Red");
+my_car.startEngine(); // Inherited method from Vehicle
+my_car.getNumberOfWheels(); // Inherited method from Vehicle
+my_car.getColor(); // Inherited method from Vehicle
+my_car.drift(); // Method from Car class
+
+Motorcycle my_motorcycle = new Motorcycle("Blue");
+my_motorcycle.startEngine(); // Inherited method from Vehicle
+my_motorcycle.getNumberOfWheels(); // Inherited method from Vehicle
+my_motorcycle.getColor(); // Inherited method from Vehicle
+my_motorcycle.popWheelie(); // Method from Motorcycle class
+```
 
 ## Packages
+Packages are used to organize classes and avoid naming conflicts. A package is a group of related classes that are stored in a directory structure. The package name is usually the reverse of the domain name of the organization or project, followed by the name of the package. For example, we may create a package of each subsystem on our robot. The package name for the shooter subsystem could be `robot.subsystems.shooter`.
+```java
+package robot.subsystems.shooter;
+public class ShooterSubsystem {
+    // Class code
+}
+```
+:::tip
+When creating a package, make sure to create a directory structure that matches the package name. For example, if the package name is `robot.subsystems.shooter`, you should create a directory structure like this:
+```
+robot/
+└── subsystems
+    └── shooter/
+```
+:::
+
+## Importing Classes
+If we want to use a class that is defined in another package, we need to import it. This is done using the `import` keyword followed by the package name and class name. For example, if we want to use the `MathUtils` class from our custom package `com.example.utils`, we would write:
+```java
+import com.example.utils.MathUtils;
+```
+You now have access to the `MathUtils` class and can use its methods in your code. If you want to use multiple classes from the same package, you can import them individually or use a wildcard `*` to import all classes from that package.
+```java
+import com.example.utils.*;
+```
