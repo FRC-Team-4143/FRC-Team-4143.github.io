@@ -206,27 +206,185 @@ This is a quick reference guide for Java programming. It provides an overview of
 
 ## [**Conditions**](./conditions.mdx)
 - Comparison:
+    <table>
+    <tr>
+    {/* Column Titles */}
+    <td> **Operator** </td>
+    <td> **Description** </td>
+    <td> **Example** </td>
+    </tr>
+    <tr>
+    {/* == operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `==` </td>
+    <td> equal </td>
+    <td>
+    ```java
+    (1 == 2) // false
+    (false == false) // true
+    ```
+    </td>
+    </tr>
+    <tr>
+    {/* != operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `!=` </td>
+    <td> not equal </td>
+    <td>
+    ```java
+    (1 != 2) // true
+    (false != false) // false
+    ```
+    </td>
+    </tr>
+    <tr>
+    {/* < and <= operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `<`, `<=` </td>
+    <td> less than, less than or equal to </td>
+    <td>
+    ```java
+    (-10 < 0) // true
+    (-10 <= -10) // true
+    ```
+    </td>
+    </tr>
+    <tr>
+    {/* > and >= operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `>`, `>=` </td>
+    <td> greater than, greater than or equal to </td>
+    <td>
+    ```java
+    (10 > 0) // true
+    (10 >= 10) // true
+    ```
+    </td>
+    </tr>
+    </table>
 - Logical:
+    <table>
+    <tr>
+    {/* Column Titles */}
+    <td> **Operator** </td>
+    <td> **Description** </td>
+    <td> **Example** </td>
+    </tr>
+    <tr>
+    {/* ! operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `!` </td>
+    <td> logical **NOT** </td>
+    <td>
+    ```java
+    !(false) // true
+    !(true) // false
+    ```
+    </td>
+    </tr>
+    <tr>
+    {/* && operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `&&` </td>
+    <td> logical **AND** </td>
+    <td>
+    ```java
+    (false && false) // true
+    (false && true) // false
+    (true && false) // false
+    (true && true) // true
+    ```
+    </td>
+    </tr>
+    <tr>
+    {/* || operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `||` </td>
+    <td> logical **OR** </td>
+    <td>
+    ```java
+    (false || false) // true
+    (false || true) // true
+    (true || false) // true
+    (true || true) // true
+    ```
+    </td>
+    </tr>
+    </table>
 - Use comparison operators inside `()` for if-statements.
 - Only compare compatible types.
-- Example: `if (x > 0) { ... }`
+- If Statement: `if (x > 0) { ... }`
+- Else If Statement: `else if (x < 0) { ... }`
+- Else Statement: `else { ... }`
+- Switch Statement: Use `switch` for multiple conditions on the same variable.
+    - Use `break` to exit a switch case.
+    - Use `default` for a fallback case in a switch statement.
 ## [**Loops**](./loops.mdx)
 - Use `for` and `while` loops to repeat code.
-- Avoid `while` loops in robot code to prevent infinite loops.
-- Use increment operators (`++`, `--`, `+=`, `-=`) for counters.
+    - For Loop: `for (int i = 0; i < 10; i++) { ... }`
+    - While Loop: `while (condition) { ... }`
+- **Avoid** `while` **loops in robot code to prevent infinite loops.**
+- Increment Operators:
+    <table>
+    <tr>
+    {/* Column Titles */}
+    <td> **Operator** </td>
+    <td> **Description** </td>
+    <td> **Compatible Datatypes** </td>
+    <td> **Example** </td>
+    </tr>
+    <tr>
+    {/* ++ operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `++` </td>
+    <td> Increment </td>
+    <td > `int`, `double` </td>
+    <td>
+    ```java
+    int x = 0;
+    x++; // x = 1
+    ```
+    </td>
+    </tr>
+    <tr>
+    {/* -- operator */}
+    <td style={{textAlign: 'center', fontSize: 25}}> `--` </td>
+    <td> Decrement </td>
+    <td> `int`, `double` </td>
+    <td>
+    ```java
+    int x = 0;
+    x--; // x = -1
+    ```
+    </td>
+    </tr>
+    </table>
+- break and continue statements:
+    - `break` exits the loop immediately.
+    - `continue` skips the current iteration and continues with the next one.
+## [**Methods**](./methods.mdx)
+- Methods are reusable blocks of code.
+- Use `camelCase` for method names.
+- Method Declaration: `returnType methodName(parameters) { ... }`
+- Call a method: `methodName(arguments);`
+- Parameters: Use parameters to pass data into methods by defining them in the method declaration.
+- Return a value: Use `return` to send a value back from a method. `void` methods do not return a value.
+- Variables inside methods are not accessible outside.
 ## [**Arrays & ArrayLists**](./arrays.mdx)
-- Arrays store multiple values of the same type. Indexing starts at 0.
-- Use `.length` for array size and `ArrayList.size()` for ArrayLists.
+- Arrays store multiple values of the same type.
+- Indexing starts at 0.
 - Arrays are fixed size and ArrayLists are dynamic arrays.
+- Array Specific:
+    - Declare: `int[] numbers = new int[5];`
+    - Initialize: `int[] numbers = {1, 2, 3, 4, 5};`
+    - Access: `numbers[0]` for the first element.
+- ArrayList Specific:
+    - Declare: `ArrayList<Integer> numbers = new ArrayList<>();`
+    - Initialize: `numbers.add(1);`
+    - Access: `numbers.get(0)` for the first element.
+- Use `for` loops to iterate through arrays and ArrayLists.
+- Use `for-each` loops for cleaner iteration: `for (int num : numbers) { ... }`
 ## [**Classes & Objects**](./classes-objs.mdx)
 - Java is class-based. Classes are blueprints; objects are instances.
 - Use `PascalCase` for class names.
 - Use constructors to initialize objects.
-- Access fields and methods with dot notation.
+- Create an object: `ClassName obj = new ClassName();`
+- Access fields and methods with dot notation: `obj.field` or `obj.method()`.
 - Prefer getter/setter methods for encapsulation.
-## [**Methods**](./methods.mdx)
-- Methods are reusable blocks of code.
-- Use `camelCase` for method names.
-- Methods can have parameters and return values.
-- Scope matters—variables inside methods are not accessible outside.
+ - getters return field values: `getFieldName()`
+ - setters modify field values: `setFieldName(value)`
+- Inheritance: Use `extends` to create a subclass. Subclasses inherit fields and methods from the superclass.
+
 
