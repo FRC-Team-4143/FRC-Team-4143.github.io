@@ -116,6 +116,12 @@ const config = {
             position: 'left',
             label: 'Business Services',
           },
+          {
+            type: 'docSidebar',
+            sidebarId: 'scoutingSidebar',
+            position: 'left',
+            label: 'Scouting',
+          },
           // adds sight seach to the navbar
           {
             type: 'search',
