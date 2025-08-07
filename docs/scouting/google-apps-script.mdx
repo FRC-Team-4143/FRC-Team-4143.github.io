@@ -6,3 +6,25 @@ sidebar_position: 3
 ---
 
 # Google Apps Script
+Google Apps Script is a cloud service provided by Google that allows the user to write JavaScript code to automate tasks across Google products and third-party services. It is commonly used for automating tasks in Google Sheets, Docs, Calender and other Google Workspace applications. Within our scouting pipeline, Google Apps Script acts as an formatter for both TBA and RLD to pass on data to Tableau in the form of Google Sheets (One individually for each Pit and Match Data).
+
+# Setup (Script Creation)
+To make a new App Script go the the google drive folder that will be used then click on the `+ New` button in the top left corner. Then select `More` and then `Google Apps Script`. This will open a new tab with the Apps Script editor.
+"TBA&RLD_Script_25" within our drive should be used as a reference (or just copied) as an example of the code for the script.
+App Scripts can be connected directly to a Sheet but it is not recommend to do so in order to avoid permission conflicts and to allow for easily saving the sheet and script separately for backing ups.
+Needed codes / keys
+- TBA Read API Key
+    - This key is used to access TBA's API to get match and team data. Can be generated with any free TBA account.
+- Google Sheets ID
+    - This ID is used to access the Google Sheet that will be used to store the data.
+- Real Life Data output urls
+    - These urls are used to access the Real Life Data output data. These can be found in the RLD settings under "Output URLs".
+- Event Key
+    - This key is used to specify which event the script will get data for. This can be found in the event's TBA url. For example, in the url `https://www.thebluealliance.com/event/2024miket`, the event key is `2024miket`.
+:::info Email Restrictions
+The majority of franchise or school emails will not allow you to run or App Scripts since the Script will be editing files on your behalf. To avoid this use a personal email that has permission to edit both the Script and the Sheet.
+::::
+# Setup (Sheet Creation)
+To make a new Google Sheet go the the google drive folder that will be used then click on the `+ New` button in the top left corner. Then select `Google Sheets`. This will open a new tab with the Google Sheets editor. First create new tabs within the sheet for each different page of data that will be used. For example "Teams" for info on each team like hometown and Nickname. The names of the tabs need to match correctly with all of there references within the Script. 
+You do not need to edit any data like headers in the sheet directly since the Script will overwrite it for you. 
+In order to connect the Sheet to Tableau, you will need to publish the Sheet to the web. To do this, go to `File` > `Share` > `Publish to the web`. Set the "Entire Document" to "Web page" and then click "Publish". This will give you a link that can be used in Tableau to access all data within each tab. The weblink will update automatically when the sheet is changed.
