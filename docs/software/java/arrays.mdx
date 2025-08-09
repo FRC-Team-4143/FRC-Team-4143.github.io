@@ -6,17 +6,23 @@ sidebar_position: 6
 ---
 
 # Arrays and ArrayLists
-What if you need to store dozens or even hundreds of related values? We wouldn't want to make a variable for every single one. That would take ages to program and be a nightmare to manage. In Java, arrays allow you to refer to collections of values by one variable. Each value in the array is called an **element**. Each array has a type indicating which kind of data is being stored. You can make an Array for any data type.
+What if you need to store dozens or even hundreds of related values? We wouldn't want to make a variable for every
+single one. That would take ages to program and be a nightmare to manage. In Java, arrays allow you to refer to
+collections of values by one variable. Each value in the array is called an **element**. Each array has a type
+indicating which kind of data is being stored. You can make an Array for any data type.
 
 ## Arrays
-Similar to how we would declare and define a variable, we can do the same with an array. However, after we decide the datatype, we have to add square brackets `[]` to indicate we are creating an array.
+Similar to how we would declare and define a variable, we can do the same with an array. However, after we decide the
+datatype, we have to add square brackets `[]` to indicate we are creating an array.
 ```java
 int[] int_array;
 double[] double_array;
 String[] string_array;
 ```
 
-After we declare the array, we need to assign the values. Before we can do that, there is one step that is unique to arrays. Like stated above, arrays store multiple values in a single reference. Arrays require the size of elements that will be stored to be declared prior to filling with elements. There are two ways that we can do this:
+After we declare the array, we need to assign the values. Before we can do that, there is one step that is unique to
+arrays. Like stated above, arrays store multiple values in a single reference. Arrays require the size of elements that
+will be stored to be declared prior to filling with elements. There are two ways that we can do this:
 ```java
 // An empty array to later be filled with data
 int[] int_array = new int[4]; // Will store 4 int elements
@@ -25,12 +31,15 @@ int[] int_array = new int[4]; // Will store 4 int elements
 double[] double_array = {0.0, 0.25, 0.5, 0.75, 1.0}; // Will store 5 double elements
 String[] string_array = {"FRC", "Team", "4143"}; // Will store 3 String elements
 ```
-Now that we have created our array, either with empty elements or predefined values, we need a way to access or update that data. An **index** is the position in the array that an element occurs. It is important to remember that array indexes start at 0.
+Now that we have created our array, either with empty elements or predefined values, we need a way to access or update
+that data. An **index** is the position in the array that an element occurs. It is important to remember that array
+indexes start at 0.
 ```java
 int[] team_number = {4, 1, 4, 3};
 // indexes {0, 1, 2, 3}
 ```
-That's all good, but we still need to be able to actually reference the element now that we know the index. You can access the element at a given `index` by using `array_name[index]`.
+That's all good, but we still need to be able to actually reference the element now that we know the index. You can
+access the element at a given `index` by using `array_name[index]`.
 ```java
 int[] team_number = {4, 1, 4, 3};
 System.out.println(team_number[0]); // Prints 4
@@ -39,7 +48,8 @@ System.out.println(team_number[2]); // Prints 4
 System.out.println(team_number[3]); // Prints 3
 ```
 :::warning Out of Bounds Index
-If you try to reference an index outside the size of the array your program will throw an error and crash. In order to avoid this, you can check the size of a given array using the `length` property;
+If you try to reference an index outside the size of the array your program will throw an error and crash. In order to
+avoid this, you can check the size of a given array using the `length` property;
 ```java
 int[] team_number = {4, 1, 4, 3};
 System.out.println(team_number.length); // Prints 4
@@ -48,14 +58,17 @@ Remember the largest valid index will be `length - 1` since index counting begin
 :::
 
 ## ArrayLists
-ArrayLists are a little more friendly to use as they do not have fixes sizes and aren't declared with values. They still only store one datatype, but are much more flexible. In order to create an ArrayList for a given type the syntax is the following:
+ArrayLists are a little more friendly to use as they do not have fixes sizes and aren't declared with values. They
+still only store one datatype, but are much more flexible. In order to create an ArrayList for a given type the syntax
+is the following:
 ```java title="Syntax"
 ArrayList<type> name = new ArrayList<type>();
 ```
 ```java title="Example"
 ArrayList<double> double_array_list = new ArrayList<double>();
 ```
-Because of how the ArrayList structure is built we will have to access the elements differently as well. There are unique methods we can call from the variable that let us preform the functions similar to `[]` on a standard array.
+Because of how the ArrayList structure is built we will have to access the elements differently as well. There are
+unique methods we can call from the variable that let us preform the functions similar to `[]` on a standard array.
 ```java
 // Retrieving an element from the ArrayList
 double_array_list.get(index);
@@ -63,13 +76,16 @@ double_array_list.get(index);
 // "Setting an element of the ArrayList"
 double_array_list.set(index, value);
 ```
-If we need to get the size of an ArrayList that is unique as well. This will return the number of elements in a given ArrayList, so remember the largest valid index will be `size - 1` since index counting begins at 0.
+If we need to get the size of an ArrayList that is unique as well. This will return the number of elements in a given
+ArrayList, so remember the largest valid index will be `size - 1` since index counting begins at 0.
 ```java
 double_array_list.size();
 ```
 
 ## For Each
-One of the most common ways of accessing elements in array is by looping through and checking all indexes. This can obviously be done with a simple `for` loop. Theres will loop through all elements in an array and preform a specific or repeated action using each element. In the example below we are just printing the value of each element.
+One of the most common ways of accessing elements in array is by looping through and checking all indexes. This can
+obviously be done with a simple `for` loop. Theres will loop through all elements in an array and preform a specific or
+repeated action using each element. In the example below we are just printing the value of each element.
 ```java
 // Looping through an array
 for(int i = 0; i < array.length; i++){
@@ -81,7 +97,10 @@ for(int i = 0; i < array.size(); i++){
     System.out.println(array.get(i));
 }
 ```
-However there is an even cleaner way to loop through all the elements in an array. That is using a what is typically called a **for-each** loop. The for-each loop creates a variable within the loop's scope to represent a given element and will update that reference over and over until all elements in the array have been used. The example below stores the value of a given element in the `value` variable.
+However there is an even cleaner way to loop through all the elements in an array. That is using a what is typically
+called a **for-each** loop. The for-each loop creates a variable within the loop's scope to represent a given element
+and will update that reference over and over until all elements in the array have been used. The example below stores
+the value of a given element in the `value` variable.
 ```java
 // Looping through an array or ArrayList
 for(double value : array){
@@ -89,5 +108,7 @@ for(double value : array){
 }
 ```
 :::tip ArrayList forEach method
-If you have read through the [methods](./methods.mdx) doc you would have seen reference to a `.forEach()` method for an ArrayList. You can use the `forEach()` method and lambdas to make a more powerful and simpler loop through an ArrayList.
+If you have read through the [methods](./methods.mdx) doc you would have seen reference to a `.forEach()` method for an
+ArrayList. You can use the `forEach()` method and lambdas to make a more powerful and simpler loop through an
+ArrayList.
 :::

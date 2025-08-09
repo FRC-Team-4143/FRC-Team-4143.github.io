@@ -6,10 +6,18 @@ sidebar_position: 5
 ---
 
 # Methods
-If you haven't picked it up by now programmers are **very very** lazy. If we have code that is written more than once or could be repeated if template-able we can use a method. Methods are a block of code that perform a specific task or a set of actions. They can help to reduce code duplication, improve readability, and make our code more organized. Methods can be called from anywhere in our code, allowing us to re-use the same code multiple times without having to write it out again. They are a fundamental concept in [object-oriented programming](./classes-objs.mdx). Methods are also called functions, procedures, or subroutines in other programming languages.
+If you haven't picked it up by now programmers are **very very** lazy. If we have code that is written more than once
+or could be repeated if template-able we can use a method. Methods are a block of code that perform a specific task or
+a set of actions. They can help to reduce code duplication, improve readability, and make our code more organized.
+Methods can be called from anywhere in our code, allowing us to re-use the same code multiple times without having to
+write it out again. They are a fundamental concept in [object-oriented programming](./classes-objs.mdx) Methods are
+also called functions, procedures, or subroutines in other programming languages.
 
 ## Method Syntax
-A method is defined by its signature. A method signature contains its [return](#return) type, method name, and any [parameters](#parameters) it may use as inputs. They should be named using `camelCase`, which means that the first letter of the first word is lowercase and the first letter of each subsequent word is capitalized. For example, `calculateSpeed`, `setMotorSpeed`, and `getSensorData` are all valid method names.
+A method is defined by its signature. A method signature contains its [return](#return) type, method name, and any
+[parameters](#parameters) it may use as inputs. They should be named using `camelCase`, which means that the first
+letter of the first word is lowercase and the first letter of each subsequent word is capitalized. For example,
+`calculateSpeed`, `setMotorSpeed`, and `getSensorData` are all valid method names.
 The general syntax for a method is as follows:
 ```java
 returnType methodName(){
@@ -18,7 +26,8 @@ returnType methodName(){
 ```
 - `returnType`: Datatype of the value the method with return
     - For simple examples imagine the return type as `void`. This means there is nothing returned.
-- `methodName`: This can be anything similar to a variable name. Try to name your methods based off what actions they preform.
+- `methodName`: This can be anything similar to a variable name. Try to name your methods based off what actions they
+preform.
 - `method code`: This will be the code that runs when your method is "called".
 
 Below is an example of a simple method.
@@ -33,7 +42,10 @@ stopMotors();
 ```
 
 ## Parameters
-Parameters allow us to template our method to allow for different inputs. The values when passed into a method called arguments. hey allow us to re-use our method with different arguments each time we call them. Methods can have as many parameters as you would like including none which you saw in the previous example. Each parameters need a datatype and a name to be referenced by within its scope.
+Parameters allow us to template our method to allow for different inputs. The values when passed into a method called
+arguments. hey allow us to re-use our method with different arguments each time we call them. Methods can have as many
+parameters as you would like including none which you saw in the previous example. Each parameters need a datatype and
+a name to be referenced by within its scope.
 ```java
 // Creating the Method
 void printInfo(String motor, double speed){
@@ -45,7 +57,8 @@ printInfo("Shooter Motor", 3.0);
 ```
 
 :::note Method Scope
-Your parameters only exist in a method's scope. That means outside of the `{}` of your method they do not exist and cannot be referenced. This goes for any variables you create inside your method as well.
+Your parameters only exist in a method's scope. That means outside of the `{}` of your method they do not exist and
+cannot be referenced. This goes for any variables you create inside your method as well.
 ```java
 // Neither param_name or var_name can be referenced here
 void methodName(double param_name){
@@ -55,11 +68,16 @@ void methodName(double param_name){
 ```
 :::
 :::tip
-You have seen curly braces `{}` in several parts of the code already. There are used in methods, if statements, classes, etc. This is actually the creation of a scope. They function the same way as described above. Any variables within your scope can only be referenced from inside that scope. You can declare a scope anywhere in your code if you were so inclined.
+You have seen curly braces `{}` in several parts of the code already. There are used in methods, if statements,
+classes, etc. This is actually the creation of a scope. They function the same way as described above. Any variables
+within your scope can only be referenced from inside that scope. You can declare a scope anywhere in your code if you
+were so inclined.
 :::
 
 ## Return
-We can also have our methods produce an output. The examples above have use `void` as their return type. This means that they have nothing to return and are just executing code. If we change that return type to one of our datatypes we can make our method "return" something of that type.
+We can also have our methods produce an output. The examples above have use `void` as their return type. This means
+that they have nothing to return and are just executing code. If we change that return type to one of our datatypes we
+can make our method "return" something of that type.
 ```java
 // Creating the Method
 int sum(int a, int b){
@@ -96,7 +114,8 @@ boolean isNumberEven(int number){
 ## Lambdas
 Similar to methods, **lambda expressions**, (also called *lambdas*, *lambda functions*, or *arrow functions*)
 are a specific type of method that can go unnamed, take in some or no parameters, and produce an output.
-However, they cannot initialize variables or contain statements such as `if` or `for`. These are less commonly used in programming, but can be helpful in specific situations.
+However, they cannot initialize variables or contain statements such as `if` or `for`. These are less commonly used in
+programming, but can be helpful in specific situations.
 
 ```java title="Syntax"
 (type n1, type n2) -> {body of expression}
@@ -112,5 +131,6 @@ numbers.add(1);
 numbers.forEach( (n) -> { System.out.println(n); } );
 ```
 :::info
-Within our robot code we typically try to keep lambdas limited to commands interaction. Interfacing with buttons is typically done with lambdas.
+Within our robot code we typically try to keep lambdas limited to commands interaction. Interfacing with buttons is
+typically done with lambdas.
 :::

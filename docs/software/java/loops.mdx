@@ -6,10 +6,14 @@ sidebar_position: 4
 ---
 
 # Loops
-Loops are a powerful tool that allow us to "loop" through a segment of code with out having to write that segment over and over again. Like I have said countless times before, programmers are lazy, and this is just more proof.
+Loops are a powerful tool that allow us to "loop" through a segment of code with out having to write that segment over
+and over again. Like I have said countless times before, programmers are lazy, and this is just more proof.
 
 ## While Loops
-If we want to repeat a given block of code over and over again we can use a `while` loop. This will execute anything within its scope until the supplied condition becomes false. These are typically used for long running loops with an unknown number of iterations. It is important to have a condition within your loop that will allow it to end. If the condition remains true the loop while run till the end of time 👴.
+If we want to repeat a given block of code over and over again we can use a `while` loop. This will execute anything
+within its scope until the supplied condition becomes false. These are typically used for long running loops with an
+unknown number of iterations. It is important to have a condition within your loop that will allow it to end. If the
+condition remains true the loop while run till the end of time 👴.
 ```java
 boolean want_loop = true;
 while(want_loop){
@@ -22,11 +26,15 @@ while(want_loop){
 }
 ```
 :::danger DO NOT USE WHILE LOOPS IN ROBOT CODE!!!
-`while` loops are very dangerous in a controls application. If for some reason you forget to setup your exit condition correctly or your iterator increment is wrong you can get stuck in a infinite loop. This will lock up your entire robot program. That means while your code may still be "running" your robot will sit still and not respond to any inputs.
+`while` loops are very dangerous in a controls application. If for some reason you forget to setup your exit condition
+correctly or your iterator increment is wrong you can get stuck in a infinite loop. This will lock up your entire robot
+program. That means while your code may still be "running" your robot will sit still and not respond to any inputs.
 :::
 
 ## Increment Operators
-There are a few more operators that may be helpful for looping through code. They are called increment operators. They purpose is assignment and arithmetic within a single simple operator. The two new operators can be seen in the table below.
+There are a few more operators that may be helpful for looping through code. They are called increment operators. They
+purpose is assignment and arithmetic within a single simple operator. The two new operators can be seen in the table
+below.
 <table>
 <tr>
 {/* Column Titles */}
@@ -60,12 +68,17 @@ x--; // x = -1
 </td>
 </tr>
 </table>
-These are typically used in loops as an iterator to keep track of how many times a segment of code has been executed. They are for common in `for` loops, but can be used anywhere in your code.
+These are typically used in loops as an iterator to keep track of how many times a segment of code has been executed.
+They are for common in `for` loops, but can be used anywhere in your code.
 
 ## For Loops
-When we have any idea how many times we want to loop through a specific segment of code we can use a `for` loop. There are much safer, because they are structured to force a developer to thing about what happens to their iterator each loop and what the exit condition looks like. There are three segments to a `for` loop definition.
-- **Initialization**: Run once when the for loop starts. This is only run once and typically is used to set the initial state of the iteration variable
-- **Condition**: Stop condition that is checked at the start of each cycle of the loop.The condition typically includes some sort of logic check against the iteration variable.
+When we have any idea how many times we want to loop through a specific segment of code we can use a `for` loop. There
+are much safer, because they are structured to force a developer to thing about what happens to their iterator each
+loop and what the exit condition looks like. There are three segments to a `for` loop definition.
+- **Initialization**: Run once when the for loop starts. This is only run once and typically is used to set the initial
+state of the iteration variable
+- **Condition**: Stop condition that is checked at the start of each cycle of the loop.The condition typically includes
+some sort of logic check against the iteration variable.
 - **Update**: Run after each cycle of the loop. It is typically used to update the iteration variable.
 ```java title="Syntax"
 for(initialization; condition; update){
