@@ -13,6 +13,8 @@ Since we are a software team, we need to be able to track our code and changes m
 control comes in. Version control is a system that allows us to track changes made to our code over time. It allows us
 to go back to previous versions of our code, see who made changes, and collaborate with other developers.
 
+---
+
 ## Git
 We use a tool called *git* for version control. This allows us to take "snapshots" of our code at a given time and save
 it for development documentation, reference, and backups. Git is a very powerful tool, but can be confusing and
@@ -28,6 +30,8 @@ Make sure to read our documentation for a short brief, but I would recommend usi
 [Learn Git Branching](https://learngitbranching.js.org/) This will help you get a feel for how git works and how to use
 it effectively.
 
+---
+
 ## Repos
 A project that is tracked by git is called a *repository* or frequently shortened to *repo*. A repo is the file
 structure containing all the "code" used for the project. It also contains all git tracking information stored in a
@@ -35,6 +39,7 @@ structure containing all the "code" used for the project. It also contains all g
 developers on the project to correctly update your local copy. Each programming project should live in its own repo.
 All of our robot projects are their own repo. We also have several other repos for generic projects like this website!
 
+---
 
 ## Commits
 The snapshots of your repo at a given moment of development is called a commit. Commits are a unique point in
@@ -101,6 +106,8 @@ git commit -m "commit message"
 You can add your own commit message in the string after `-m`.  Remember what we talked about, short, but informative.
 After the commit is complete feel free to check the `git log` again to see your new commit.
 
+---
+
 ## Branches
 Branches are a way to create a separate line of development in your repo. This is useful for developing new features or
 fixing bugs without affecting the main line of development. The main branch is usually called `main` or `master`, but
@@ -143,6 +150,8 @@ gitGraph BT:
    checkout main
    commit
 ```
+
+---
 
 ## Merge
 Merges are used to combine the changes from one branch into another. This is useful when you have completed a feature
@@ -193,6 +202,7 @@ content from `NEW_CONTENT_BRANCH_NAME` onto your current branch.
 git merge NEW_CONTENT_BRANCH_NAME
 ```
 
+---
 
 ## Push and Pull
 While everything we have talked about has been in the local space, git allows us to establish a remote. This is a
