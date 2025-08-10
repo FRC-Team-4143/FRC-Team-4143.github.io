@@ -5,13 +5,12 @@ hide_table_of_contents: true
 sidebar_position: 1
 ---
 
-# Control Theory
-Control theory is a branch of engineering and mathematics that deals with the
-behavior of dynamical systems. Its main goal is to develop models and control
-strategies that ensure desired system behavior.
+import 'katex/dist/katex.min.css';
 
-- **Setpoint**: Desired value or state for system to reach. Is typically some
-real world measurable value.
+# Control Theory
+Control theory is a branch of engineering and mathematics that deals with the behavior of dynamical systems. Its main goal is to develop models and control strategies that ensure desired system behavior. Below are some key concepts and terms used in control theory.
+
+- **Setpoint**: Desired value or state for system to reach. Is typically some real world measurable value.
     ```mermaid
     stateDiagram-v2
         direction LR
@@ -19,8 +18,7 @@ real world measurable value.
 
         Setpoint:::highlight
     ```
-- **Computer/Controller**: Primary control unit for the system. Performs all
-calculations for desired command based of the requested setpoint.
+- **Computer/Controller**: Primary control unit for the system. Performs all calculations for desired command based of the requested setpoint.
     ```mermaid
     stateDiagram-v2
         direction LR
@@ -28,8 +26,7 @@ calculations for desired command based of the requested setpoint.
 
         Setpoint --> Computer:::highlight
     ```
-- **Motor/Actuator**: Actuator for the system that is used to change the
-current state of the system.
+- **Motor/Actuator**: Actuator for the system that is used to change the current state of the system.
     ```mermaid
     stateDiagram-v2
         direction LR
@@ -38,8 +35,7 @@ current state of the system.
         Setpoint --> Computer
         Computer --> Motor:::highlight
     ```
-- **Output**: Effect the control has on the system. The reaction of the system
-from the applied command to the motor.
+- **Output**: Effect the control has on the system. The reaction of the system from the applied command to the motor.
     ```mermaid
     stateDiagram-v2
         direction LR
@@ -49,8 +45,7 @@ from the applied command to the motor.
         Computer --> Motor
         Motor --> Output:::highlight
     ```
-- **Sensor**: Device that measures the true output of the system. Allows you to
-checking what is happening and react instead of instructing the system blindly.
+- **Sensor**: Device that measures the true output of the system. Allows you to checking what is happening and react instead of instructing the system blindly.
     ```mermaid
     stateDiagram-v2
         direction LR
@@ -60,11 +55,8 @@ checking what is happening and react instead of instructing the system blindly.
         Computer --> Motor
         Motor --> Output
         Output --> Sensor:::highlight
-        Sensor --> Computer
     ```
-- **Measurement**: Device that measures the true output of the system. Allows
-you to checking what is happening and react instead of instructing the system
-blindly.
+- **Measurement**: The measurement of the system is the actual reading of its condition at the given time.
     ```mermaid
     stateDiagram-v2
         direction LR
@@ -74,18 +66,13 @@ blindly.
         Computer --> Motor
         Motor --> Output
         Output --> Measurement:::highlight
-        Measurement --> Computer
 
         state Sensor {
             direction LR
             Measurement
         }
     ```
-- **Error**: Difference between the setpoint and the sensor measurement. This
-is what the controller uses to determine how to adjust the output.
-$$
-Error = Setpoint - Measurement
-$$
+- **Error**: Difference between the setpoint and the sensor measurement. This is what the controller uses to determine how to adjust the output.
     ```mermaid
     stateDiagram-v2
         direction LR
@@ -109,10 +96,41 @@ $$
     ```
 
 ## Open Loop
-
+Open loop control is a type of control system where the output is not fed back to the input for correction. In other words, the controller sends commands to the actuator without considering the actual output of the system. This type of control is simpler and easier to implement, but it can be less accurate and more susceptible to disturbances.
+```mermaid
+    stateDiagram-v2
+        direction LR
+        Setpoint --> Computer
+        Computer --> Motor
+        Motor --> Output
+    ```
 - Feed Forward Control
 
 ## Closed Loop
+Closed loop control is a type of control system where the output is fed back to the input for correction. The controller continuously monitors the output and adjusts the input commands to minimize the error between the setpoint and the actual output. This type of control is more complex but can provide better accuracy and stability.
+    ```mermaid
+    stateDiagram-v2
+        direction LR
 
-- Bang Bang Controller
-- PID Controller
+        Setpoint --> Error
+        Computer --> Motor
+        Motor --> Output
+        Output --> Measurement
+        Measurement --> Error
+
+        state Sensor {
+            direction LR
+            Measurement
+        }
+
+        state Computer {
+            direction LR
+            Error
+        }
+    ```
+The feedback from the sensor allows the controller to make real-time adjustments to the motor commands based on the actual performance of the system. This is done by adjusting the control signal from the computer based on the calculated error.
+$$
+Error = Setpoint - Measurement
+$$
+- [Bang Bang Controller](bang-bang)
+- [PID Controller](pid)
