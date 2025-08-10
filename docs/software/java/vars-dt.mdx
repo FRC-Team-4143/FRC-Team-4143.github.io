@@ -1,7 +1,7 @@
 ---
 title: Variables and Data Types
 description: Overview of variables and common data types.
-hide_table_of_contents: true
+hide_table_of_contents: false
 sidebar_position: 1
 ---
 
@@ -9,6 +9,8 @@ sidebar_position: 1
 Variables are a core concept in any programming language. Think of them as a container to store a single piece of data.
 You need to define what type of data you will put into the container and give it a name. Variables should be named to
 easily identify what they contain.
+
+---
 
 ## Declaring a Variable
 You can create a variable without assigning a value to it. You would do this is you plan on using it, but do not have a
@@ -27,6 +29,8 @@ value, but if other developers are unaware and may read from it before its assig
 or crash.
 :::
 
+---
+
 ## Assigning a Variable
 When you define a variable you are assigning it a value to store. The syntax for this is `[name] = [value]` which can
 be seen in examples below.
@@ -44,6 +48,8 @@ ensure the variable has a default value at the start of the program. This is don
 int team_number = 4143;
 ```
 :::
+
+---
 
 ## Datatypes
 You have seen a few of them already in the examples above, but there are plenty of datatypes in Java. A datatype is the
@@ -98,6 +104,8 @@ String message = "I am a string!";
 </tr>
 </table>
 
+---
+
 ## Enums
 If we wanted to create our own "datatype" with a fixed set of values we can create a `enum`. This is a special data
 type that allows for the definition of a fixed set of named values. We may want to use these to represent a system
@@ -132,6 +140,8 @@ actually use an enum to represent anything you would like. Check out our
 where we use it to store elevator targets including all of the height/angle information. This gave us an easy way to
 organize and reference all of our elevator target throughout the code.
 :::
+
+---
 
 ## Constants
 Variables that are never changed and are used in fundamental calculations / settings are called constants. We can add

@@ -9,6 +9,8 @@ sidebar_position: 4
 Loops are a powerful tool that allow us to "loop" through a segment of code with out having to write that segment over
 and over again. Like I have said countless times before, programmers are lazy, and this is just more proof.
 
+---
+
 ## While Loops
 If we want to repeat a given block of code over and over again we can use a `while` loop. This will execute anything
 within its scope until the supplied condition becomes false. These are typically used for long running loops with an
@@ -30,6 +32,8 @@ while(want_loop){
 correctly or your iterator increment is wrong you can get stuck in a infinite loop. This will lock up your entire robot
 program. That means while your code may still be "running" your robot will sit still and not respond to any inputs.
 :::
+
+---
 
 ## Increment Operators
 There are a few more operators that may be helpful for looping through code. They are called increment operators. They
@@ -71,6 +75,8 @@ x--; // x = -1
 These are typically used in loops as an iterator to keep track of how many times a segment of code has been executed.
 They are for common in `for` loops, but can be used anywhere in your code.
 
+---
+
 ## For Loops
 When we have any idea how many times we want to loop through a specific segment of code we can use a `for` loop. There
 are much safer, because they are structured to force a developer to thing about what happens to their iterator each
@@ -90,6 +96,8 @@ for(int i = 0; i < 500; i++){
     // Run this code 500 times
 }
 ```
+
+---
 
 ## Break and Continue
 Inside of a loop you can use certain keywords to skip a single loop or even stop the looping altogether.
