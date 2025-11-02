@@ -9,15 +9,20 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 # Hardware Configurators
-Each vendor has their own software and process to setup their hardware before it can be used. There are a few common vendors we use below, each with instructions on how to configure their hardware to be able to interface with it in our robot code.
+Each vendor has their own software and process to setup their hardware before it can be used. There are a few common
+vendors we use below, each with instructions on how to configure their hardware to be able to interface with it in our
+robot code.
 
-There are very few settings that need changed in the configuration applications, but you can change almost everything on the device. Typically we only change the CAN ids from the applications. The tools are also allow for simple manual control (for prototyping) or seeing device telemetry. They are also used to update the device firmware.
+There are very few settings that need changed in the configuration applications, but you can change almost everything
+on the device. Typically we only change the CAN ids from the applications. The tools are also allow for simple manual
+control (for prototyping) or seeing device telemetry. They are also used to update the device firmware.
 
 :::note
 We try to set most settings in code that way we can enforce and ensure the devices are always configured correctly.
 :::
 
-Below is reference and tips for each of the primary hardware vendors that we frequently use. Cycle through the different tabs to see the unique setup instructions for each.
+Below is reference and tips for each of the primary hardware vendors that we frequently use. Cycle through the
+different tabs to see the unique setup instructions for each.
 <Tabs>
     <TabItem value="general" label="General 🧰" default>
     ## Generic FRC Hardware
@@ -25,21 +30,30 @@ Below is reference and tips for each of the primary hardware vendors that we fre
         - [roboRIO - NI](https://docs.wpilib.org/en/stable/docs/software/roborio-info/roborio-introduction.html)
         - [VH109 FRC Radio - Vivid Hosting](https://frc-radio.vivid-hosting.net/)
 
-        These devices have their own unique configuration method, but are required on all FRC robots. You can't run your code without a RIO and you can't connect to the field without a radio.
+        These devices have their own unique configuration method, but are required on all FRC robots. You can't run
+        your code without a RIO and you can't connect to the field without a radio.
 
         ### roboRIO
-        The two different roboRIOs have different imaging processes as listed below. The device has both firmware and a software application image. The firmware updates are rare, but there is a yearly season image release.
-        - [Imaging the RIO - roboRIO 2](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/roborio2-imaging.html)
-        - [Imaging the RIO - roboRIO](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/imaging-your-roborio.html)
+        The two different roboRIOs have different imaging processes as listed below. The device has both firmware and a
+        software application image. The firmware updates are rare, but there is a yearly season image release.
+        -
+        [Imaging the RIO - roboRIO 2](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/roborio2-imaging.html)
+        -
+        [Imaging the RIO - roboRIO](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/imaging-your-roborio.html)
         :::danger[AVOID THE ORIGINAL RIO]
-        Avoid using the original roboRIO since it has barely enough memory to run modern FRC code. Only use it for simple applications like test benches or small project robots.
+        Avoid using the original roboRIO since it has barely enough memory to run modern FRC code. Only use it for
+        simple applications like test benches or small project robots.
         :::
 
-        You can debug an information on the RIOs by opening a hosted webserver at `10.41.43.2` in any browser on the robots network. If you are connected over USB you can try `172.22.11.2`
+        You can debug an information on the RIOs by opening a hosted webserver at `10.41.43.2` in any browser on the
+        robots network. If you are connected over USB you can try `172.22.11.2`
 
         ### VH109 FRC Radio
-        The VH109 also has firmware and configuration settings that are required to be set to let your computers connect to the robot. The radio will need to be reprogrammed at and after each event, because the events require additional configuration. Firmware updates will be rare.
-        - [Checking Device Firmware](https://frc-radio.vivid-hosting.net/overview/upgrading-firmware/checking-firmware-version)
+        The VH109 also has firmware and configuration settings that are required to be set to let your computers
+        connect to the robot. The radio will need to be reprogrammed at and after each event, because the events
+        require additional configuration. Firmware updates will be rare.
+        -
+        [Checking Device Firmware](https://frc-radio.vivid-hosting.net/overview/upgrading-firmware/checking-firmware-version)
         - [Updating Device Firmware](https://frc-radio.vivid-hosting.net/overview/upgrading-firmware)
         - [Programming the Radio](https://frc-radio.vivid-hosting.net/overview/programming-your-radio-at-home)
 
@@ -55,14 +69,23 @@ Below is reference and tips for each of the primary hardware vendors that we fre
         - [Pigeon 2.0](https://v6.docs.ctr-electronics.com/en/latest/docs/hardware-reference/pigeon2/index.html)
         - [CANivore](https://v6.docs.ctr-electronics.com/en/stable/docs/canivore/canivore-intro.html)
 
-    All CTRE devices are configured through the [Tuner X](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html) application. It is likely already installed so you can just use Windows search, but there are instructions to install [here](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html#what-is-phoenix-tuner-x). You can launch Tuner X and connect over the robot network to see all the CTRE devices on the RIO or CANivore CAN bus.
+    All CTRE devices are configured through the
+    [Tuner X](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html) application. It is likely already
+    installed so you can just use Windows search, but there are instructions to install
+    [here](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html#what-is-phoenix-tuner-x) You can launch
+    Tuner X and connect over the robot network to see all the CTRE devices on the RIO or CANivore CAN bus.
 
-    CTRE provides excellent documentation for interfacing with their devices over the tool and how to set it up. Below are some quick links to the more common actions you would preform in Tuner X, but you can also see their entire documentation [here](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html).
+    CTRE provides excellent documentation for interfacing with their devices over the tool and how to set it up. Below
+    are some quick links to the more common actions you would preform in Tuner X, but you can also see their entire
+    documentation [here](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html)
     - [How to Connect using Tuner X](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/connecting.html)
     - [Device List Overview](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-list.html)
-    - [Blinking Device for Identification](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#blinking)
-    - [Setting Device CAN ID and Name](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
-    - [Updating Device Firmware](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
+    -
+    [Blinking Device for Identification](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#blinking)
+    -
+    [Setting Device CAN ID and Name](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
+    -
+    [Updating Device Firmware](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
     - [Manually Controlling Devices](https://v6.docs.ctr-electronics.com/en/latest/docs/tuner/controlling-devices.html)
     - [Viewing Device Telemetry](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/self-test.html)
     </TabItem>
@@ -70,7 +93,8 @@ Below is reference and tips for each of the primary hardware vendors that we fre
     <TabItem value="rev" label="REV ⚙️">
     ## REV Robotics
     :::warning[CTRE Devices are Preferred]
-    We tend to try to limit REV devices on the robot to attempt to run a common motor controller ecosystem. Sometimes there is no other option and a REV device is the best for a given situation.
+    We tend to try to limit REV devices on the robot to attempt to run a common motor controller ecosystem. Sometimes
+    there is no other option and a REV device is the best for a given situation.
     :::
     Hardware that we typically use from REV includes:
         - [SPARK MAX](https://docs.revrobotics.com/brushless/spark-max/overview)
@@ -78,19 +102,31 @@ Below is reference and tips for each of the primary hardware vendors that we fre
         - [Power Distribution Hub](https://docs.revrobotics.com/ion-control/pdh/overview)
             - This device can run without REVLib and is typically used on all FRC robots.
 
-    All REV devices are configured through the [REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client) application. It is likely already installed so you can just use Windows search, but there are instructions to install [here](https://docs.revrobotics.com/rev-hardware-client/gs/install). This tool requires being physically connected to a REV device on the robot through a USB-C cable. You should be able to see all devices that share the same CAN bus as the device you plugged into.
+    All REV devices are configured through the [REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client)
+    application. It is likely already installed so you can just use Windows search, but there are instructions to
+    install [here](https://docs.revrobotics.com/rev-hardware-client/gs/install) This tool requires being physically
+    connected to a REV device on the robot through a USB-C cable. You should be able to see all devices that share the
+    same CAN bus as the device you plugged into.
 
-    REV provides documentation for interfacing with their devices over the tool and how to set it up. Below are some quick links to the more common actions you would preform in the REV Hardware Client, but you can also see their entire documentation [here](https://docs.revrobotics.com/rev-hardware-client).
-    - [How to Connect using REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client/gs/navigation#no-hardware-detected)
+    REV provides documentation for interfacing with their devices over the tool and how to set it up. Below are some
+    quick links to the more common actions you would preform in the REV Hardware Client, but you can also see their
+    entire documentation [here](https://docs.revrobotics.com/rev-hardware-client)
+    -
+    [How to Connect using REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client/gs/navigation#no-hardware-detected)
     - [Device List Overview](https://docs.revrobotics.com/rev-hardware-client/gs/navigation#device-menu)
-    - [Blinking Device for Identification - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max#basic-tab)
+    -
+    [Blinking Device for Identification - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max#basic-tab)
     - [Updating Device Firmware - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max/update)
     - [Manually Controlling Devices - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max#run-tab)
-    - [Blinking Device for Identification - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex#basic-tab)
-    - [Updating Device Firmware - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex/updating-a-spark-flex)
-    - [Manually Controlling Devices - SPARK Flex](https://v6.docs.ctr-electronics.com/en/latest/docs/tuner/controlling-devices.html)
+    -
+    [Blinking Device for Identification - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex#basic-tab)
+    -
+    [Updating Device Firmware - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex/updating-a-spark-flex)
+    -
+    [Manually Controlling Devices - SPARK Flex](https://v6.docs.ctr-electronics.com/en/latest/docs/tuner/controlling-devices.html)
     - [Viewing PDH Faults](https://docs.revrobotics.com/rev-hardware-client/ion/power-distribution-hub#basic-tab)
-    - [Updating Device Firmware - PDH](https://docs.revrobotics.com/rev-hardware-client/ion/power-distribution-hub/updating-a-power-distribution-hub)
+    -
+    [Updating Device Firmware - PDH](https://docs.revrobotics.com/rev-hardware-client/ion/power-distribution-hub/updating-a-power-distribution-hub)
     - [Viewing Device Telemetry](https://docs.revrobotics.com/rev-hardware-client/ion/telemetry)
 
     :::warning[Update Your Parameters]
@@ -101,11 +137,16 @@ Below is reference and tips for each of the primary hardware vendors that we fre
     <TabItem value="pwf" label="PWF ☢️">
     ## Playing with Fusion
     Hardware we typically use from PWF includes:
-        - [CAN TOF Sensor](https://www.playingwithfusion.com/productview.php?pdid=96&srsltid=AfmBOoousfpN-KCGxjvtirn6ySc9kqbQOXRCp1HBE1Lr27P25vWSUAC3)
+        -
+        [CAN TOF Sensor](https://www.playingwithfusion.com/productview.php?pdid=96&srsltid=AfmBOoousfpN-KCGxjvtirn6ySc9kqbQOXRCp1HBE1Lr27P25vWSUAC3)
 
-    There is not much configuration required for the PWF TOF sensor. It doesn't even require an external application. Once the library has been added to the robot project and a sensor has been added in code it will force a webserver to launch on the robot network. This webserver allow for changing the CAN id of the device and blinking the LED for identification.
+    There is not much configuration required for the PWF TOF sensor. It doesn't even require an external application.
+    Once the library has been added to the robot project and a sensor has been added in code it will force a webserver
+    to launch on the robot network. This webserver allow for changing the CAN id of the device and blinking the LED for
+    identification.
 
-    You can reach the webserver by entering `10.41.43.2:5812` into a web browser on the robot network. If you are connected to the RIO via usb you can also try `172.22.11.2:5812`.
+    You can reach the webserver by entering `10.41.43.2:5812` into a web browser on the robot network. If you are
+    connected to the RIO via usb you can also try `172.22.11.2:5812`.
     :::tip[Not on a 4143 Robot?]
     Ensure the address matches the roboRIOs and the port is `5812`
     :::

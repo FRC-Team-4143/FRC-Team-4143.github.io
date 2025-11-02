@@ -1,9 +1,0 @@
-{
-  "label": "Closed Loop Control",
-  "position": 2,
-  "link": {
-    "type": "generated-index",
-    "description": "Control concepts using system feedback for adjustments"
-  },
-  "collapsed": true
-}

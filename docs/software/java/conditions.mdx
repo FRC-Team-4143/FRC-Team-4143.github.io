@@ -6,12 +6,20 @@ sidebar_position: 3
 ---
 
 # Conditions
-Conditions are fundamental to programming. They allow us to preform certain actions based of the state of a program. A condition is defined as a comparison between two values using a comparison operator and enclosed in `()`.
+Conditions are fundamental to programming. They allow us to preform certain actions based of the state of a program. A
+condition is defined as a comparison between two values using a comparison operator and enclosed in `()`.
+
+---
 
 ## Comparison Operators
-These operators allow us to compare two values together. Similar to our arithmetic operators you need to think about what comparing two datatypes mean. You can't use create a condition that compares `"hello"` and `5` because is there is logical comparison between a `String` and an `int`. As stated above a condition in java is defined as comparison between two values using a comparison operator. The condition must be encompassed in `()`. The syntax for that would look like `([value] [comparison] [value])`.
+These operators allow us to compare two values together. Similar to our arithmetic operators you need to think about
+what comparing two datatypes mean. You can't use create a condition that compares `"hello"` and `5` because is there is
+logical comparison between a `String` and an `int`. As stated above a condition in java is defined as comparison
+between two values using a comparison operator. The condition must be encompassed in `()`. The syntax for that would
+look like `([value] [comparison] [value])`.
 
-The are a few comparison operators each with their own behavior. Below is a table that shows the available comparison operators, a brief description of their function, and a code based example.
+The are a few comparison operators each with their own behavior. Below is a table that shows the available comparison
+operators, a brief description of their function, and a code based example.
 <table>
 <tr>
 {/* Column Titles */}
@@ -65,8 +73,14 @@ The are a few comparison operators each with their own behavior. Below is a tabl
 </tr>
 </table>
 
+---
+
 ## Logical Operators
-What if we want to make a compound condition? Compare if one conditions is true and another false? Both true? Luckily our pal [George Boole](https://en.wikipedia.org/wiki/George_Boole) had us in mind when he crated the concept called [boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra). The fundamentals of boolean logic is three logical operator **NOT**, **AND**, and **OR**. Below are some "truth tables" which show the boolean output of comparing conditions using those logical operators.
+What if we want to make a compound condition? Compare if one conditions is true and another false? Both true? Luckily
+our pal [George Boole](https://en.wikipedia.org/wiki/George_Boole) had us in mind when he crated the concept called
+[boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra) The fundamentals of boolean logic is three logical
+operator **NOT**, **AND**, and **OR**. Below are some "truth tables" which show the boolean output of comparing
+conditions using those logical operators.
 
 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 20, fontSize: 15}}>
     <table>
@@ -94,7 +108,9 @@ What if we want to make a compound condition? Compare if one conditions is true 
     <tr> <td style={{ color: 'green' }}> true </td> <td style={{ color: 'green' }}> true </td> <td style={{ color: 'green' }}> true </td> </tr>
     </table>
 </div>
-Because our conditions return a `boolean` *(true/false)*, these same logical operators can be used in code to compare conditions with one another. The tables below shows the logical operations available in Java. Remember that each `true`/`false` below can be replace with a condition.
+Because our conditions return a `boolean` *(true/false)*, these same logical operators can be used in code to compare
+conditions with one another. The tables below shows the logical operations available in Java. Remember that each
+`true`/`false` below can be replace with a condition.
 
 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'wrap', gap: 20, fontSize: 15}}>
     <table>
@@ -118,7 +134,7 @@ Because our conditions return a `boolean` *(true/false)*, these same logical ope
     <td style={{textAlign: 'center', fontSize: 25}}> `&&` </td>
     <td>
     ```java
-    (false && false) // true
+    (false && false) // false
     (false && true) // false
     (true && false) // false
     (true && true) // true
@@ -134,7 +150,7 @@ Because our conditions return a `boolean` *(true/false)*, these same logical ope
     <td style={{textAlign: 'center', fontSize: 25}}> `||` </td>
     <td>
     ```java
-    (false || false) // true
+    (false || false) // false
     (false || true) // true
     (true || false) // true
     (true || true) // true
@@ -144,8 +160,12 @@ Because our conditions return a `boolean` *(true/false)*, these same logical ope
     </table>
 </div>
 
+---
+
 ## Condition Logic
-If we want to run different segments of our cond based on the value of a condition we can use an `if` statement. The mighty `if` statement is a programmers favorite tool. It allows you to create powerful and unique behavior within your code.
+If we want to run different segments of our cond based on the value of a condition we can use an `if` statement. The
+mighty `if` statement is a programmers favorite tool. It allows you to create powerful and unique behavior within your
+code.
 
 If the condition in the parentheses is true, then the code in the block is run. Otherwise, Java skips over it.
 ```java title="Syntax"
@@ -175,7 +195,8 @@ if((number / 2) == 0){
     System.out.println("Number is Odd");
 }
 ```
-If we want to add multiple condition checks to a statement we can use an `else if`. They are checked if the previous statement is false. The code in the `else` block is run all the conditions are false.
+If we want to add multiple condition checks to a statement we can use an `else if`. They are checked if the previous
+statement is false. The code in the `else` block is run all the conditions are false.
 ```java title="Syntax"
 if(<condition>){
     // Run This Code
@@ -194,8 +215,13 @@ if(number == 0){
 }
 ```
 
+---
+
 ## Ternary Operator
-Programmers are lazy. Sometimes even too lazy to write an `if`-`else` statement for a simple condition, that preforms a very small action. Thats why they created the ternary operator `?`. The ternary operator can be added to the end of a condition and allow for quick one line `if-else` statements. The syntax for using it is as follows. `(condition)? <code if true> : <code if false>;` A quick example show its power can be seen below.
+Programmers are lazy. Sometimes even too lazy to write an `if`-`else` statement for a simple condition, that preforms a
+very small action. Thats why they created the ternary operator `?`. The ternary operator can be added to the end of a
+condition and allow for quick one line `if-else` statements. The syntax for using it is as follows. `(condition)? <code
+if true> : <code if false>;` A quick example show its power can be seen below.
 ```java
 // Traditional if-else statement
 if (is_button_pressed){
@@ -208,8 +234,13 @@ if (is_button_pressed){
 (is_button_pressed)? doThisThing() : doThatThing();
 ```
 
+---
+
 ## Switch Statement
-Programmers are **very** lazy. If I have a bunch of values I want to compare to for a variable and preform specific code for each value it would be painful to write 15 `if` or `if`-`else if` statements. Thankfully we can use a switch statement. It will allow you to provide and single expression for comparison and then easily create a case for different each value it can take on. This is the basic syntax structure:
+Programmers are **very** lazy. If I have a bunch of values I want to compare to for a variable and preform specific
+code for each value it would be painful to write 15 `if` or `if`-`else if` statements. Thankfully we can use a switch
+statement. It will allow you to provide and single expression for comparison and then easily create a case for
+different each value it can take on. This is the basic syntax structure:
 ```java
 switch (<expression>) {
     case <value>:
@@ -251,7 +282,9 @@ switch (day) {
 Thursday
 ```
 :::danger ALWAYS INCLUDE A break
-If you forget to include a `break` at the end for your case it will cause the code to waterfall through following cases until a `break` or the end of the switch is reached. For example the code below would cause a waterfall from case 2 to case 4 because of the missing `break`.
+If you forget to include a `break` at the end for your case it will cause the code to waterfall through following cases
+until a `break` or the end of the switch is reached. For example the code below would cause a waterfall from case 2 to
+case 4 because of the missing `break`.
 ```java
 int day = 2;
 switch (day) {
@@ -277,7 +310,8 @@ Thursday
 ```
 :::
 :::tip Combining Cases
-Sometimes you can use the waterfall concept to your advantage if we have multiple values the expression can take, but want it to preform the same action.
+Sometimes you can use the waterfall concept to your advantage if we have multiple values the expression can take, but
+want it to preform the same action.
 ```java
 switch (month){
     case "December":
