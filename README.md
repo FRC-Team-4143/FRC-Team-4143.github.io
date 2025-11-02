@@ -12,9 +12,9 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
     set PATH=%PATH%;C:\Path\to\nodejs
     ```
 
-- Install docusaurus
+- Install dependencies
+    nvigate your terminal to the root directory of the project and run:
     ```bash
-    npm install -g docusaurus
     npm install
     ```
 - Start the development server
