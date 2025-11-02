@@ -39,8 +39,7 @@ Example is show below:
     boolean is_enabled_;
     float error_;
     ```
-- Variables that are constant should be named using `SCREAMING_SNAKE_CASE`. The should also use the `final` and
-`static` modifiers to prevent accidental updates and multiple instances. Examples are shown below:
+- Variables that are constant should be named using `SCREAMING_SNAKE_CASE`. The should also use the `final`.
     ```java
     static final double ELEVATOR_HOME_POSITION;
     static final int COUNTER_RESET;
@@ -61,7 +60,7 @@ Example is show below:
     ```
 
 ## Loops
-- Never use `while` loops
+- Avoid using `while` loops
     - They are dangerous in a controls application and could result in a infinite loop if not updated correctly.
 - Iterators for a `for` loops should be used in order of `i`, `j`, and then `k`.
     - If the iterator is used external to the `for` it should be named something unique to its purpose.
