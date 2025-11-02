@@ -41,6 +41,22 @@ All of our robot projects are their own repo. We also have several other repos f
 
 ---
 
+## Workflow
+When working with git there is a general workflow that is followed. This workflow consists of four main areas:
+- Working Directory : The directory where you make changes to your files.
+- Staging Area : The area where you prepare your changes to be committed. Changes are staged by being added to a commit, but not yet committed.
+- Local Repository : The repository on your local machine where your commits are stored. Changes that are commited are saved here.
+- Remote Repository : The repository on a remote server where your code is stored and shared with others. To send changes to the remote repo, you push your commits. To get changes from the remote repo, you pull commits.
+
+```mermaid
+graph LR;
+    work[Working Directory] -->|git add| stage[Staging Area];
+    stage -->|git commit| commit[Local Repository];
+    commit -->|git push| push[Remote Repository];
+```
+
+---
+
 ## Commits
 The snapshots of your repo at a given moment of development is called a commit. Commits are a unique point in
 development that show the state of all tracked files in your repo. They are uniquely assigned a SHA, which is a long
