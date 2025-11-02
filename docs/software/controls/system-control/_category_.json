@@ -1,9 +1,5 @@
 {
   "label": "System Controls",
   "position": 2,
-  "link": {
-    "type": "generated-index",
-    "description": "System control concepts for physical systems"
-  },
   "collapsed": true
 }

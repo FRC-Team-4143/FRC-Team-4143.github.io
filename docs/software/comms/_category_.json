@@ -1,9 +1,5 @@
 {
   "label": "Robot Communications",
   "position": 5,
-  "link": {
-    "type": "generated-index",
-    "description": "Ways the robot communications with all its devices"
-  },
   "collapsed": true
 }
