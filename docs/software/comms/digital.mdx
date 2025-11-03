@@ -1,9 +1,23 @@
 ---
-title: Digital Inputs
+title: Digital I/O
 description: Digital interfaces overview and what they are used for.
 hide_table_of_contents: true
 sidebar_position: 3
 ---
 
-# Digital Inputs
-Digital Inputs
+import wave from '@site/static/img/software/comms/digital/wave.png';
+
+# Digital I/O
+Digital I/O allows the robot controller to interact with basic digital signals. Digital signals are binary in nature, meaning they can only be in one of two states: HIGH or LOW.
+A HIGH state typically represents a voltage level of 5V, while a LOW state represents 0.
+
+<img src={wave} width="300" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
+
+## Digital Inputs
+Digital Inputs are used to read the state of a digital signal. They are commonly used to read the state of simple sensors like switches that are either on or off, or read the speed 
+or relative position of a Quadrature Encoder. Quadrature encoders provide two digital signals that can be used to determine the relative position and direction of rotation of a shaft.
+Currently our robots do not use digital inputs, but they are available if needed in the future.
+
+## Digital Outputs
+Digital Outputs are used to send a digital signal to another device. In FRC robots, digital outputs may be used to control simple devices like LEDs or to send signals to other devices
+that may require a digital input. Currently our robots do not use digital outputs, but they are available if needed in the future.
