@@ -1,0 +1,86 @@
+---
+title: Operator Interface
+description: Interfacing with controllers and buttons
+hide_table_of_contents: false
+sidebar_position: 4
+---
+
+# Operator Interface
+Our robots are often controlled using game controllers, joysticks, or custom button panels. This section covers how to set up and interface with these input devices in your robot code. 
+We try to keep all controller-related code in the `OI` (Operator Interface) class for better organization. 
+If subsystems require direct access to controller inputs, consider passing the necessary values from the `OI` class to those subsystems using a getter method instead of accessing the controllers directly.
+
+---
+
+## Setting up a Controller
+To set up a controller, you will need to create an instance of the controller class and configure it to read input from the desired devices.
+This typically involves specifying the port or connection type for the controller.
+We typically use the `CommandXboxController` class for Xbox controllers, but other controller classes are available depending on the specific hardware. 
+This allows us to read inputs such as joystick positions, button presses, and trigger values. We can then bind a command directly to a button press or joystick movement.
+```java
+CommandXboxController controller = new CommandXboxController(0);
+```
+The value `0` indicates the port number the controller is connected to. You can check what port your controller is using in the Driver Station software.
+
+---
+
+## Interfacing with an Axis
+To read input from an axis (such as a joystick or trigger), you can use the `getAxis()` method of the controller class.
+This method returns a value between -1.0 and 1.0, representing the position of the axis.
+For a joystick, -1.0 typically represents full left or down, while 1.0 represents full right or up. For triggers, 0.0 represents not pressed, and 1.0 represents fully pressed.
+```java
+double leftY = controller.getLeftY();
+double rightTrigger = controller.getRightTrigger();
+```
+
+---
+
+## Interfacing with Button
+To read input from a button, you can use the `getButton()` method of the controller class. This method returns a boolean value indicating whether the button is currently pressed.
+```java
+boolean aButtonPressed = controller.getAButton();
+boolean rightMushroomButtonPressed = controller.getRightStick();
+```
+
+---
+
+## Using the Controller POV Pad
+The POV (Point of View) pad, also known as the D-pad, is a directional pad on the controller that can be used for additional input options.
+You can read the state of the POV pad using the `getPOV()` method, which returns an angle in degrees corresponding to the direction pressed (0 for up, 90 for right, 180 for down, and 270 for left).
+If no direction is pressed, it returns -1.
+```java
+int povAngle = controller.getPOV();
+if (povAngle == 0) {
+    // Up direction pressed
+} else if (povAngle == 90) {
+    // Right direction pressed
+} // and so on...
+```
+
+---
+
+## Binding Commands to Controller Inputs
+You can bind commands to button presses using the `onTrue()`, `whileTrue()`, and their counterparts for button releases.
+This allows you to execute specific commands when a button is pressed or held down.
+```java
+controller.a().onTrue(new SomeCommand());
+controller.b().whileTrue(new AnotherCommand());
+```
+
+Trigger axises can also be used to trigger commands when they exceed a certain threshold:
+```java
+// Custom Threshold
+controller.rightTrigger(0.75).onTrue(new TriggeredCommand());
+// Default Threshold of 0.5
+controller.leftTrigger().whileTrue(new HeldCommand());
+```
+
+You can also bind commands to the POV pad directions:
+```java
+controller.povUp().onTrue(new UpCommand());
+controller.povRight().onTrue(new RightCommand()); 
+```
+
+We try to keep all of the bindings within the `configureBindings()` method of the `OI` class for better organization and maintainability.
+Other methods can exist for getting raw input values, but all command bindings should be centralized in `configureBindings()`.
+It not pretty, but you can see our 2025 bindings [here](https://github.com/FRC-Team-4143/mainbot-2025/blob/develop/src/main/java/frc/robot/OI.java)

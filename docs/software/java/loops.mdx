@@ -27,7 +27,7 @@ while(want_loop){
     }
 }
 ```
-:::danger DO NOT USE WHILE LOOPS IN ROBOT CODE!!!
+:::danger AVOID USING WHILE LOOPS IN ROBOT CODE!!!
 `while` loops are very dangerous in a controls application. If for some reason you forget to setup your exit condition
 correctly or your iterator increment is wrong you can get stuck in a infinite loop. This will lock up your entire robot
 program. That means while your code may still be "running" your robot will sit still and not respond to any inputs.

@@ -6,14 +6,14 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 - Ensure `Node.js` version is greater than 18.0 (check by running `node -v`)
     - Install the latest version [here](https://nodejs.org/en/download/).
 
-- Add the `nodejs` direcotry to your PATH enviroment variable.
+- Add the `nodejs` directory to your PATH environment variable.
     - A restart may be required after updating.
     ```bash
     set PATH=%PATH%;C:\Path\to\nodejs
     ```
 
 - Install dependencies
-    nvigate your terminal to the root directory of the project and run:
+    Navigate your terminal to the root directory of the project and run:
     ```bash
     npm install
     ```
