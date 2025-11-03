@@ -26,7 +26,7 @@ different tabs to see the unique setup instructions for each.
 <Tabs>
     <TabItem value="general" label="General 🧰" default>
     ## Generic FRC Hardware
-    Hardware that we typically use that is generic across all robots includes:
+        Hardware that we typically use that is generic across all robots includes:
         - [roboRIO - NI](https://docs.wpilib.org/en/stable/docs/software/roborio-info/roborio-introduction.html)
         - [VH109 FRC Radio - Vivid Hosting](https://frc-radio.vivid-hosting.net/)
 
@@ -36,10 +36,8 @@ different tabs to see the unique setup instructions for each.
         ### roboRIO
         The two different roboRIOs have different imaging processes as listed below. The device has both firmware and a
         software application image. The firmware updates are rare, but there is a yearly season image release.
-        -
-        [Imaging the RIO - roboRIO 2](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/roborio2-imaging.html)
-        -
-        [Imaging the RIO - roboRIO](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/imaging-your-roborio.html)
+        - [Imaging the RIO - roboRIO 2](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/roborio2-imaging.html)
+        - [Imaging the RIO - roboRIO](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/imaging-your-roborio.html)
         :::danger[AVOID THE ORIGINAL RIO]
         Avoid using the original roboRIO since it has barely enough memory to run modern FRC code. Only use it for
         simple applications like test benches or small project robots.
@@ -52,8 +50,7 @@ different tabs to see the unique setup instructions for each.
         The VH109 also has firmware and configuration settings that are required to be set to let your computers
         connect to the robot. The radio will need to be reprogrammed at and after each event, because the events
         require additional configuration. Firmware updates will be rare.
-        -
-        [Checking Device Firmware](https://frc-radio.vivid-hosting.net/overview/upgrading-firmware/checking-firmware-version)
+        - [Checking Device Firmware](https://frc-radio.vivid-hosting.net/overview/upgrading-firmware/checking-firmware-version)
         - [Updating Device Firmware](https://frc-radio.vivid-hosting.net/overview/upgrading-firmware)
         - [Programming the Radio](https://frc-radio.vivid-hosting.net/overview/programming-your-radio-at-home)
 
@@ -80,12 +77,9 @@ different tabs to see the unique setup instructions for each.
     documentation [here](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/index.html)
     - [How to Connect using Tuner X](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/connecting.html)
     - [Device List Overview](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-list.html)
-    -
-    [Blinking Device for Identification](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#blinking)
-    -
-    [Setting Device CAN ID and Name](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
-    -
-    [Updating Device Firmware](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
+    - [Blinking Device for Identification](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#blinking)
+    - [Setting Device CAN ID and Name](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
+    - [Updating Device Firmware](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/device-details-page.html#configuring-name-ids)
     - [Manually Controlling Devices](https://v6.docs.ctr-electronics.com/en/latest/docs/tuner/controlling-devices.html)
     - [Viewing Device Telemetry](https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/self-test.html)
     </TabItem>
@@ -104,29 +98,23 @@ different tabs to see the unique setup instructions for each.
 
     All REV devices are configured through the [REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client)
     application. It is likely already installed so you can just use Windows search, but there are instructions to
-    install [here](https://docs.revrobotics.com/rev-hardware-client/gs/install) This tool requires being physically
+    install [here](https://docs.revrobotics.com/rev-hardware-client/gs/install). This tool requires being physically
     connected to a REV device on the robot through a USB-C cable. You should be able to see all devices that share the
     same CAN bus as the device you plugged into.
 
     REV provides documentation for interfacing with their devices over the tool and how to set it up. Below are some
     quick links to the more common actions you would preform in the REV Hardware Client, but you can also see their
     entire documentation [here](https://docs.revrobotics.com/rev-hardware-client)
-    -
-    [How to Connect using REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client/gs/navigation#no-hardware-detected)
+    - [How to Connect using REV Hardware Client](https://docs.revrobotics.com/rev-hardware-client/gs/navigation#no-hardware-detected)
     - [Device List Overview](https://docs.revrobotics.com/rev-hardware-client/gs/navigation#device-menu)
-    -
-    [Blinking Device for Identification - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max#basic-tab)
+    - [Blinking Device for Identification - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max#basic-tab)
     - [Updating Device Firmware - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max/update)
     - [Manually Controlling Devices - SPARK MAX](https://docs.revrobotics.com/rev-hardware-client/ion/spark-max#run-tab)
-    -
-    [Blinking Device for Identification - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex#basic-tab)
-    -
-    [Updating Device Firmware - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex/updating-a-spark-flex)
-    -
-    [Manually Controlling Devices - SPARK Flex](https://v6.docs.ctr-electronics.com/en/latest/docs/tuner/controlling-devices.html)
+    - [Blinking Device for Identification - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex#basic-tab)
+    - [Updating Device Firmware - SPARK Flex](https://docs.revrobotics.com/rev-hardware-client/ion/spark-flex/updating-a-spark-flex)
+    - [Manually Controlling Devices - SPARK Flex](https://v6.docs.ctr-electronics.com/en/latest/docs/tuner/controlling-devices.html)
     - [Viewing PDH Faults](https://docs.revrobotics.com/rev-hardware-client/ion/power-distribution-hub#basic-tab)
-    -
-    [Updating Device Firmware - PDH](https://docs.revrobotics.com/rev-hardware-client/ion/power-distribution-hub/updating-a-power-distribution-hub)
+    - [Updating Device Firmware - PDH](https://docs.revrobotics.com/rev-hardware-client/ion/power-distribution-hub/updating-a-power-distribution-hub)
     - [Viewing Device Telemetry](https://docs.revrobotics.com/rev-hardware-client/ion/telemetry)
 
     :::warning[Update Your Parameters]
@@ -137,8 +125,7 @@ different tabs to see the unique setup instructions for each.
     <TabItem value="pwf" label="PWF ☢️">
     ## Playing with Fusion
     Hardware we typically use from PWF includes:
-        -
-        [CAN TOF Sensor](https://www.playingwithfusion.com/productview.php?pdid=96&srsltid=AfmBOoousfpN-KCGxjvtirn6ySc9kqbQOXRCp1HBE1Lr27P25vWSUAC3)
+        - [CAN TOF Sensor](https://www.playingwithfusion.com/productview.php?pdid=96&srsltid=AfmBOoousfpN-KCGxjvtirn6ySc9kqbQOXRCp1HBE1Lr27P25vWSUAC3)
 
     There is not much configuration required for the PWF TOF sensor. It doesn't even require an external application.
     Once the library has been added to the robot project and a sensor has been added in code it will force a webserver
@@ -150,5 +137,20 @@ different tabs to see the unique setup instructions for each.
     :::tip[Not on a 4143 Robot?]
     Ensure the address matches the roboRIOs and the port is `5812`
     :::
+    </TabItem>
+
+    <TabItem value="ttb" label="TTB 🤖">
+    ## The Thrifty Bot
+    Hardware we typically use from TTB includes:
+        - [Thrifty Nova](https://docs.thethriftybot.com/thrifty-nova)
+
+    All TTB devices are configured through the [Thrifty Config](https://docs.home.thethriftybot.com/ThriftyConfig.html)
+    application. It is likely already installed so you can just use Windows search, but there it can be installed 
+    [here](https://docs.home.thethriftybot.com/ThriftyConfig.html). This tool requires being physically
+    connected to a TTB device on the robot through a USB-C cable. You should be able to see all devices that share the
+    same CAN bus as the device you plugged into.
+
+    TTB does not have any documentation for interacting with their devices over the tool, but it is conceptually similar
+    to the other hardware configuration tools listed here. There is a quick demo video of the software available [here](https://www.youtube.com/watch?v=d6l2VE9Lulk).
     </TabItem>
 </Tabs>
