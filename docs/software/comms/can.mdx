@@ -9,11 +9,11 @@ import linear_net from '@site/static/img/software/comms/can/linear_net.png';
 import star_net from '@site/static/img/software/comms/can/star_net.png';
 
 # Controller Area Network
-Controller Area Network or CAN is a low cost communication system between a network of devices connected devices. It uses two wires, sometimes called HI and LOW, to transmit data between devices.
-For FRC, this is most commonly used to connect motor controllers, sensors, and other devices to the roboRIO. Each device on the CAN network has a unique dentifer that it is assigned, allowing the roboRIO 
+Controller Area Network or CAN is a low cost communication system between a network of connected devices. It uses two wires, sometimes called HI and LOW, to transmit data between devices.
+For FRC, this is most commonly used to connect motor controllers, sensors, and other devices to the roboRIO. Each device on the CAN network has a unique identifier that it is assigned, allowing the roboRIO 
 to communicate with each device on the network individually.
 
-## Eletronics
+## Electronics
 CAN bus uses a differential signaling method to transmit data. This means that the voltage on the two wires is compared to determine the state of the bus. When the voltage on the HI wire is higher than the LOW wire,
 the bus is considered to be in a logical 1 state. When the voltage on the LOW wire is higher than the HI wire, then the bus is considered to be in a logical zero state. For a CAN bus to function properly, it must be 
 terminated at both ends with a 120 ohm resistor. This prevents signals traveling down the bus from reflecting back and causing problems. Due to the differential signaling method used by CAN, it can also be sensitive to 
@@ -22,9 +22,9 @@ colored yellow for HI, and green for LOW.
 
 ## Architectures
 CAN uses a bus architecture, meaning that all devices are connected to the same two wires. This allows for easy addition and removal of devices from the network, as well as reducing the amount of wiring needed.
-A CAN network can be layed out using multiple topologies. The mosst common topologies are linear, star, and ring.
+A CAN network can be laid out using multiple topologies. The most common topologies are linear, star, and ring.
 
-1. **Linear Topology**: All devices are connected in a daisy chained fashion to a single bus. The bus will start at the roboRIO, connecting to each sucessive device on the network. This is the most common topology used in FRC.
+1. **Linear Topology**: All devices are connected in a daisy chained fashion to a single bus. The bus will start at the roboRIO, connecting to each successive device on the network. This is the most common topology used in FRC.
 
    <img src={linear_net} width="400" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
 
