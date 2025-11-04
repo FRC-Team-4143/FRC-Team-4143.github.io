@@ -2,8 +2,21 @@
 title: PWM
 description: Pulse Width Modulation overview and what it is used for
 hide_table_of_contents: true
-sidebar_position: 2
+sidebar_position: 4
 ---
+import pwm from '@site/static/img/software/comms/pwm/pwm.jpg';
 
 # Pulse Width Modulation
-PWM or Pulse Width Modulation
+PWM or Pulse Width Modulation is a unidirectional communication method that allows the communication of a single analog 
+value between devices. It acts as a digital pulse where the width of the pulse is varied between no pulse all they way 
+to a continuous pulse at a given frequency. 
+
+<img src={pwm} width="500" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
+
+PWM is commonly used in FRC to control motor controllers and servos. The roboRIO outputs a PWM signal to the motor controller,
+which then interprets the width of the pulse to determine the speed and direction of the motor. A wider pulse corresponds to a 
+higher speed, while a narrower pulse corresponds to a lower speed.
+
+It can also be used as an input signal. On our robots, we commonly use PWM absolute encoders for our swerve dirve train to
+determine the angle of each wheel module on boot. The encoder outputs a PWM signal to the roboRIO, which then interprets the 
+width of the pulse to determine the angle of the wheel.

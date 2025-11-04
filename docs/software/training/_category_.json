@@ -1,0 +1,9 @@
+{
+  "label": "📚 Training",
+  "position": 10,
+  "link": {
+    "type": "doc",
+    "id": "software/training/index"
+  },
+  "collapsed": true
+}
