@@ -23,7 +23,6 @@ When a button is pressed or released, it may generate multiple rapid on/off sign
 Debouncing ensures that only a single, clean signal is registered for each button press or release. However, we can use it for any digital signal that may be noisy.
 Check the WPILib documentation for their implementation of a [Debouncer](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/filters/debouncer.html).
 
----
 
 ### Rising Edge Debounce
 A rising edge in a signal occurs when the signal transitions from a low state (0) to a high state (1).
@@ -31,7 +30,6 @@ The debounce is to configured to only transition to output a high signal when th
 <img src={risingEdge} width="600"/>
 In the plot above, the debounced is configured with a 0.3 second delay. The raw input signal has some noise that causes it to briefly drop low multiple times, but the output signal only transitions high after the input has been high for a continuous 0.3 seconds.
 
----
 
 ### Falling Edge Debounce
 A falling edge in a signal occurs when the signal transitions from a high state (1) to a low state (0).
@@ -45,14 +43,12 @@ They can also be used to generate a slight delay to confirm a condition is met b
 For example making sure the elevator and arm have come to a complete stop before allowing the shooter to run.
 :::
 
----
 
 ### Combined Rising and Falling Edge Debounce
 In many cases, it is useful to apply both rising and falling edge debouncing to a signal. This ensures that the signal transitions are clean and stable in both directions.
 By configuring separate debounce durations for rising and falling edges, we can tailor the filtering to the specific characteristics of the signal and the application requirements.
 This combined approach helps to further improve signal quality and reliability.
 
----
 
 ### WPILib Debounce Class
 WPILib provides a built-in `Debounce` class that can be used to implement debouncing for digital signals.
