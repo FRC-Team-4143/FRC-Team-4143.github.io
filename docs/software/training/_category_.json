@@ -1,0 +1,9 @@
+{
+  "label": "📚 Training",
+  "position": 10,
+  "link": {
+    "type": "generated-index",
+    "description": "MARS/WARS Pre-Season Training Materials. This curriculum is designed to help new and returning team members get up to speed with the software tools and practices used in FRC programming. It is recommended to complete these lessons in order as they walk through the fundamentals step-by-step."
+  },
+  "collapsed": true
+}
