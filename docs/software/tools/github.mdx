@@ -17,6 +17,19 @@ the repos in our organization.
 
 ---
 
+## Why do we use GitHub?
+GitHub provides a centralized platform for managing our code and collaborating with other team members. It allows us
+to track changes made to our code, review and approve changes before they are merged, and manage tasks and issues related to our projects.
+
+Without GitHub we would need to manually share code or emails or a thumb drive which would be inefficient and prone to errors. Progress and tasks to be completed would have to be tracked on sticky notes or a physical board which would be hard to manage especially when working remotely. GitHub allows us to:
+- Manage code in a centralized location
+- Track changes made to the code
+- Collaborate with other team members
+- Review and approve changes before they are merged
+- Manage tasks and issues related to our projects
+
+---
+
 ## Clone
 If the project you are going to work on is already hosted on GitHub you can clone the repo to your local machine. This
 will create a local copy of the repo that you can work on. You can clone a repo using the following command.
@@ -41,7 +54,7 @@ merged into the main branch. This is a good way to ensure that the changes are c
 main branch. You can create a pull request from GitHub and have your peers review your changes before merging.
 
 You can create a pull request by going to the GitHub page for the repo and clicking on the `Pull requests` tab. From
-there, you can click on the `New pull request` button and select the branch you want to into your selected target
+there, you can click on the `New pull request` button and select the branch you want to merge into your selected target
 branch. You can then add a title and description for your pull request and submit it for review. The PR will show all
 the changes made in that branch and allow your peers or mentors to review your changes before merging. They can leave
 comments, request changes, or approve the pull request. Once the pull request is approved, you can merge it into the
@@ -50,6 +63,17 @@ target branch.
 Some PRs even have automated checks that will run to ensure that the code is correct and does not break anything. This
 is a good way to catch errors before they are merged into the main branch.
 
+---
+
+## Branch Strategy
+- The `main` branch is the production ready code that will be deployed to the robot for competitions.
+- The `develop` branch is the integration branch where all features are merged before being promoted to `main`.
+- Branch for each new issue or task you are working on. This makes it easier to manage multiple tasks at once and merge them separately.
+   - Typically the branch name will be in the format `issue-<ISSUE_NUMBER>-<SHORT_DESCRIPTION>`, where `<ISSUE_NUMBER>` is the number of the issue you are working on and `<SHORT_DESCRIPTION>` is a brief description of the task.
+
+:::danger Protected branches
+Do not direct push to `main` or `develop` branches. These branches are protected and require a pull request to merge changes. This ensures that all changes are reviewed and approved before they are merged into the main codebase.
+:::
 ---
 
 ## Issues / Tasks
@@ -98,3 +122,14 @@ Each issue is sorted into a column based on its status. The columns in our typic
 Make sure you assign yourself to any issues you are working on. This allows us to see who is working on what and helps
 us prioritize tasks. You can also assign issues to other team members if you think they would be a good fit for the
 task.
+
+---
+
+## Workflow
+When working on one of our projects, we typically follow a specific workflow to ensure that our code is organized and easy to manage. The typical workflow is as follows.
+1. **Check if a task/issue exists**: Before starting work on a new feature or bug fix, check the project's issue tracker to see if a relevant task or issue already exists. If it does, you can assign it to yourself and start working on it.
+2. **Create a new branch**: Create a new branch for your work based on related to the issue name. This helps keep your work organized and makes it easier to manage multiple tasks at once.
+3. **Record Progress**: As you work on the task, make sure to commit your changes frequently with clear and descriptive commit messages. This helps keep track of your progress and makes it easier to review your work later. Ideally you also update the issue comments with your progress as well.
+4. **Create a Pull Request**: Once you have completed the task, create a pull request to merge your changes into the target branch. Make sure to link the pull request to the relevant issue so that it can be tracked.
+5. **Request Review**: Request a review from a team member or mentor to ensure that your changes are correct and do not break anything in the target branch.
+6. **Merge Changes**: Once your pull request has been approved, merge your changes into the target branch. Make sure to delete your branch after merging to keep the repo clean.
