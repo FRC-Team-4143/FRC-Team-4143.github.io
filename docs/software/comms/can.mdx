@@ -5,6 +5,7 @@ hide_table_of_contents: true
 sidebar_position: 1
 ---
 
+import can_wire from '@site/static/img/software/comms/can/can-wire.png';
 import linear_net from '@site/static/img/software/comms/can/linear_net.png';
 import star_net from '@site/static/img/software/comms/can/star_net.png';
 
@@ -19,6 +20,9 @@ the bus is considered to be in a logical 1 state. When the voltage on the LOW wi
 terminated at both ends with a 120 ohm resistor. This prevents signals traveling down the bus from reflecting back and causing problems. Due to the differential signaling method used by CAN, it can also be sensitive to 
 length differences between the two wires. To ensure proper operation, the length difference between the two wires should be kept to a minimum, ideally less than 11 inches. For FRC robots, the wires are typically 
 colored yellow for HI, and green for LOW.
+
+<img src={can_wire} width="400" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
+
 
 ## Architectures
 CAN uses a bus architecture, meaning that all devices are connected to the same two wires. This allows for easy addition and removal of devices from the network, as well as reducing the amount of wiring needed.
