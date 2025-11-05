@@ -32,28 +32,24 @@ it effectively.
 
 ---
 
+## Why do we use Git?
+Ok so you got a overview of what git is, but why do we use it? There are several reasons why we use git for version control.
+
+Without git we would have files name like `robot-code-v1`, `robot-code-v2`, `robot-code-final`, `robot-code-final-really`, etc. This is not a good way to manage code and can lead to confusion and mistakes. Then we would have to upload our code to a shared drive or email it to each other. This is not a good way to collaborate and can lead to lost files and confusion. Git helps us by giving a process to:
+- Track changes made to our code
+- Collaborate with other developers
+- Backup our code
+- Experiment with new features without breaking the main codebase
+- Easily revert to previous versions of our code
+
+---
+
 ## Repos
 A project that is tracked by git is called a *repository* or frequently shortened to *repo*. A repo is the file
 structure containing all the "code" used for the project. It also contains all git tracking information stored in a
 `.git` folder. It needs to know about all the [commits](#commits) and [branches](#branches) being made by all
 developers on the project to correctly update your local copy. Each programming project should live in its own repo.
 All of our robot projects are their own repo. We also have several other repos for generic projects like this website!
-
----
-
-## Workflow
-When working with git there is a general workflow that is followed. This workflow consists of four main areas:
-- Working Directory : The directory where you make changes to your files.
-- Staging Area : The area where you prepare your changes to be committed. Changes are staged by being added to a commit, but not yet committed.
-- Local Repository : The repository on your local machine where your commits are stored. Changes that are commited are saved here.
-- Remote Repository : The repository on a remote server where your code is stored and shared with others. To send changes to the remote repo, you push your commits. To get changes from the remote repo, you pull commits.
-
-```mermaid
-graph LR;
-    work[Working Directory] -->|git add| stage[Staging Area];
-    stage -->|git commit| commit[Local Repository];
-    commit -->|git push| push[Remote Repository];
-```
 
 ---
 
@@ -253,3 +249,19 @@ It is very important that you pull before a work session to ensure your local re
 The same goes for pushing at the end of a work session. There are ways to fix it if this occurs, but will likely
 require help from a mentor, unless you are a git wizard 🧙.
 :::
+
+---
+
+## Workflow
+When working with git there is a general workflow that is followed. This workflow consists of four main areas:
+- Working Directory : The directory where you make changes to your files.
+- Staging Area : The area where you prepare your changes to be committed. Changes are staged by being added to a commit, but not yet committed.
+- Local Repository : The repository on your local machine where your commits are stored. Changes that are commited are saved here.
+- Remote Repository : The repository on a remote server where your code is stored and shared with others. To send changes to the remote repo, you push your commits. To get changes from the remote repo, you pull commits.
+
+```mermaid
+graph LR;
+    work[Working Directory] -->|git add| stage[Staging Area];
+    stage -->|git commit| commit[Local Repository];
+    commit -->|git push| push[Remote Repository];
+```
