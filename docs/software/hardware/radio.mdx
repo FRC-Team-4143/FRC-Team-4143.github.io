@@ -9,14 +9,20 @@ import radio from '@site/static/img/software/hardware/radio/radio.avif';
 
 # VH109 Robot Radio
 The VH109 Robot Radio is a device used in FRC robots to provide wireless communication between the robot and the driver station. For our robots,
-the VH109 radio on the robot will be connected to our Field Management System (FMS) while on the field. This allows for us to connect multiple 
+the VH109 radio on the robot will be connected to our Field Management System (FMS) while on the field. This allows us to connect multiple 
 development computers to the robot wirelessly while developing software at home. 
 
 <img src={radio} width="400" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
 
 ## Configuration
+:::warning
+Do not set an SSID prefix. Setting this will prevent the robot from connecting to the FMS.
+:::
 - **Default IP Address**: 10.TE.AM.1 (10.41.43.1 for Varsity, and 10.44.23.1 for JV)
 - **Default 2.4GHz Password**: W3AR3MAR5WAR5
 - **Default 6GHz Password**: Each robot / team number has a unique password. Check the FMS password report or ask a mentor to get it for you.
 
 
+## Troubleshooting
+
+See the Vivid Hosting radio documentation [here](https://frc-radio.vivid-hosting.net/overview/programming-your-radio-at-home)
