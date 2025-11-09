@@ -6,6 +6,7 @@ sidebar_position: 10
 ---
 
 import object_detection from '@site/static/img/software/vision/obj_det.webp';
+import trt from '@site/static/img/software/vision/trt.png';
 
 Object detection is a computer vision technique that allows a computer to identify and locate
 objects within an image. For our applications, this often means identifying game pieces or field elements.
@@ -54,6 +55,9 @@ This framework provides a simple interface for training YOLO models from our Rob
 Once the model is trained, we then deploy the model to our [Nvidia Jetson](../hardware/jetsons.mdx) vision computer. Since the Jetson is not as powerful
 as a desktop computer, we often need to optimize the model for inference on the Jetson. To do this, we use a tool called 
 [TensorRT](https://developer.nvidia.com/tensorrt), which is a high-performance deep learning optimizer and runtime library.
+
+<img src={trt} style={{maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}}/>
+
 First the model must be exported to the ONNX format, which is a standard format for trained deep learning models. ONNX encodes
 both the model architecture and the learned weights. Once encoded, the model is then fed to TensorRT for optimization. 
 TensorRT Converts the model to a highly optimized runtime that is specifically designed for inference on Nvidia hardware like

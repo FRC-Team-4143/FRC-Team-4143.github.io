@@ -1,0 +1,39 @@
+---
+title: AprilTag Fiducials
+description: AprilTag Fiducials overview and what it is used for.
+hide_table_of_contents: true
+sidebar_position: 1
+---
+
+import april_tags from '@site/static/img/software/vision/april_tags.png';
+
+AprilTags are a special type of QR Code like marker that are use for computer vision recognition.
+They feature a unique black and white pattern that can be easily detected and uniquely identified.
+On FRC fields, they are used as a reference point for robots to determine their position on the
+field relative to the field elements. AprilTags are often placed on or near the most important
+field elements, such as scoring areas or game piece pickup locations.
+
+<img src={april_tags} style={{maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}}/>
+
+## AprilTag Detection
+To detect AprilTags, we use the algorithm described in the [WPILIB documentation](https://frcdocs.wpi.edu/en/latest/docs/software/vision-processing/apriltag/apriltag-intro.html#processing-technique) 
+for AprilTag detection. Unlike the reference implementation, which uses the [AprilTag C library](https://april.eecs.umich.edu/software/apriltag.html),
+we use a [GPU accelerated version](https://github.com/FRC-Team-4143/GpuDetectorJNI) of the library, 
+originally written by FRC Team 971. This version of the library is optimized to run on Nvidia Jetson 
+vision computers, allowing for real time detection of AprilTags from multiple 60 FPS camera streams.
+
+## Pose Estimation
+Once an AprilTag is detected in an image, we can then use the known size of the AprilTag to
+estimate a camera relative pose (position and orientation) of the AprilTag. This is done using
+a mathematical technique called [Perspective-n-Point](https://en.wikipedia.org/wiki/Perspective-n-Point)
+(PnP). The PnP algorithm takes as input the 2D coordinates of the corners of the AprilTag in the image,
+the known 3D coordinates of the corners of the AprilTag in the real world, and the camera's 
+calibration parameters (camera intrinsics). Using this information, the PnP algorithm computes the
+3D position and orientation of the AprilTag relative to the camera. 
+
+For the purposes of localizing the robot, we can also compute the pose of the camera in field space
+by providing the 3d positions of the tag corners in field space, rather than relative to the camera,
+and using multiple tags in the field of view, we can get a more accurate estimate of the camera's
+pose.
+
+
