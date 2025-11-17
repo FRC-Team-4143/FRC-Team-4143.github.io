@@ -1,0 +1,154 @@
+---
+title: IMU
+description: Sensors that measure orientation and acceleration
+hide_table_of_contents: true
+sidebar_position: 2
+---
+
+import pigeon from '@site/static/img/software/hardware/sensors/pigeon.png';
+import navx from '@site/static/img/software/hardware/sensors/navx.png';
+import axes from '@site/static/img/software/hardware/sensors/rollpitchyaw.png';
+
+# Inertial Measurement Unit (IMU)
+
+An Inertial Measurement Unit (IMU) is a critical sensor in FRC robotics that measures a robot's orientation, angular velocity, and linear acceleration. IMUs enable autonomous navigation, field-oriented drive systems, and precise robot positioning.
+
+---
+
+## What is an IMU?
+
+An IMU typically combines several sensors:
+- **Gyroscope**: Measures angular velocity (rotation rate) around three axes
+- **Accelerometer**: Measures linear acceleration along three axes
+- **Magnetometer**: Measures magnetic field strength (compass functionality)
+
+Together, these sensors provide 9 degrees of freedom (9-DOF) of motion data, allowing you to determine your robot's orientation in 3D space. The most important measurements are typically from the gyroscope (heading/yaw) and accelerometer (pitch and roll).
+<img src={axes} width="200" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
+
+---
+
+## CTRE Pigeon 2.0
+<img src={pigeon} width="300" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
+**Key Features:**
+- 9-axis fusion algorithm for precise heading calculation
+- CAN bus communication for reduced wiring
+- Temperature compensation for improved accuracy
+- Built-in vibration rejection
+- Easy integration with Phoenix framework
+
+**Wiring:**
+```
+CAN High (Yellow) → CAN Bus High
+CAN Low (Green)   → CAN Bus Low
+V+ (Red)          → 12V
+GND (Black)       → Ground
+```
+
+**CTRE Docs:**
+- [Hardware Setup](https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/pigeon2/index.html)
+- [Software API](https://api.ctr-electronics.com/phoenix6/release/java/com/ctre/phoenix6/hardware/Pigeon2.html)
+
+---
+
+## Kauai Labs (Studica Robotics) NavX-MXP
+<img src={navx} width="300" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
+**Key Features:**
+- 200Hz update rate for responsive control
+- Multiple connection interfaces (SPI, I2C, USB, Serial)
+- Built-in sensor fusion algorithms
+- Collision detection capabilities
+- Comprehensive software libraries
+
+**Wiring (SPI Connection - Recommended):**
+Connect to the MXP port on the roboRIO:
+```
+MXP Pin 1  → 3.3V
+MXP Pin 2  → DIO 0 (CS)
+MXP Pin 4  → DIO 1 (MISO)
+MXP Pin 6  → DIO 2 (MOSI)
+MXP Pin 8  → DIO 3 (SCLK)
+MXP Pin 14 → Ground
+```
+
+**Studica Docs:**
+- [Hardware Setup](https://pdocs.kauailabs.com/navx-mxp/)
+- [Software API](https://www.kauailabs.com/public_files/navx-mxp/apidocs/java/com/kauailabs/navx/frc/AHRS.html)
+
+---
+
+## FRC Applications
+
+### 1. Field-Oriented Drive
+
+IMUs enable field-oriented (field-centric) drive systems where robot movement is relative to the field rather than the robot's orientation.
+
+```java
+public void fieldOrientedDrive(double xSpeed, double ySpeed, double rotation) {
+    // Get current robot heading
+    double robotAngle = Math.toRadians(imu.getHeading());
+    
+    // Transform driver inputs to field-relative coordinates
+    double fieldRelativeXSpeed = xSpeed * Math.cos(robotAngle) + ySpeed * Math.sin(robotAngle);
+    double fieldRelativeYSpeed = -xSpeed * Math.sin(robotAngle) + ySpeed * Math.cos(robotAngle);
+    
+    // Drive the robot
+    drivetrain.drive(fieldRelativeXSpeed, fieldRelativeYSpeed, rotation);
+}
+```
+
+### 2. Autonomous Navigation
+
+IMUs provide critical heading information for autonomous routines:
+
+```java
+public class TurnToAngleCommand extends CommandBase {
+    private final DriveSubsystem drivetrain;
+    private final double targetAngle;
+    private final PIDController turnController = new PIDController(0.02, 0, 0.004);
+    
+    public TurnToAngleCommand(DriveSubsystem drivetrain, double targetAngle) {
+        this.drivetrain = drivetrain;
+        this.targetAngle = targetAngle;
+        addRequirements(drivetrain);
+        
+        turnController.setTolerance(2.0); // 2 degree tolerance
+        turnController.enableContinuousInput(-180, 180);
+    }
+    
+    @Override
+    public void execute() {
+        double currentAngle = drivetrain.getHeading();
+        double turnSpeed = turnController.calculate(currentAngle, targetAngle);
+        drivetrain.arcadeDrive(0, turnSpeed);
+    }
+    
+    @Override
+    public boolean isFinished() {
+        return turnController.atSetpoint();
+    }
+}
+```
+
+### 3. Balance Detection
+
+Use IMU pitch readings to detect when your robot is on the charging station (2023):
+
+```java
+public boolean isOnChargingStation() {
+    double pitch = Math.abs(imu.getPitch());
+    return pitch > 10.0; // Robot is tilted more than 10 degrees
+}
+
+public boolean isBalanced() {
+    double pitch = Math.abs(imu.getPitch());
+    return pitch < 2.5; // Robot is within 2.5 degrees of level
+}
+```
+
+---
+
+## Troubleshooting
+1. **IMU not detected**: Check wiring and CAN/SPI connections
+2. **Inconsistent readings**: Ensure proper mounting and calibration
+3. **Drift over time**: Implement periodic resets and consider environmental factors
+4. **Noisy data**: Add software filtering or check for mechanical vibration
