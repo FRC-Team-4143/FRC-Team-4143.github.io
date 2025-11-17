@@ -4,3 +4,131 @@ description: Sensors that measure rotational position and speed
 hide_table_of_contents: true
 sidebar_position: 1
 ---
+
+# Encoders
+
+Encoders are essential sensors in FRC robotics that measure rotational position and speed. They provide critical feedback for precise control of motors, mechanisms, and autonomous navigation. Understanding the different types of encoders and their applications is crucial for building competitive robots.
+
+## Types of Encoders
+There are two primary types of encoders used in FRC applications: relative (incremental) encoders and absolute (analog) encoders. Each type has its own characteristics, advantages, and use cases. Some encoders may support both modes of operation depending on configuration.
+
+### Relative (Incremental) Encoders
+
+Relative encoders measure changes in position from a starting reference point. They generate pulses as the shaft rotates, with each pulse representing a small angular increment.
+
+**Characteristics:**
+- Output pulses (typically A and B channels for direction detection)
+- Position is relative to power-on or reset point
+- Must be "zeroed" or homed to establish absolute position
+- Higher resolution possible (can have thousands of counts per revolution)
+- Generally less expensive than absolute encoders
+
+:::tip Relative to Zero Point
+Relative encoders require a homing sequence to determine absolute position. Their readings reset when power is lost/restored.
+:::
+
+
+### Absolute (Analog) Encoders
+
+Absolute encoders provide a unique position value for every angular position within one complete revolution. They maintain position information even when power is lost.
+
+**Characteristics:**
+- Output is an analog voltage or digital value representing absolute position
+- No need for homing sequence
+- Position is maintained through power cycles
+- Typically lower resolution than relative encoders (often 10-12 bits = 1024-4096 positions per revolution)
+- More expensive but provide immediate position feedback
+
+:::tip Single Rotation Only
+Absolute encoders only return positions within a single revolution.
+:::
+
+### Common FRC Encoders
+**Relative Encoders:**
+- [CTRE CANcoder](https://store.ctr-electronics.com/products/cancoder?srsltid=AfmBOoqJKf5fmNe4HM5omNZ3GHRM3A0eilVlL8JNZXsCZrkmr-377zaA)
+- [WCP Through Bore Encoder](https://store.ctr-electronics.com/products/wcp-throughbore-encoder?srsltid=AfmBOopncYFwJelK2oRdyD2UUvlLBR_Wwln415mZ__6N3CmPfyJW16Tg)
+- [REV Through Bore Encoder](https://www.revrobotics.com/rev-11-1271/)
+
+**Absolute Encoders:**
+- [CTRE CANcoder](https://store.ctr-electronics.com/products/cancoder?srsltid=AfmBOoqJKf5fmNe4HM5omNZ3GHRM3A0eilVlL8JNZXsCZrkmr-377zaA)
+- [WCP Through Bore Encoder](https://store.ctr-electronics.com/products/wcp-throughbore-encoder?srsltid=AfmBOopncYFwJelK2oRdyD2UUvlLBR_Wwln415mZ__6N3CmPfyJW16Tg)
+- [REV Through Bore Encoder](https://www.revrobotics.com/rev-11-1271/)
+- [Thrifty Absolute Magnetic Encoder](https://www.thethriftybot.com/products/thrifty-absolute-magnetic-encoder)
+
+
+---
+
+## Encoder Placement
+Where you mount the encoder can significantly impact its performance and the accuracy of the data it provides. There are two primary placements for encoders in FRC applications: internal motor encoders and external mechanism encoders.
+
+### Internal Motor Encoders
+
+These encoders are built into or directly attached to the motor shaft, measuring the motor's raw output before any gearing.
+
+**Advantages:**
+- High resolution due to direct motor shaft measurement
+- Protected from external mechanical damage
+- No additional mounting required
+- Excellent for motor velocity control and basic position feedback
+
+**Limitations:**
+- Measure motor position, not mechanism position
+- Affected by gear backlash and mechanical play
+- Cannot detect mechanism slippage or belt skipping
+- May accumulate error through gear trains
+
+**Common Examples:**
+- Internal rotor encoder in Kraken
+- Internal rotor encoder in NEO
+- Internal rotor encoder in Falcon 500
+
+### External Mechanism Encoders
+
+These encoders are mounted directly on the mechanism being controlled, measuring the actual output position.
+
+**Advantages:**
+- Measure true mechanism position
+- Detect mechanical failures (belt slip, gear issues)
+- More accurate for precise positioning tasks
+- Can measure multi-turn positions with appropriate gearing
+
+**Limitations:**
+- Require additional mounting and protection
+- More complex wiring and setup
+- Potential for mechanical damage
+- Additional cost and complexity
+
+**Common Examples:**
+- Encoder on arm pivot point
+- Encoder on swerve module steering
+
+---
+
+## FRC Applications
+
+**Swerve Drive:**
+- Absolute encoders for steering module position
+- Wheel encoders for distance and velocity
+- Critical for maintaining module orientation
+
+**Shooter Systems:**
+- Motor encoders for flywheel speed control
+- External encoders for hood angle positioning
+- Ensures consistent shot accuracy
+
+**Arm and Elevator Systems:**
+- Absolute encoders for position feedback
+- Prevents damage from over-extension
+- Enables precise positioning for scoring
+
+**Intake Systems:**
+- Motor encoders for roller speed control
+- Position encoders for deployment mechanisms
+
+---
+
+### Troubleshooting
+- **Noisy readings:** Check wiring, grounding, and EMI sources
+- **Inconsistent zero position:** Verify absolute encoder calibration
+- **Lost counts:** Check for loose connections or mechanical slippage
+- **Reverse direction:** Swap encoder channels or invert in software
