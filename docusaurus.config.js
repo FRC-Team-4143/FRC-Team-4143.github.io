@@ -109,13 +109,7 @@ const config = {
             sidebarId: 'designSidebar',
             position: 'left',
             label: 'Design',
-          },
-          {
-            type: 'docSidebar',
-            sidebarId: 'mechanicalSidebar',
-            position: 'left',
-            label: 'Mechanical',
-          },          
+          },       
           {
             type: 'docSidebar',
             sidebarId: 'businessServicesSidebar',

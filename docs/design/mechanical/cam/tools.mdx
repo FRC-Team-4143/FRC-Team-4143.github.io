@@ -1,10 +1,11 @@
 ---
-title: Tool List
+title: Tools & Offsets
 hide_table_of_contents: true
 sidebar_position: 2
 ---
 
-Tool library : Here
+Tool library : Here  
+**Tools #'s and Feed Rates:**
 
 |ID|Tool|Feed Rate - Aluminum|
 |---|---|---|
@@ -27,3 +28,18 @@ Tool library : Here
 |18 |Step Drill       |
 |19 |0.25" Ball Endmill|
 |20 |0.75" Slotting Cutter|
+
+**Work Offsets #'s and Locations:**  (Need to confirm....)
+|Fusion ID|G-Code ID|Location|
+|---|---|---|
+|1  |G54      |Right side bottom of vice.
+|2  |G55      |Left side bottom of vice.
+|3  |G56      |Right side bottom of vise +0.5x.
+|4  |**G57** ⭐      |Left side top of parallels in vice.
+|5  |G58      |Right side top of parallels in vice.
+|6  |G59      |Back right outside vice hooks -3x.
+
+:::note
+- All work offsets are relative to the back face of the vice, not the front face.
+- G57 is the most commonly used work offset for machining in our shop.
+:::

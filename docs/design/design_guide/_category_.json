@@ -1,9 +1,9 @@
 {
     "label": "Design Guide",
-    "position": 1,
+    "position": 2,
     "link": {
       "type": "generated-index",
-      "description": "An index of design best practices and tolerencing."
+      "description": "An index of design best practices and tolerating."
     },
     "collapsed": true
   }
