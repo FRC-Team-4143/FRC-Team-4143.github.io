@@ -1,0 +1,63 @@
+---
+title: WPILib
+description: How we use WPILib for programming a FRC Robot
+hide_table_of_contents: true
+sidebar_position: 1
+---
+
+# WPILib
+WPILib is the primary library used for programming FRC robots. It provides a wide range of tools and utilities to help teams develop their robot code efficiently. 
+This section covers some of the key components and features of WPILib that we utilize in our robot projects.
+It is recommended to refer to the [official WPILib documentation](https://docs.wpilib.org/en/stable/) for more detailed information and updates.
+Also refer to the [WPILib Javadocs](https://github.wpilib.org/allwpilib/docs/release/java/index.html) for in-depth API references.
+
+---
+
+## Geometry Types
+One important aspect of robot programming is handling geometry and spatial relationships. WPILib provides several classes to represent geometric concepts such as points, vectors, and poses.
+Computations involving these geometry types are essential for tasks like navigation, path planning, and kinematics and then can tend to get complex quickly. 
+It is recommeded to look at the [WPILib documentation](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/geometry/pose.html) for more details on how to use these classes effectively.
+- [Translation](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Translation2d.html): Represents a point or vector in 2D space with x and y coordinates.
+- [Rotation](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Rotation2d.html): Represents a rotation in 2D space around the origin.
+- [Pose](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Pose2d.html): Represents a position and orientation in 2D space.
+- [Twist](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Twist2d.html): Represents a change in position and orientation in 2D space.
+- [Transforms](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Transform2d.html): Represents a transformation in 2D space, including translation and rotation.
+
+These geometry types also have a 3D counterpart (Translation3d, Rotation3d, Pose3d, Twist3d, Transform3d) for handling spatial relationships in three-dimensional space, 
+but we primarily use the 2D versions for our robot programming needs.
+
+---
+
+## Command-Based Programming
+WPILib provides a command-based programming framework that helps organize robot code into modular commands. This are very powerful and allow for easy scheduling and execution of robot actions.
+However, unless implemented carefully, they can lead to complex interdependencies and make debugging more difficult.
+We have choosen to reduce our use of commands and keep behaviors more directly implemented in subsystems where possible.
+If you are interested in learning more about commands and how to use them effectively, refer to the [Command-Based Programming documentation](https://docs.wpilib.org/en/stable/docs/software/commandbased/index.html) 
+and the [Commands](./commands.mdx) page in this documentation.
+
+---
+
+## NetworkTables
+NetworkTables is a key component of WPILib that enables communication between the robot and other devices, such as the driver station or vision processing systems.
+It is a publish-subscribe messaging system that allows for real-time data exchange. Data is published over a topic, and other devices can subscribe to that topic to receive updates.
+The full WPILib documentation for NetworkTables can be found [here](https://docs.wpilib.org/en/stable/docs/software/networktables/index.html). Many of the complexity behind networktables 
+is handled by other classes in WPILib, such as the Shuffleboard and SmartDashboard classes, which provide user-friendly interfaces for displaying and interacting with data.
+If you want to use those refer to our [Telemetry](./telemetry.mdx) page in this documentation.
+
+---
+
+## Build Tools
+WPILib provides a set of build tools to help manage the robot code development process. These tools include GradleRIO, which is a customized version of Gradle specifically designed for FRC robot projects.
+These tools help with tasks such as dependency management, code compilation, and deployment to the robot. There are shortcuts built into VS Code to make using these tools easier.
+Here are a few common tasks you may need to perform:
+- **Building the Robot Code**: You can build the robot code using the `Build Robot Code` command in VS Code. This will compile the code and generate the necessary files for deployment.
+- **Deploying to the Robot**: To deploy the code to the robot, use the `Deploy Robot Code` command in VS Code. This will transfer the compiled code to the robot's control system
+- **Setting the Team Number**: You can set the team number for your robot project using the `Set Team Number` command in VS Code. This will configure the project to use the correct team number for communication with the driver station and other devices.
+- **Simulation**: If you want to run your robot code in simulation, you can use the `Simulate Robot Code` command in VS Code. This will launch the simulator and allow you to test your code without needing a physical robot. See more about simulation [here](./testing.mdx).
+:::tip
+You can access the command palette in VS Code by pressing `Ctrl + Shift + P` (Windows/Linux) or `Cmd + Shift + P` (Mac).
+There should also be a WPILib icon in the top right corner of VS Code that you can click to access these commands.
+From there, you can search for the desired WPILib command to execute. All the WPILib related commands should be prefixed with `WPILib: `.
+:::
+
+

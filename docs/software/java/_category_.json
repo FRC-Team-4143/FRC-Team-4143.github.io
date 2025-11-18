@@ -1,9 +1,5 @@
 {
-  "label": "Java Basics",
+  "label": "☕ Java Basics",
   "position": 2,
-  "link": {
-    "type": "generated-index",
-    "description": "Basic Java concepts for programming introduction"
-  },
   "collapsed": true
 }

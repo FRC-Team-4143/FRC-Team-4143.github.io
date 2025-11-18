@@ -1,0 +1,9 @@
+{
+  "label": "Motor Controllers",
+  "position": 3,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "software/hardware/motor_controllers/index"
+  }
+}

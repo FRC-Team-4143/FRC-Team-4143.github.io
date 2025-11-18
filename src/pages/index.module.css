@@ -3,3 +3,161 @@
  * and scoped locally.
  */
 
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+  color: white;
+}
+
+/* Ensure hero text is always white for contrast */
+.heroBanner .hero__title,
+.heroBanner .hero__subtitle {
+  color: white !important;
+}
+
+.heroLogo {
+  height: 120px;
+  width: auto;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  background: transparent;
+  object-fit: contain;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+  gap: 1rem;
+}
+
+.features {
+  display: flex;
+  align-items: center;
+  padding: 4rem 0;
+  width: 100%;
+  background-color: var(--ifm-background-color);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80px;
+}
+
+.features .col {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+.features .col > div {
+  height: 100%;
+  border-radius: 8px;
+  padding: 2rem 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  background-color: var(--ifm-card-background-color);
+  color: var(--ifm-font-color-base);
+}
+
+.features .col > div:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--ifm-global-shadow-lw);
+}
+
+[data-theme='dark'] .features .col > div:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.features .button--primary {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: white !important;
+}
+
+.features .button--primary:hover {
+  background-color: #b91c1c !important;
+  border-color: #b91c1c !important;
+  color: white !important;
+}
+
+.redButton {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: white !important;
+}
+
+.redButton:hover {
+  background-color: #b91c1c !important;
+  border-color: #b91c1c !important;
+  color: white !important;
+  text-decoration: none !important;
+}
+
+.aboutSection {
+  padding: 4rem 0;
+  background-color: var(--ifm-color-emphasis-100);
+  color: var(--ifm-font-color-base);
+}
+
+.aboutSection h2 {
+  color: #dc2626;
+  margin-bottom: 1.5rem;
+}
+
+.aboutSection p {
+  font-size: 1.1rem;
+  color: var(--ifm-font-color-base);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.aboutSection ul {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--ifm-font-color-base);
+}
+
+.aboutSection ul li {
+  margin-bottom: 0.5rem;
+  color: var(--ifm-font-color-base);
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
+  .heroBanner {
+    padding: 2rem 0;
+  }
+  
+  .heroLogo {
+    height: 80px;
+    background: transparent !important;
+  }
+  
+  .buttons {
+    flex-direction: column;
+  }
+  
+  .features {
+    padding: 2rem 0;
+  }
+  
+  .features .col > div {
+    margin-bottom: 1rem;
+  }
+  
+  .aboutSection {
+    padding: 2rem 0;
+  }
+  
+  .aboutSection h2 {
+    font-size: 1.5rem;
+  }
+}

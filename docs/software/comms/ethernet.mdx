@@ -1,9 +1,32 @@
 ---
 title: Ethernet
-description: Ethernet overview and what its used for.
+description: Ethernet overview and what it is used for.
 hide_table_of_contents: true
-sidebar_position: 4
+sidebar_position: 2
 ---
 
+import ethernet_tab from '@site/static/img/software/comms/ethernet/ethernet_tab.png';
+
 # Ethernet
-Ethernet
+Ethernet is another common communication protocol used between computers. Like CAN it uses a differential signaling method to transmit data, but it is typically used for higher speed communication over longer distances.
+Ethernet uses twisted pair cables, typically Cat5e or Cat6, to transmit data between devices. Each device on the network is assigned a unique IP address, allowing for communication between devices on the same network or
+across different networks using routers.
+
+## Electronics
+Ethernet uses a differential signaling method similar to CAN, but it uses four pairs of wires instead of two. Ethernet uses a total of four pairs of wires, with two pairs used for transmitting data and two pairs used for
+receiving data. This allows for full duplex communication, meaning that data can be transmitted and received simultaneously. Ethernet cables are typically terminated with RJ45 connectors, which are designed to provide a 
+secure connection between the device and cable. RJ45 connectors have a release tab that allows for easy removal of the connector from the device. 
+
+:::danger
+When removing an RJ45 connector, Make sure to **fully press the release tab** down **before pulling** the connector out. Pulling on the cable or the connector without pressing the release 
+tab **will damage the connector** or the device. **Please be gentle with our robot parts!**
+
+<img src={ethernet_tab} width="300" style={{backgroundColor: 'white', padding: '10px', borderRadius: '8px', display: 'block', marginTop: '10px'}}/>
+
+:::
+
+## Network Architecture
+Ethernet uses a star topology, meaning that all devices are connected to a central hub or switch. A network switch is a device that connects multiple devices on the same network, allowing them to communicate with each other.
+On FRC Robots, the [Robot Radio](../hardware/radio.mdx) acts as the network switch, allowing the roboRIO and other devices to communicate with each other. Commonly we have the roboRIO, as well as our vision
+coprocessor connected to the robot radio via ethernet on the robot.
+

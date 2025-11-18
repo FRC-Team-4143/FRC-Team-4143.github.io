@@ -1,0 +1,90 @@
+---
+title: Signal Filtering
+description: How to filter signals to get a more desired result
+hide_table_of_contents: true
+sidebar_position: 5
+---
+
+import fallingEdge from '@site/static/img/software/controls/filters/falling-edge-debounce.png';
+import risingEdge from '@site/static/img/software/controls/filters/rising-edge-debounce.png';
+
+# Signal Filtering
+In robotics, sensor signals can often be noisy or contain unwanted fluctuations that can affect the performance of control systems.
+This is due to various factors such as electrical interference, mechanical vibrations, or environmental conditions.
+In a simulated environment, noise is not present, allowing for cleaner signals. However, when working with real-world hardware, it is essential to implement filtering techniques to improve signal quality.
+Filtering helps to smooth out the signal, reduce noise, and extract relevant information for better decision-making and control.
+This section covers some common filtering techniques used in robotics.
+
+---
+
+## Debounce
+Debouncing is a technique used to eliminate noise and false triggers from digital signals, particularly in mechanical switches and buttons. 
+When a button is pressed or released, it may generate multiple rapid on/off signals due to mechanical vibrations.
+Debouncing ensures that only a single, clean signal is registered for each button press or release. However, we can use it for any digital signal that may be noisy.
+Check the WPILib documentation for their implementation of a [Debouncer](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/filters/debouncer.html).
+
+
+### Rising Edge Debounce
+A rising edge in a signal occurs when the signal transitions from a low state (0) to a high state (1).
+The debounce is to configured to only transition to output a high signal when the raw input signal has been continuously high for a specified duration.
+<img src={risingEdge} width="600"/>
+In the plot above, the debounced is configured with a 0.3 second delay. The raw input signal has some noise that causes it to briefly drop low multiple times, but the output signal only transitions high after the input has been high for a continuous 0.3 seconds.
+
+
+### Falling Edge Debounce
+A falling edge in a signal occurs when the signal transitions from a high state (1) to a low state (0).
+The debounce is to configured to only transition to output a low signal when the raw input signal has been continuously low for a specified duration.
+<img src={fallingEdge} width="600"/>
+In the plot above, the debounced is configured with a 0.3 second delay. The raw input signal has some noise that causes it to briefly raise high multiple times, but the output signal only transitions low after the input has been low for a continuous 0.3 seconds.
+
+:::info
+We may use debouncing for game piece detections with internal sensors that may be noisy due to vibrations or other factors.
+They can also be used to generate a slight delay to confirm a condition is met before taking action.
+For example making sure the elevator and arm have come to a complete stop before allowing the shooter to run.
+:::
+
+
+### Combined Rising and Falling Edge Debounce
+In many cases, it is useful to apply both rising and falling edge debouncing to a signal. This ensures that the signal transitions are clean and stable in both directions.
+By configuring separate debounce durations for rising and falling edges, we can tailor the filtering to the specific characteristics of the signal and the application requirements.
+This combined approach helps to further improve signal quality and reliability.
+
+
+### WPILib Debounce Class
+WPILib provides a built-in `Debounce` class that can be used to implement debouncing for digital signals.
+The `Debounce` class allows you to specify separate durations for rising and falling edge debouncing.
+Here is an example of how to use the `Debounce` class in Java:
+```java
+Debounce risingDebounce = new Debounce(duration, Debounce.DebounceType.kRising);
+Debounce fallingDebounce = new Debounce(duration, Debounce.DebounceType.kFalling);
+
+boolean processedInputSignal = risingDebounce.calculate(rawInputSignal);
+boolean processedInputSignal = fallingDebounce.calculate(rawInputSignal);
+```
+
+:::note
+WPILib's `Debounce` does have a combined rising and falling edge mode, but it uses the same duration for both edges.
+```java
+Debounce combinedDebounce = new Debounce(duration, Debounce.DebounceType.kBoth);
+boolean processedInputSignal = combinedDebounce.calculate(rawInputSignal);
+```
+If you want different durations for rising and falling edges, you will need to use two separate `Debounce` instances as shown in the previous example.
+You can then hack them together to get a combined effect.
+```java
+boolean processedInputSignal = risingDebounce.calculate(fallingDebounce.calculate(rawInputSignal));
+```
+:::
+
+---
+
+## Rate Limiting
+Rate limiting is a technique used to control the frequency of signals or commands sent to a system. 
+In robotics, it can be useful to prevent excessive commands from being sent to actuators or motors, which can cause erratic behavior or damage.
+By implementing rate limiting, you can ensure that commands are sent at a controlled rate, allowing the system to respond more smoothly and predictably.
+
+---
+
+## Kalman Filter
+The Kalman filter is an advanced filtering technique used to estimate the state of a dynamic system from noisy measurements.
+It is particularly useful in robotics for sensor fusion, where data from multiple sensors are combined to obtain a more accurate estimate of the system's state.
+We typically use this for localization and navigation tasks, where odometery, IMU, and vision data are fused together to estimate the robot's position and orientation.

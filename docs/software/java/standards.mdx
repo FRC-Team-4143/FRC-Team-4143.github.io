@@ -8,7 +8,8 @@ sidebar_position: 10
 # Java Programming Standards
 
 ## Comments
-- All methods should be commented following java doc styling. Make sure to include any parameters or return members. Example is show below:
+- All methods should be commented following java doc styling. Make sure to include any parameters or return members.
+Example is show below:
     ```java
     /**
      * Calculates the chassis traveled distance based on provided speed and duration
@@ -38,7 +39,7 @@ sidebar_position: 10
     boolean is_enabled_;
     float error_;
     ```
-- Variables that are constant should be named using `SCREAMING_SNAKE_CASE`. The should also use the `final` and `static` modifiers to prevent accidental updates and multiple instances. Examples are shown below:
+- Variables that are constant should be named using `SCREAMING_SNAKE_CASE`. They should also use the `final` keyword.
     ```java
     static final double ELEVATOR_HOME_POSITION;
     static final int COUNTER_RESET;
@@ -57,6 +58,12 @@ sidebar_position: 10
         TRAVELING_DOWN
     }
     ```
+
+## Loops
+- Avoid using `while` loops
+    - They are dangerous in a controls application and could result in a infinite loop if not updated correctly.
+- Iterators for a `for` loops should be used in order of `i`, `j`, and then `k`.
+    - If the iterator is used external to the `for` it should be named something unique to its purpose.
 
 ## Methods / Functions
 - Methods should be named using `lowerCamelCase`. Examples are shown below:
@@ -101,8 +108,4 @@ sidebar_position: 10
     ```
     :::
 
-## Loops
-- Never use `while` loops
-    - They are dangerous in a controls application and could result in a infinite loop if not updated correctly.
-- Iterators for a `for` loops should be used in order of `i`, `j`, and then `k`.
-    - If the iterator is used external to the `for` it should be named something unique to its purpose.
+## Classes

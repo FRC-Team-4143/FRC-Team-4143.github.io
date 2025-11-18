@@ -1,0 +1,34 @@
+---
+title: RoboRio
+description: Main compute system for FRC robots
+hide_table_of_contents: true
+sidebar_position: 1
+---
+
+import rio from '@site/static/img/software/hardware/roborio/roboRio.png';
+
+# RoboRio
+The RoboRio is the main compute system used in FRC robots. It is responsible for running the robot code, managing communication between various subsystems, and interfacing with sensors and actuators on the robot. The RoboRio is a embedded system that provides a robust platform for developing and deploying robot software. Check the WPILib documentation for a more detailed [overview](https://docs.wpilib.org/en/stable/docs/software/roborio-info/roborio-introduction.html).
+
+<img src={rio} width="400"/>
+
+
+## Configuration
+- **Default IP Address**: 10.TE.AM.2 (10.41.43.2 for Varsity, and 10.44.23.2 for JV)
+- **USB Port IP Address**: 127.22.11.1
+- **Hostname**: roboRIO-TEAM-FRC.local (roboRIO-4143-FRC.local for Varsity, and roboRIO-4423-FRC.local for JV)
+
+:::note Imaging and Configuration
+For imaging and configuring the roboRIO, refer to the [Hardware Configurators](../tools/hw-config.mdx) documentation.
+:::
+
+## Input/Outputs
+- **Digital I/O**: 10
+- **Analog Inputs**: 4
+- **PWM Outputs**: 10
+- **CAN Ports**: 1 (CAN bus for motor controllers and other devices)
+- **Ethernet Port**: 1 (for communication with robot radio and other devices)
+- **USB Ports**: 2 (for connecting cameras and other USB devices)
+- **SPI Port**: 1 (for high-speed communication with sensors)
+- **I2C Port**: 1 (for communication with sensors and other devices)
+
