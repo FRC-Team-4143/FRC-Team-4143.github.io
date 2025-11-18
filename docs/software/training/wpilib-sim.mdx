@@ -1,32 +1,21 @@
 ---
-title: Methods and WPILib
-description: This is a into to using and creating methods. It will also cover some WPILib features that make development faster.
+title: WPILib and Simulation
+description: This is a into to using and creating methods.
 hide_table_of_contents: true
-sidebar_position: 4
+sidebar_position: 5
 ---
 
-# Methods and WPILib
-In this module, we will cover the concept of methods in programming and explore some features of WPILib that can help streamline your development process for FRC robots.
+# WPILib and Simulation
+In this module we will cover some basic uses of WPILib for driving a differential drive robot as well as setting up a simulation environment to test your code without a physical robot.
 
 ---
 
 ## Presentation
-<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vQNXSVrmBe01ck-pI0dfdgDoaSrjMiBYgiO-yfATjwp1QctFpWmim-kf6_Tm-14hdWak50vYMMjANxX/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTyvrLPFZj8cYaDwGkbPY_WGTxrjbIHkxOXvSxk9a9HyA6k5dZknC0UT05FngsJ99Ot7c0mbulSE4dn/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
 
 ---
 
 ## Exercises
-### Methods
-- Write methods to convert the encoder inputs usable outputs
-    - translation position in m
-    - translation speed in m/s
-    - rotation position in radians
-    - rotation speed in rads/s
-- Write methods to set the speed drive motors
-    - setting the left motor only
-    - setting the right motor only
-    - method that performs the math of arcade drive and sets the motors (using above methods)
-- Write methods to update the inputs and outputs following the IO model
 ### WPILib
 - Create a [DifferentialDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html) Object
     - Use the [arcadeDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html#arcadeDrive(double,double)) method to drive the robot in auto/tele
@@ -45,11 +34,8 @@ In this module, we will cover the concept of methods in programming and explore 
 
 ## Related Documentation
 ### Software
-- [Methods](../java/methods.mdx): A detailed explanation of methods in programming, including how to create and use them effectively.
 - [WPILib](../robot_dev/wpilib.mdx): The main library used for programming FRC robots.
 - [Kinematics and the ChassisSpeeds Class](https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/intro-and-chassis-speeds.html): Overview of kinematics and how to use the ChassisSpeeds class in WPILib.
-### Hardware
-- [IMU](../hardware/sensors/imu): Guide on using Inertial Measurement Units (IMUs) for robot orientation and movement tracking.
 ### Software Tools
 - [VSCode](../tools/vscode.mdx): Our primary Integrated Development Environment (IDE) for programming.
 - [Driver Station](../tools/driver-station.mdx): Software used to control and monitor the robot during competitions.
