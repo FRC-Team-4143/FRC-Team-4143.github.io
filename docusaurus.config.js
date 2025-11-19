@@ -122,13 +122,14 @@ const config = {
             sidebarId: 'designSidebar',
             position: 'left',
             label: 'Design',
-          },
+          },       
           {
             type: 'docSidebar',
             sidebarId: 'businessServicesSidebar',
             position: 'left',
             label: 'Business Services',
           },
+
           // adds sight seach to the navbar
           {
             type: 'search',

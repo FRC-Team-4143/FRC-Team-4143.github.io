@@ -1,0 +1,9 @@
+{
+    "label": "Mechanical",
+    "position": 3,
+    "link": {
+      "type": "generated-index",
+      "description": "Make da robit."
+    },
+    "collapsed": true
+  }

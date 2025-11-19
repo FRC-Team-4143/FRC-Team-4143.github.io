@@ -1,0 +1,9 @@
+{
+    "label": "CAM",
+    "position": 2,
+    "link": {
+      "type": "doc",
+      "id": "design/mechanical/cam/index"
+    },
+    "collapsed": true
+}
