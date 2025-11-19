@@ -1,12 +1,12 @@
 ---
-title: WPILib and Simulation
+title: OOO and WPILib
 description: This is a into to using and creating methods.
 hide_table_of_contents: true
 sidebar_position: 5
 ---
 
 # WPILib and Simulation
-In this module we will cover some basic uses of WPILib for driving a differential drive robot as well as setting up a simulation environment to test your code without a physical robot.
+In this module we will cover the basics of Object Oriented Programming. This will include creating classes, methods, and using objects. We will then cover some of the WPILib classes used for controlling a differential drive robot, including kinematics and odometry. Finally, we will cover how to simulate a differential drive robot using WPILib's simulation tools.
 
 ---
 
@@ -16,6 +16,22 @@ In this module we will cover some basic uses of WPILib for driving a differentia
 ---
 
 ## Exercises
+### Classes
+- Create an abstract OI class
+    - Add a getter for a joystick Y axis
+    - Add a getter for a joystick X axis
+- Update your code to use the OI class methods and remove the XboxController from Robot.java
+### Objects
+- Create a Drivetrain Class
+    - Create the class in a new folder called “subsystems”
+    - Move all content related to your drivetrain and its methods to the new class
+    - Your readInputs and writeOutputs should now be your primary methods
+    - Add a new method to reset wheel encoders
+    - Add a new helper method to convert from ticks to meters
+- Create a Drivetrain Object in Robot
+    - Use it to call readInputs and writeOutputs in robotPeriodic
+    - Use it to call arcadeDrive in teleopPeriodic and autonomousPeriodic
+    - Use it to call getDistance in autonomous
 ### WPILib
 - Create a [DifferentialDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html) Object
     - Use the [arcadeDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html#arcadeDrive(double,double)) method to drive the robot in auto/tele
@@ -34,6 +50,7 @@ In this module we will cover some basic uses of WPILib for driving a differentia
 
 ## Related Documentation
 ### Software
+- [Classes and Objects](../java/classes-objs.mdx): Overview of classes and objects in Java.
 - [WPILib](../robot_dev/wpilib.mdx): The main library used for programming FRC robots.
 - [Kinematics and the ChassisSpeeds Class](https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/intro-and-chassis-speeds.html): Overview of kinematics and how to use the ChassisSpeeds class in WPILib.
 ### Software Tools
