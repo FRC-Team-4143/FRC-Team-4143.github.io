@@ -1,13 +1,17 @@
 ---
-title: Getting Started with Fusion
+title: Fusion Guide
 hide_table_of_contents: true
 sidebar_position: 1
 unlisted: true
 
 ---
 
+# Fusion Guide
+
 The following text will walk you through how to set up and generate G-Code from Fusion.
 If you do not have access to Fusion or the shared work space refer to [**Fusion Sign-Up**](https://frc-team-4143.github.io/docs/mechanical/fusion/fusion-sign-up)
+
+## Exporting from Onshape to Fusion 360
 
 - Right click the part in Onshape model or the part tree and click **Export**.
 
@@ -21,12 +25,86 @@ If you do not have access to Fusion or the shared work space refer to [**Fusion 
 - Option: Download
 <img src={onshape_download} width="400"/>
 
+- Navigate to Autodesk Fusion 360.
+- Open the Data Panel in the upper left corner.
+- Select the appropriate project folder (2026FRC4143).
+<img src={Upload_1} width="400"/>
+
+- Navigate to the desired subassembly folder.
+<img src={Upload_2} width="400"/>
 
 
+- Click the Upload button in the Data Panel.
+- Drag and drop the exported Step file into the upload window.
+- Once file is loaded Click Upload.
+- Once the file is uploaded, double click the part to open it in Fusion.
+<img src={Upload_3} width="400"/>
+
+## Fusion CAM Setup
+
+- Alight part in the Fusion workspace.
+    - identify the top, front, and right faces of the part.
+    - Cli
+    - Utilize the alight tool to set the orientation of the part onto the XY-plane.
+
+# pictures
+
+- Switch to the Manufacture workspace.
+    - Click the Setup dropdown and select New Setup.
+
+# pictures
+
+### Stock setup
+
+Set stock,
+Set origin point to,
+Set Work offset,
+Reference [Tools & Offsets](../cam/tools) for work offset locations.
+
+### Operations
+
+Determine Order of operations.
+
+Drilling
+Milling
+Parting
+
+#### Drilling
+
+- 
+
+# Drilling Picture 1 (Shows selection)
+
+# Drilling Picture 2 (Shows parameters)
+Pecking
+Reference [Torque Monitoring](../machining/milling_cnc#torque-monitoring) for work offset locations.
+
+# Drilling Picture 3 (Shows Depth)
+
+#### Boring
+
+#### Milling
+
+#### Parting
+
+# Contour Picture 1 (Shows selection)
+
+# contour Picture 2 (Shows parameters)
+
+# contour Picture 2 (Tabs??)
+
+### Validation
 
 
-
-
+### Post Process
+Confirm post processor
+Confrim operations
+Confirm work offset
+Confrim name
+Confirm save locations
 
 import onshape_download from '@site/static/img/mechanical/Fusion/Onshape_Download.png';
 import onshape_export from '@site/static/img/mechanical/Fusion/Onshape_Export.png';
+import Upload_1 from '@site/static/img/mechanical/Fusion/Upload_1.jpg';
+import Upload_2 from '@site/static/img/mechanical/Fusion/Upload_2.jpg';
+import Upload_3 from '@site/static/img/mechanical/Fusion/Upload_3.jpg';
