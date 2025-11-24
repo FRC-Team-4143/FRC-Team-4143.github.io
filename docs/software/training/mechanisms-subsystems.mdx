@@ -1,0 +1,35 @@
+---
+title: Mechanisms and Subsystems
+description: An overview of mechanisms and subsystems used in FRC robots. This is a unique approach compare to the traditional subsystem-based design, focusing on modular and reusable components.
+hide_table_of_contents: true
+sidebar_position: 7
+---
+
+# Mechanisms and Subsystems
+In this module, we will explore the concept of mechanisms and subsystems in FRC robots. Unlike traditional subsystem-based designs, we will focus on a modular approach that allows for reusable components. This method emphasizes the creation of mechanisms that can be easily integrated into different subsystems, promoting flexibility and efficiency in robot design.
+
+## Presentation
+<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTbvSvRfeg_-zSxDjNJ2fSz3RLFuMd5oTOnJLEpuFJHxpUDmR0eOuIlMy0PuSwDA6otN7Vv8ojdo7Fm/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+
+## Exercises
+### GitHub Repo
+- Fork the [onboarding](https://github.com/FRC-Team-4143/onboarding) repo.
+- Clone the onboarding repo to your folder in the share drive
+- Update the readme and create / push a commit
+### Mechanisms and Subsystems
+- Create a shooter package under subsystems
+- Create a ShooterConstants class
+    - Add all constants for the flywheel and roller
+    - Update the OI class to allow reading buttons
+- Create a Shooter Subsystem
+    - Add a flywheel Mechanism
+    - Add a roller mechanism
+    - Create logic to allow a button press to shoot
+    - Create logic to allow a button press to index
+- Update the RobotContainer to register your subsystem
+
+## Related Documentation
+### Software
+- [Mechanisms](../robot_dev/mechanisms.mdx): Overview of mechanisms in FRC robots (Unique to MARS/WARE).
+- [Subsystems](../robot_dev/subsystems.mdx): Overview of subsystems in FRC robots (Unique to MARS/WARE).
+
