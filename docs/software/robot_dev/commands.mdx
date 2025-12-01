@@ -19,8 +19,9 @@ behavior:
 - `execute()`: Called repeatedly while the command is scheduled.
 - `isFinished()`: Returns true when the command should end.
 - `end(interrupted)`: Called once when the command ends, either because it finished or was interrupted.
+
 These methods execute like a state machine, with `initialize()` running once, followed by repeated calls to `execute()`
-until `isFinished()` returns true, at which point `end()` is called.
+until `isFinished()` returns true, at which point `end()` is called. Below is an example of a command as a state machine:
 
 ```mermaid
 stateDiagram-v2
