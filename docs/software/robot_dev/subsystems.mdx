@@ -163,6 +163,7 @@ The reset method should set the subsystem back to its initial state. This is imp
 public void reset() {
     system_state_ = ShooterStates.IDLE;
 }
+```
 
 ### Registering the Subsystem
 Finally, ensure that the new subsystem is registered within the robot's main subsystem manager. This typically involves adding an instance of the subsystem to a list or map of subsystems that the robot manages. This step is crucial for the subsystem to be recognized and updated during the robot's operation. This is usually done in the `RobotContainer` class. Here is an example of how to register the `ShooterSubsystem`:

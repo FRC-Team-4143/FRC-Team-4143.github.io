@@ -10,10 +10,10 @@ The mechanisms discussed on this page are part of our custom MWLib library devel
 :::
 
 # Mechanisms
-Mechanisms are a a part of our MWLib library that help reduce implementation time for common robot mechanisms by providing pre-built classes and methods. They are designed to be modular and reusable, allowing us to quickly integrate complex mechanisms into our robot code with minimal effort.
+Mechanisms are a part of our MWLib library that help reduce implementation time for common robot mechanisms by providing pre-built classes and methods. They are designed to be modular and reusable, allowing us to quickly integrate complex mechanisms into our robot code with minimal effort.
 This provides a high level overview for some of the mechanisms available in MWLib. For detailed documentation and usage examples, please refer to the [MWLib GitHub repository](https://github.com/FRC-Team-4143/MW-Lib).
 
-The primary benefit to this architecture is to allow for easier adoption of robot simulation. The subsystems logic remains the same between simulation and real robot code, with only the mechanism implementations differing. This allows for a smoother transition between testing in simulation and deploying on the actual robot. The external API for the mechanisms remain consistent across operating modes and just the internal implementation changes based on whether the code is running in simulation or on the real robot hardware.
+The primary benefit to this architecture is to allow for easier adoption of robot simulation. The subsystems logic remains the same between simulation and real robot code, with only the mechanism implementations differing. This allows for a smoother transition between testing in simulation and deploying on the actual robot. The external API for the mechanisms remains consistent across operating modes and just the internal implementation changes based on whether the code is running in simulation or on the real robot hardware.
 
 ---
 
@@ -184,7 +184,7 @@ classDiagram
     MechBase <|-- RollerMech
 ```
 
-There are additional "mechanism" that are more utility based and not full mechanisms by themselves. These include things like a Time of Flight Sensor or other single purpose devices. These are generally not full mechanisms but can be used as components within a larger mechanism or subsystem. A distance may be used in an intake, but does not belong to the pivot or the rollers directly.
+There are additional "mechanisms" that are more utility-based and not full mechanisms by themselves. These include things like a Time of Flight sensor or other single-purpose devices. These are generally not full mechanisms but can be used as components within a larger mechanism or subsystem. A distance sensor may be used in an intake, but does not belong to the pivot or the rollers directly.
 
 ---
 

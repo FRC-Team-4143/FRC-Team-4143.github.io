@@ -62,8 +62,8 @@ Remember the largest valid index will be `length - 1` since index counting begin
 ---
 
 ## ArrayLists
-ArrayLists are a little more friendly to use as they do not have fixes sizes and aren't declared with values. They
-still only store one datatype, but are much more flexible. In order to create an ArrayList for a given type the syntax
+ArrayLists are a little more friendly to use as they do not have fixed sizes and aren't declared with values. They
+still only store one datatype, but are much more flexible. In order to create an ArrayList for a given type, the syntax
 is the following:
 ```java title="Syntax"
 ArrayList<type> name = new ArrayList<type>();
@@ -71,8 +71,8 @@ ArrayList<type> name = new ArrayList<type>();
 ```java title="Example"
 ArrayList<double> double_array_list = new ArrayList<double>();
 ```
-Because of how the ArrayList structure is built we will have to access the elements differently as well. There are
-unique methods we can call from the variable that let us preform the functions similar to `[]` on a standard array.
+Because of how the ArrayList structure is built, we will have to access the elements differently as well. There are
+unique methods we can call from the variable that let us perform the functions similar to `[]` on a standard array.
 ```java
 // Retrieving an element from the ArrayList
 double_array_list.get(index);
@@ -89,8 +89,8 @@ double_array_list.size();
 ---
 
 ## For Each
-One of the most common ways of accessing elements in array is by looping through and checking all indexes. This can
-obviously be done with a simple `for` loop. Theres will loop through all elements in an array and preform a specific or
+One of the most common ways of accessing elements in an array is by looping through and checking all indexes. This can
+obviously be done with a simple `for` loop. These will loop through all elements in an array and perform a specific or
 repeated action using each element. In the example below we are just printing the value of each element.
 ```java
 // Looping through an array
@@ -103,7 +103,7 @@ for(int i = 0; i < array.size(); i++){
     System.out.println(array.get(i));
 }
 ```
-However there is an even cleaner way to loop through all the elements in an array. That is using a what is typically
+However, there is an even cleaner way to loop through all the elements in an array. That is using what is typically
 called a **for-each** loop. The for-each loop creates a variable within the loop's scope to represent a given element
 and will update that reference over and over until all elements in the array have been used. The example below stores
 the value of a given element in the `value` variable.
