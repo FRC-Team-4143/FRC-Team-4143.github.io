@@ -59,6 +59,27 @@ public void readInputs(double timestamp) {
     current_draw_ = motor_.getSupplyCurrent().getValue().in(Amps);
     motor_temp_c_ = motor_.getDeviceTemp().getValue().in(Celsius);
     bus_voltage_ = motor_.getSupplyVoltage().getValueAsDouble();
+
+    // run the simulation update step here if we are simulating
+    if (IS_SIM) {
+        // Provide a battery voltage to the TalonFX sim so controller output is
+        // meaningful
+        motor_.getSimState().setSupplyVoltage(12.0);
+
+        // Set input voltage from motor controller to simulation
+        roller_sim_.setInput(motor_.getSimState().getMotorVoltage());
+
+        // Update simulation by 20ms
+        roller_sim_.update(0.020);
+
+        // Convert meters to motor rotations
+        double motorPosition = Radians.of(roller_sim_.getAngularPositionRad()).in(Rotations);
+        double motorVelocity = RadiansPerSecond.of(roller_sim_.getAngularVelocityRadPerSec())
+                .in(RotationsPerSecond);
+
+        motor_.getSimState().setRawRotorPosition(motorPosition);
+        motor_.getSimState().setRotorVelocity(motorVelocity);
+    }
 }
 ```
 The `writeOutputs()` method takes the desired actuator commands and converts them into raw outputs that can be sent to the actuators (or simulated actuators). This may involve scaling, limiting, or converting physical units into raw actuator commands. The outputs written to the actuators should be stored in a variable to allow for logging. An example of this method is shown below:
@@ -170,7 +191,9 @@ There are additional "mechanism" that are more utility based and not full mechan
 ## Interacting with Mechanisms
 Interacting with mechanisms in MWLib is straightforward. Each mechanism class provides methods to set target positions, velocities, or duty cycles, depending on the type of mechanism. There are also methods to retrieve the current state of the mechanism, such as its position or velocity. These methods tend to follow a consistent naming convention across different mechanism classes, making it easier to switch between them:
 - **Set Target Position**: `setTargetPosition(value)` - Sets the desired position for mechanisms that support position control.
+    - `value` is typically in physical units such as radians for arms or meters for elevators.
 - **Set Target Velocity**: `setTargetVelocity(value)` - Sets the desired velocity for mechanisms that support velocity control.
+    - `value` is typically in physical units such as radians per second or meters per second.
 - **Set Target Duty Cycle**: `setTargetDutyCycle(value)` - Sets the desired duty cycle for mechanisms that support duty cycle control.
 - **Get Current Position**: `getCurrentPosition()` - Retrieves the current position of the mechanism.
 - **Get Current Velocity**: `getCurrentVelocity()` - Retrieves the current velocity of the mechanism.
@@ -178,6 +201,12 @@ Interacting with mechanisms in MWLib is straightforward. Each mechanism class pr
 :::warning Getters and Setters Only
 It is important to note that the mechanism classes are designed to be interacted with primarily through their public getters and setters. Direct manipulation of internal state variables is discouraged to maintain encapsulation and ensure proper operation of the mechanisms.
 :::
+
+:::tip Example Implementation
+For an example of how to implement and use these mechanisms in a subsystem, refer to the [Subsystems Documentation](./subsystems/#using-the-mechanisms).
+:::
+
+---
 
 ## Simulation Overrides
 When running in simulation mode, the mechanism classes automatically switch to using simulated sensors and actuators. This is handled internally by checking the `IS_SIM` flag within the read and write methods. As a user of the mechanism classes, you do not need to make any changes to your code to accommodate simulation; simply ensure that the `IS_SIM` flag is set appropriately for your environment.
