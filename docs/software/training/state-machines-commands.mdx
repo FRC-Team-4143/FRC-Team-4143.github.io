@@ -3,7 +3,34 @@ title: State Machines and Commands
 description: An introduction to state machines and command-based programming in FRC robots. This includes how to create and manage states, transitions, and commands to control robot behavior.
 hide_table_of_contents: true
 sidebar_position: 8
-unlisted: true
 ---
 
-# WIP
+# State Machines and Commands
+State machines are a powerful way to manage complex robot behaviors by breaking them down into distinct states and defining transitions between those states. In FRC robotics, we often use state machines in conjunction with command-based programming to create modular and reusable code.
+
+## Presentation
+<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vRCNRBtQt72La-LYGF4-ZQTnZFPjgEP7pvz3qi49VdWJlC5xSWksWCY_4tRsjNviy_abANulWtZuFlC/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+
+## Exercises
+### State Machines
+- Write a State Machine in ShooterSubsystem
+    - **IDLE** State: System idle
+    - **SPIN_UP** State: Flywheel spinning up to desired speed
+    - **SHOOT** State: Index balls into flywheel
+    - Add an automated transition from **SPIN_UP** -> **SHOOT**
+    - Add an automated transition from **SHOOT** -> **SPIN_UP**
+    - Prevent **IDLE** -> **SHOOT** transition
+
+### Commands
+- Add a ShooterCommands file in the shooter package
+    - Create a command to set the wanted state of the shooter to SHOOT
+    - Bind the command to a button in OI
+- Create a Instant Command to simulate applied load from launching a ball
+    - See available methods for the flywheel mech!
+    - Bind the command to a button in OI
+
+## Related Documentation
+### Software
+- [State Machines](../controls/state-machines.mdx): Basics of state machines and how they are used in controls.
+- [Subsystems](../robot_dev/subsystems.mdx): Overview of subsystem-based programming in FRC robots.
+- [Commands](../robot_dev/commands.mdx): Overview of command-based programming in FRC robots.

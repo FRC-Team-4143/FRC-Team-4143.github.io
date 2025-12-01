@@ -6,11 +6,10 @@ sidebar_position: 3
 ---
 
 # Commands
-:::warning Avoid Using Commands!
-Please do everything possible to avoid commands. They have special behavior that attempts to handle scheduling that can
+:::warning Avoid Complex Commands!
+Commands have special behavior that attempts to handle scheduling that can
 make more complex robots unnecessarily complicated. The only use case for commands should be interfacing with buttons to
-trigger a specific subsystem state. There should be little to no logic within the command.
-**This page is just for those looking to understand commands!** 🤓
+trigger a specific subsystem state. There should be little to no logic within the command. Most robot behavior should be handled within the subsystem state machines.
 :::
 
 ## Command Structure
@@ -56,8 +55,6 @@ stateDiagram-v2
 ```
 :::
 
----
-
 ### RunOnce Command
 A command that runs a given function once and then finishes.
 The definition requires only the function to run. It will run the function and then finish immediately after.
@@ -81,8 +78,6 @@ Here is an example that sets a solenoid to the forward position once:
 // Sets the hatch solenoid to the forward position once.
 Commands.runOnce(() -> m_hatchSolenoid.set(kForward));
 ```
-
----
 
 ### Run Command
 A command that runs a given function repeatedly until it is interrupted.
@@ -112,7 +107,6 @@ Commands.run(() -> m_robotDrive.arcadeDrive(
 );
 ```
 
----
 
 ### StartEnd Command
 A command that runs one function when it starts and another when it ends.
@@ -142,8 +136,6 @@ Commands.startEnd(
 );
 ```
 
----
-
 ### Wait Command
 A command that does nothing for a specified duration. The definition requires only the duration. It will wait in `execute()` until the time has elapsed, but performs no actions during that time.
 ```mermaid
@@ -166,8 +158,6 @@ Here is an example that waits for 2 seconds:
 Commands.waitSeconds(2.0);
 ```
 
----
-
 ### Functional Command
 A command that allows you to define custom behavior for each method using functions.
 The definition requires functions for each of the command methods: `initialize()`, `execute()`, `isFinished()`, and `end()`.
@@ -188,9 +178,18 @@ stateDiagram-v2
     end --> [*]
 ```
 
-Here is an example that waits for 2 seconds:
+Here is an example of a command that dr ives the robot forward for a specified distance:
 ```java
-Commands.waitSeconds(2.0);
+new FunctionalCommand(
+    // Reset encoders on command start
+    m_robotDrive::resetEncoders,
+    // Start driving forward at the start of the command
+    () -> m_robotDrive.arcadeDrive(kAutoDriveSpeed, 0),
+    // Stop driving at the end of the command
+    interrupted -> m_robotDrive.arcadeDrive(0, 0),
+    // End the command when the robot's driven distance exceeds the desired value
+    () -> m_robotDrive.getAverageEncoderDistance() >= kAutoDriveDistanceInches
+)
 ```
 
 ---

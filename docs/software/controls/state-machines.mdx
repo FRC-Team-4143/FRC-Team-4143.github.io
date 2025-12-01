@@ -4,3 +4,77 @@ description: Basics of state machines and how they are used in controls.
 hide_table_of_contents: true
 sidebar_position: 5
 ---
+
+# State Machines
+
+State machines are one of the most fundamental and powerful concepts in robotics programming. They help us organize complex robot behaviors by breaking them down into simple, manageable pieces called **states**. Think of a state machine like a flowchart that describes how something behaves. It's a way to model systems that can be in different "modes" or "states" at any given time, and can transition between these states based on certain conditions. They are very useful for controlling robots because they allow us to define clear behaviors and transitions.
+
+---
+
+### Real-World Examples
+**Traffic Light**: A traffic light is a simple state machine with three states:
+- **Red**: Cars must stop
+- **Yellow**: Cars should prepare to stop
+- **Green**: Cars can go
+
+**Washing Machine**: Your washing machine has states like:
+- **Fill**: Adding water
+- **Wash**: Agitating clothes
+- **Rinse**: Clean water cycle
+- **Spin**: Remove water
+- **Done**: Cycle complete
+
+---
+
+## Components of a State Machine
+A state machine consists of two fundamental components: **states** and **transitions**. States represent the different modes or conditions that the system can be in. In the type of state machine we typically use in robotics, known as a finite state machine (FSM), the number of states is limited and well-defined. Each state has specific behaviors or actions associated with it.
+:::info States as Enums
+The easiest way to represent states in code is by using an enumeration (enum). Enums allow us to define a set of named constants, making our code more readable and maintainable. For example, in Java, we can define the states of a traffic light like this:
+```java
+public enum TrafficLightState {
+    RED,
+    YELLOW,
+    GREEN
+}
+```
+See the documentation on [Variables and Data Types](../java/vars-dt/#enums) for more information on enums.
+:::
+
+Transitions are the rules or conditions that determine when and how the system moves from one state to another. These transitions are often triggered by events or conditions, such as a button press, a sensor reading, or a timer expiring.
+
+---
+
+## State Machine Diagram
+State machines are often represented visually using state diagrams. These can be a great way to plan and communicate your robot's behavior. It is recommended to start with a simple diagram before implementing the state machine in code. Just to illustrate, here is a simple state diagram for a dimmer switch:
+
+```mermaid
+flowchart TD
+    OFF(OFF)
+    OFF -->|press on button| DIMMED(DIMMED)
+    DIMMED -->|press on button| NORMAL(NORMAL)
+    NORMAL -->|press on button| BRIGHT(BRIGHT)
+    DIMMED -->|press off button| OFF
+    BRIGHT -->|press off button| OFF
+    NORMAL -->|press off button| OFF
+
+    linkStyle 0 stroke:#4caf50,stroke-width:3px
+    linkStyle 1 stroke:#4caf50,stroke-width:3px
+    linkStyle 2 stroke:#4caf50,stroke-width:3px
+    linkStyle 3 stroke:#f44336,stroke-width:3px
+    linkStyle 4 stroke:#f44336,stroke-width:3px
+    linkStyle 5 stroke:#f44336,stroke-width:3px
+```
+
+
+Lets look at something more related to robotics. Below is a simple example of a state diagram for a robot shooter/indexer:
+
+```mermaid
+stateDiagram-v2
+[*] --> IDLE
+IDLE --> SPINNING_UP : shoot button pressed
+SPINNING_UP --> SHOOTING : at speed
+SHOOTING --> SPINNING_UP
+SHOOTING --> IDLE : shoot button released
+```
+
+There are some software tools that help you create state diagrams. One we have used in the past is [Mural](https://www.mural.co/). While you can always draw them by hand, it is ideal to have a digital copy that can be updated as our robot becomes more complex.
