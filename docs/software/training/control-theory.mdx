@@ -2,7 +2,6 @@
 title: Control Theory
 description: An overview of control theory principles applied to FRC robots. This includes concepts such as feedback loops, PID control, and system dynamics.
 hide_table_of_contents: true
-unlisted: true
 sidebar_position: 9
 ---
 
@@ -13,10 +12,16 @@ Control theory is a branch of engineering and mathematics that deals with the be
 <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTMq41unK0_CHxglAA-61hPvOtg72D5kyDtUtFzfjjOwKXZty6YWlCi6mc7PGsWaZ9VTbDWWyz_Koon/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
 
 # Exercises
+- [Elevator Tuning Exercises](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/introduction/tuning-elevator.html)
+- [Arm Tuning Exercise](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/introduction/tuning-vertical-arm.html)
+- Tune the Flywheel for Velocity Control
+    - Tune in Simulation first to get a rough estimation
+    - Make sure you system measurements like MOI and radius are close to the real robot
+    - Once you have tuned in simulation try final values on the robot
 
 # Related Documentation
 # Controls
 - [Control Types](../controls/system-control/control-types.mdx): Basic overview of control loop types and vocabulary
-- [Feed Forward](../controls/system-control/feed-fwd.mdx)
-- [Bang Bang Controller](../controls/system-control/bang-bang.mdx)
-- [PID Controller](../controls/system-control/pid.mdx)
+- [Feed Forward](../controls/system-control/feed-fwd.mdx): Description of a Feed Forward system control approach
+- [Bang Bang Controller](../controls/system-control/bang-bang.mdx): Description of a Bang Bang system control approach
+- [PID Controller](../controls/system-control/pid.mdx): Description of a PID system control approach
