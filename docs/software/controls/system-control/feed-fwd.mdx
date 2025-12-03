@@ -17,11 +17,11 @@ stateDiagram-v2
 ```
 Unlike closed loop control, which relies on feedback from sensors to adjust the input, feed forward control anticipates the system's behavior and applies the necessary input directly. 
 Sometimes that model can be a simple constant other times it can be a more complex equation.
-That model can only use the desired setpoint for its calculations since open loop control types dont have feedback.
+That model can only use the desired setpoint for its calculations since open loop control types don't have feedback.
 This page should serve as an introduction to feed forward control and how it can be used in FRC applications, but you can read more on WPILib's Feed Forward page [here](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/introduction/introduction-to-feedforward.html).
 
 :::warning[It Doesn't have to be this Complicated]
-For most of our applications using feed forward control, its just a simple % of the max output. 
+For most of our applications using feed forward control, it's just a simple % of the max output. 
 Typically we won't even refer to this method as feed forward control, we will just call it open loop control or percent output control.
 See the [Just Getting the Darn Thing to Move](#just-getting-the-darn-thing-to-move) section below for more info.
 :::
@@ -37,7 +37,7 @@ Don't worry this equation is much simpler than it looks. The variables are as fo
 - $K_s$: The static gain, which determines the initial response of the system to a change in the desired output. This is typically the voltage needed to overcome friction and other static forces or in other words the minimum power needed to get the system moving. This is a constant value throught out motor operation since we assume friction is constant and presnet during acceleration and all velocities.
 - $K_v$: The velocity gain, which accounts for the rate of change of the desired output. This is typically the voltage needed to maintain a certain velocity. This is a constant value throughout motor operation since we assume drag and other forces that resist motion are constant during all velocities. The relationship between speed and voltage is approximately linear for all FRC legal components.
 - $K_a$: The acceleration gain, which considers the acceleration of the desired output. This is typically the voltage needed to achieve a certain acceleration. This is a constant value throughout motor operation since we assume inertia and other forces that resist changes in motion are constant during all velocities.
-Lets break down more of equation so its simpler to understand. The equation can be thought of as a sum of three components: the static component, the velocity component, and the acceleration component. Each component contributes to the overall output voltage based on the current state of the system.
+Let's break down more of the equation so it's simpler to understand. The equation can be thought of as a sum of three components: the static component, the velocity component, and the acceleration component. Each component contributes to the overall output voltage based on the current state of the system.
 
 ### Static Component
 Our static component is multiplied by the sign of the desired velocity. This means that if we want to move forward we will apply a positive voltage and if we want to move backwards we will apply a negative voltage. This is important because it ensures that we are always applying the correct direction of force to the system.
@@ -70,7 +70,7 @@ V = K_g + K_s \cdot sgn(\dot{d}) + K_v \cdot \dot{d} + K_a \cdot \ddot{d}
 $$
 
 ### Arm Feed Forward
-Arms have the same problem as elevators, but its a little more complex since the angle of the arm changes the amount of force needed to hold it in place. This means that we need to add a term to our feed forward equation that accounts for the gravitational force acting on the arm based on its angle. This is typically done by adding a term $K_g \cdot cos(\theta)$ component to represent the voltage needed to hold the arm in place against gravity.
+Arms have the same problem as elevators, but it's a little more complex since the angle of the arm changes the amount of force needed to hold it in place. This means that we need to add a term to our feed forward equation that accounts for the gravitational force acting on the arm based on its angle. This is typically done by adding a term $K_g \cdot cos(\theta)$ component to represent the voltage needed to hold the arm in place against gravity.
 $$
 V = K_g \cdot cos(\theta) + K_s \cdot sgn(\dot{\theta}) + K_v \cdot \dot{\theta} + K_a \cdot \ddot{\theta}
 $$
@@ -78,15 +78,24 @@ Where $\theta$ is the angle of the arm, $\dot{\theta}$ is the angular velocity, 
 
 ---
 
-## Determining the Constants
-Finding the constants for your system can be done in a few different ways.
-The most common way is to use a tool like [SysId](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/sysid/sysid-overview.html) to collect data from your system and then use that data to calculate the constants. Another way is to use trial and error to find the constants that work best for your system. This can be done by running the system at different speeds and accelerations and measuring the output voltage needed to achieve those speeds and accelerations. If the designers did their homework they could also have already calculated the constants based on the physical properties of the system. They may not be aware, but one of the tools they use called [ReCalc](https://www.reca.lc/) provides some theoretical gains which could act as a great starting point. 
-Ultimately, the best way to find the constants is to use a combination of these methods to get the most accurate results.
+## Tuning a Feed Forward Controller
+To use the feed forward equation effectively, we need to determine the values of the constants $K_s$, $K_v$, $K_a$, and $K_g$ for our specific system. This can be done through a combination of theoretical calculations and empirical testing. If possible, the Design team may be able to provide some of these values based on the mechanical design of the system. Otherwise, we can perform tests on the actual robot to determine these values.
+
+:::danger Tuning Risks
+Be very careful when tuning a Feed Forward controller on a live system. Aggressive tuning can lead to instability, oscillations, or even damage to the system. Always start with conservative values and gradually adjust them while monitoring the system's response. If you notice any erratic behavior, immediately stop and reassess your tuning approach.
+:::
+
+- **Ks**: Slowly increase the voltage to the motor until the mechanism just starts to move. The voltage at which it starts to move is your static gain (Ks).
+- **Kv**: Run the mechanism at a constant speed and measure the voltage required to maintain that speed. Divide the voltage by the speed to get your velocity gain (Kv).
+- **Ka**: Apply a known acceleration to the mechanism and measure the voltage required to achieve that acceleration. Divide the voltage by the acceleration to get your acceleration gain (Ka).
+- **Kg**: For elevators and arms, measure the voltage required to hold the mechanism in place against gravity. This voltage is your gravity gain (Kg).
+
+---
 
 ## Just Getting the Darn Thing to Move!
 Like stated in above examples and explanations, many times you don't need to use the full equation to get the desired results.
 If we just want to get a mechanism to move at a approximate speed we can just kinda guess or adjust the output percentage until it works well enough.
-For example if we want an intake to spin fast enough to pick up a game piece, we can just set the motor to 60% output and see if works and adjust from there.
+For example, if we want an intake to spin fast enough to pick up a game piece, we can just set the motor to 60% output and see if it works and adjust from there.
 ```java
 intakeMotor.set(0.6);
 ```
