@@ -1,15 +1,85 @@
 ---
-title: Telemetry
+title: Telemetry and Logging
 description: Displaying and updating live robot telemetry
 hide_table_of_contents: true
 sidebar_position: 8
 ---
-:::note
-This page is a work in progress and will be updated with more detailed information soon.
+
+# Robot Telemetry and Logging
+Telemetry is the process of collecting and transmitting data from the robot to a user interface, allowing operators and programmers to monitor the robot's performance in real-time. This is crucial for debugging, performance tuning, and understanding how the robot behaves during operation.
+
+Some data we may only need to see during development, while other data is useful to see during a match. The data can be displayed on the driver station or on a separate dashboard application. There a multiple different tools for both publishing and displaying this data.
+
+There are also values which we may never need to see, but we may want to log them for later analysis. This is useful for post-match analysis or debugging issues that occur during a match. It is impossible to know what the code was doing during a match just by watching a video of the match, so logging is a useful tool to have.
+
+## NetworkTables
+NetworkTables is a communication protocol used in FRC to share data between the robot and the driver station or dashboard applications. It allows for real-time data exchange and is commonly used for telemetry and logging. NetworkTables can be used to publish data from the robot program, which can then be displayed on the driver station or a dashboard application. Technically all the tools mentioned in this section use NetworkTables to publish data, but they provide different interfaces and features.
+
+## Publishing and Recording Data
+We can publish or record almost anything from the robot program. This includes:
+- Sensor readings (e.g., distance, speed, temperature)
+- Motor outputs (e.g., speed, position)
+- System status (e.g., battery voltage, CPU usage)
+- Custom data (e.g., game state, operator inputs)
+- Debugging information (e.g., error messages, warnings)
+The data can also be advanced types beyond just numbers, such as:
+- Arrays
+- Geometry objects (e.g., Pose2d, Translation2d)
+- Custom Enums (e.g., robot state, subsystem status)
+
+:::tip Auto Logging
+Remember some of our code infrastructure automatically logs data for you. Our subsystem classes automatically log their state and some of their data. Our mechanism classes automatically log their state and related IO data. This is useful for debugging and understanding how the robot behaves during operation and reduces the need to manually log data for common use cases.
 :::
 
-# Robot Telemetry
+### DogLog
+DogLog is a logging library that allows you to log messages and data from your robot code. It is developed by FRC 581 and their listed documentation can be found [here](https://doglog.dev/). DogLog provides a simple API for both logging messages to the robot and sending publishing them over NetworkTables. When the enabled we can see the logged data as live telemetry on the driver station or a dashboard application.
 
-## SmartDashboard / Elastic
+For typically usage, you can use the `DogLog` class to log messages and data. Here is an example of how to use DogLog in your robot code:
 
-## DogLog
+```java
+DogLog.log("Custom String", data_value);
+```
+The first argument is a string that describes the data. Depending on where you are logging the data, you may want to use a compound string to better sort the data. For example, you can use a compound string like `"/subsystem/variable"` to group related data together. For our subsystem logging expect something like this:
+```java
+DogLog.log(getSubsystemKey() + "/Left Flywheel Velocity", left_velocity);
+DogLog.log(getSubsystemKey() + "/Right Flywheel Velocity", right_velocity);
+```
+
+We can also collect data from our dashboards and use that in our robot program using the `DogLog` class. For example, if we want to log the target speed of a flywheel, we can do it like this:
+```java
+DogLog.tunable("Custom String", default_value, data_value -> {
+    // This is the code that will be executed when the value is updated
+    // The daa_value is the new value that was set in the dashboard
+});
+```
+It is important to note that the final argument is a lambda function that will be executed when the value is updated. This allows us to update our robot code with the new value without having to restart the robot program. It acts as a callback function that is called whenever the value is changed in the dashboard. An example of this is:
+```java
+DogLog.tunable("Flywheel Target Speed", 0.0, target_speed -> {
+    flywheel.setTargetVelocity(target_speed);
+});
+```
+
+### WPILib SmartDashboard
+:::warning Marked for Removal in 2027 WPILib Release
+:::
+
+WPILib provides a built-in SmartDashboard that allows you to display and update live robot telemetry. SmartDashboard is a simple and effective way to visualize data from your robot. It supports various data types, including numbers, strings, booleans, and arrays. You can also create custom widgets to display specific data in a more user-friendly way.
+To use SmartDashboard, you can publish data from your robot code using the `SmartDashboard` class. Here is an example of how to use SmartDashboard in your robot code:
+```java
+SmartDashboard.putNumber("Left Flywheel Velocity", left_velocity);
+SmartDashboard.putNumber("Right Flywheel Velocity", right_velocity);
+SmartDashboard.putBoolean("Flywheel Enabled", flywheel.isEnabled());
+SmartDashboard.putString("Robot State", robotState.toString());
+```
+We can also use SmartDashboard to create tunable values that can be updated from the dashboard. This is useful for adjusting parameters without having to redeploy the code. Here is an example of how to create a tunable value in SmartDashboard:
+```java
+SmartDashboard.putNumber("Flywheel Target Speed", 0.0);
+double target_flywheel_velocity_ = SmartDashboard.getNumber("Flywheel Target Speed", 0.0);
+```
+
+## Viewing Data
+### Elastic
+Elastic is a powerful data visualization and analysis tool that can be used to view and analyze telemetry data from your robot. It provides a user-friendly interface for creating dashboards, visualizations, and alerts based on the data collected from your robot. More about Elastic can be found [here](../tools/elastic.mdx).
+
+### AdvantageScope
+AdvantageScope is a dashboard application developed by FRC Team 6238 that allows you to visualize and analyze telemetry data from your robot. It provides a user-friendly interface for creating custom visualizations based on the data collected from your robot. More about AdvantageScope can be found [here](../tools/ad-scope.mdx).

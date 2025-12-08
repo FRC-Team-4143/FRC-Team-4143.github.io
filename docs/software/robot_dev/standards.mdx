@@ -1,12 +1,62 @@
 ---
 title: Programming Standards
 description: MARS/WARS programming standards for robot projects
-hide_table_of_contents: true
+hide_table_of_contents: false
 sidebar_position: 10
 ---
 
-:::note
-This page is a work in progress and will be updated with more detailed information soon.
-:::
-
 # Programming Standards
+This page outlines the programming standards and best practices we follow for developing robot code in MARS/WARS. These standards are designed to ensure consistency, maintainability, and readability of our codebase. They are based on industry best practices and are tailored to the specific needs of our robot projects.
+
+## Coding Standards
+Our standards for writing java can be found in the [Java Coding Standards](../java/standards.mdx) document. Please refer to that document for detailed guidelines on naming conventions, formatting, and best practices for writing clean and maintainable code. However that only covers general java coding standards. Below are some specific standards we follow for MARS/WARS robot code.
+
+### Subsystems
+- All subsystems should be implemented as singletons to ensure that only one instance of each subsystem exists throughout the robot code. This prevents conflicts and ensures consistent behavior when multiple commands interact with the same subsystem. This concept is explained in more detail in the [Create the Subsystem Class](./subsystems.mdx#create-the-subsystem-class) section.
+- Keep all primary methods for the subsystem at the top of the class for easy access. Helper methods and private methods should be placed below the primary methods. The preferred order is:
+    - `getInstance()` method
+    - Constructor
+    - `getIos()` method
+    - `reset()` method
+    - `updateLogic()` method
+    - `handleStateTransitions()` method ***(only if overridden)***
+    - Any other public methods for behaviors
+    - Private helper methods
+- Use the provided state machine framework to manage subsystem states. Define clear states and transitions to ensure predictable behavior. Refer to the [Adding the State Machine](./subsystems.mdx#adding-the-state-machine) section for guidance.
+- All user added objects and variables should be declared at the top of the class and given a default value.
+- All user added objects and variables should be declared as private. If they need to be read outside the class create a public getter method, but should not be modified outside the class.
+- The the wanted state of the state machine should only be changed using the `setWantedState()` method. Directly modifying the current state can lead to unpredictable behavior.
+- Methods changing an internal variable of the subsystem should be prefixed with `set` and methods reading an internal variable should be prefixed with `get`. For example:
+    ```java
+    public void setTargetPosition(double position) {
+        target_position_ = position;
+    }
+
+    public double getCurrentPosition() {
+        return current_position_;
+    }
+    ```
+- Methods that check a condition should be prefixed with `is`. For example:
+    ```java
+    public boolean isAtTargetPosition() {
+        return Math.abs(current_position_ - target_position_) < POSITION_TOLERANCE;
+    }
+    ```
+
+### Commands
+- Commands should be designed to perform a single, well-defined action. Avoid creating commands that try to do too much, as this can lead to complex and hard-to-maintain code. Refer to the [Subsystem Commands](./commands.mdx#subsystem-commands) section for guidance on creating commands.
+- Never have a command require a subsystem. This can lead to deadlocks and unexpected behavior. Instead, commands should interact with subsystems through their public methods and state machine.
+
+### Operator Interface (OI)
+- Keep the OI class focused on mapping operator inputs to commands. Avoid adding complex logic or state management in the OI class. Refer to the [Operator Interface (OI)](./oi.mdx) section for guidance on binding commands to controller inputs.
+- Avoid using the joystick and buttons directly in the Subsystem or Command classes. Most references to the controller inputs should be done in the OI class to keep a clear separation of concerns.
+    - An exception to this is using the joystick axis values for driving the robot in a teleoperated command. In this case it is acceptable to read the pipe the joystick values to the subsystem since they are dynamic values that change frequently.
+
+## Logging and Telemetry
+- Log most things. If it is a variable that affects the robot behavior or something you may want to debug later log it. A lot is auto logged, but internal variables in your subsystems are not by default.
+:::tip Can't See What you Don't Record
+When the robot comes back from a match or test session you can't see what you didn't record. If you didn't log it you can't analyze it later. So when in doubt log it!
+:::
+- Log using the subsystem key as a prefix. This will help organize the logs and make it easier to find relevant data later. For example, if you have a drivetrain subsystem and you want to log the left motor speed, you would use a key like `Drivetrain/LeftMotorSpeed`.
+- Use DogLog for logging custom data. Refer to the [Telemetry and Logging](./telemetry.mdx) page for more information on how to set up logging and telemetry for your robot.
+- Consider logging data in trees or groups using compound keys. This can help organize related data and make it easier to analyze later. For example, you could log all path following data under a `Choreo/` prefix.
