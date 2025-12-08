@@ -41,10 +41,10 @@ Example is show below:
     ```
 - Variables that are constant should be named using `SCREAMING_SNAKE_CASE`. They should also use the `final` keyword.
     ```java
-    static final double ELEVATOR_HOME_POSITION;
-    static final int COUNTER_RESET;
-    static final boolean IS_MOTOR_INVERTED;
-    static final float I_TERM_ERROR_MAX;
+    final double ELEVATOR_HOME_POSITION;
+    final int COUNTER_RESET;
+    final boolean IS_MOTOR_INVERTED;
+    final float I_TERM_ERROR_MAX;
     ```
 
 ## Enums
@@ -109,3 +109,20 @@ Example is show below:
     :::
 
 ## Classes
+- Class names should be named using `UpperCamelCase`. Examples are shown below:
+    ```java
+    public class ElevatorSubsystem extends SubsystemBase {
+        // Class code here
+    }
+
+    public class RobotContainer {
+        // Class code here
+    }
+    ```
+- The opening curly brace `{` for a class should be on the same line as the class signature. Examples shown below:
+    ```java
+    // This is correct formatting
+    public class MyClass {
+        // Class code here
+    }
+    ```

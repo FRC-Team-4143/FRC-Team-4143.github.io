@@ -2,7 +2,7 @@
 title: Subsystems
 description: Subsystem basics and programming tips
 hide_table_of_contents: false
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 :::note MARS/WARS Custom Implementation
@@ -149,6 +149,8 @@ public static ShooterSubsystem getInstance() {
     return instance_;
 }
 ```
+Anytime we need to access the subsystem we call `ShooterSubsystem.getInstance()`. This prevents us from accidentally creating multiple instances of the subsystem which would lead to unexpected behavior.
+
 Make sure to call the superclass constructor in the subsystem constructor, passing in the initial state and a new instance of the constants class. This will make sure the subsystem is properly initialized using our custom framework. You can then add any additional initialization code needed for your subsystem after the superclass constructor call.
 ```java
 public ShooterSubsystem() {
@@ -165,7 +167,7 @@ public void reset() {
 }
 ```
 
-### Registering the Subsystem
+### Register the Subsystem
 Finally, ensure that the new subsystem is registered within the robot's main subsystem manager. This typically involves adding an instance of the subsystem to a list or map of subsystems that the robot manages. This step is crucial for the subsystem to be recognized and updated during the robot's operation. This is usually done in the `RobotContainer` class. Here is an example of how to register the `ShooterSubsystem`:
 
 ```java
@@ -177,7 +179,7 @@ public RobotContainer() {
     reset();
 }
 ```
-:::warning Subsystem Registration
+:::warning Unregistered Subsystems Do Not Tick
 Failing to register the subsystem will result in it not being updated or functioning correctly during robot operation.
 :::
 
@@ -296,9 +298,12 @@ public void handleStateTransition(ShooterStates wanted) {
     }
 }
 ```
-:::warning State Transition Management
-If you choose to override this method, ensure that you handle all possible state transitions appropriately. Failing to do so may result in the subsystem getting stuck in an unintended state.
-:::
+### Updating the State
+To change the state of the subsystem from other parts of the code, use the `setWantedState()` method. This method sets the desired state for the subsystem, which will be processed in the next update cycle.
+```java
+ShooterSubsystem.getInstance().setWantedState(ShooterStates.SHOOTING);
+```
+This will request the subsystem to transition to the **SHOOTING** state during the next update cycle, provided any conditions in `handleStateTransition()` are met. It helps ensure that state changes are managed in a controlled manner.
 
 ---
 
@@ -307,11 +312,8 @@ Logging is an important aspect of subsystem development, as it allows you to mon
 ```java
 DogLog.log(getSubsystemKey() + "/State", system_state_.toString());
 ```
-This will log the current state of the subsystem under a key that includes the subsystem's name, making it easy to identify in the logs. Make sure to log any other relevant data that will help you understand the subsystem's behavior during operation. This could include variables or internal subsystem states that are important for debugging or performance analysis.
+This will log the current state of the subsystem under a key that includes the subsystem's name, making it easy to identify in the logs. Make sure to log any other relevant data that will help you understand the subsystem's behavior during operation. This could include variables or internal subsystem states that are important for debugging or performance analysis. See more about logging and telemetry on the [Telemetry and Logging](./telemetry.mdx) page.
 
 :::tip Mechanism Logging
-Each mechanism also has its own logging capabilities. They will automatically log relevant data such as motor outputs, sensor readings, and internal state variables. Make sure to set the logging prefix for each mechanism to ensure that the log data is organized correctly.
-```java
-indexer_.setLoggingPrefix(getSubsystemKey());
-```
+Each mechanism also has its own logging capabilities. They will automatically log relevant data such as motor outputs, sensor readings, and internal state variables. Make sure to set the logging prefix for each mechanism to ensure that the log data is organized correctly. This is required in the mechanism constructor.
 :::

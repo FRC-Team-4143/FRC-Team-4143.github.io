@@ -14,7 +14,7 @@ function HomepageHeader() {
           alt="MARS/WARS Logo"
         />
         <Heading as="h1" className="hero__title">
-          MARS/WARS Robotics
+          MARS/WARS Robotics Program
         </Heading>
         <p className="hero__subtitle">
           Documentation Hub for Software, Design, and Business Services

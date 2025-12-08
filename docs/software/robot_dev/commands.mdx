@@ -2,7 +2,7 @@
 title: Commands
 description: Command basics and programming tips
 hide_table_of_contents: false
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # Commands
@@ -279,4 +279,38 @@ Command myCommandSequence = new ExampleCommand()
 ```
 :::tip
 You can use these decorators on instant commands as well to create quick command sequences without needing to create full command classes.
+:::
+
+## Subsystem Commands
+In order to interact with subsystems, we typically create commands that interface directly with the subsystem's state machine.
+These commands are used to request specific states or actions from the subsystem. We try to keep these commands simple, often using instant commands to trigger state changes. To keep the code clean we typically create these commands within the subsystem's package.
+
+```java
+package frc.robot.subsystems.shooter;
+
+public class ShooterCommands {
+
+    /**
+     * Command to set the shooter to the shooting state with the intent to shoot a ball.
+     * @return Command to shoot a ball
+    */
+    public static Command shootBall(){
+        return Commands.runOnce(() -> Shooter.getInstance().setState(ShooterState.SHOOTING));
+    }
+
+    // Additional subsystem commands can be added here
+}
+```
+
+:::note static Keyword
+In the example above, the `shootBall` method is declared as `static`, which means it can be called without creating an instance of the `ShooterCommands` class. This is useful for utility classes that provide a collection of related commands.
+
+```java
+// Usage for static method
+ShooterCommands.shootBall();
+
+// Usage for non-static method
+ShooterCommands shooterCommands = new ShooterCommands();
+shooterCommands.shootBall();
+```
 :::
