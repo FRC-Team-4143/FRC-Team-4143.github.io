@@ -1,0 +1,97 @@
+---
+title: Lightweighting
+hide_table_of_contents: true
+sidebar_position: 3
+---
+WIP
+
+
+Lightweighting materials is a key strategy in design to enhance performance, efficiency, and maneuverability. By reducing the weight of components without compromising their strength and durability. Cars, rockets, and robots can achieve faster acceleration, improved handling, and reduced strain on motors and other mechanical systems by removing underutilized material.
+### Strategies for Lightweighting
+
+#### Material Selection 
+Opt for lightweight materials such as aluminum, polycarbonate, plastic, or carbon fiber that offer different balances of strength, weight, and cost.
+
+- Aluminum (6061): Good stiffness-to-weight, easy to machine (chassis, brackets, structural components).
+- Polycarbonate (Lexan): (Impact-resistant covers, lightweight end effectors, ).
+- 3D-printed plastics (ABS, Nylon): Rapid prototypes and low-load parts; **orient layers for strength**.
+
+Guidelines:
+- Default to aluminum for structure.
+- Use polycarbonate for impact/visibility.
+- 3D print for fast iteration; validate before load use.
+
+#### Design Techniques
+
+Use these techniques to remove unnecessary mass while keeping parts fit for their loads.
+
+- Lightening holes  
+    - Description: Remove material from low-stress regions (rounded cutouts, hex patterns, or slots) while keeping webs and fastener areas intact. Use smooth radii to avoid stress risers.  
+    - When to use: Long chassis rails, sheet-metal brackets, battery trays, and non-load-bearing covers.  
+    - Example: Perforated side rails on a robot frame to shave grams without reducing stiffness in mounting zones.
+
+- Hollowing or pocketing  
+    - Description: Machine or 3D-print internal pockets or bores into thick sections (pockets, counterbores, internal cavities) instead of using solid blocks. Keep wall thickness sufficient for stiffness and fastener engagement.  
+    - When to use: Thick spacers, long standoffs, motor or gearbox housings where internal volume is unused.  
+    - Example: Pocketed aluminum motor mount where outer flange remains solid for fasteners, but the central web is relieved to cut weight.
+
+- Ribs and gussets instead of full thickness  
+    - Description: Replace uniform-thickness walls with thinner skins supported by ribs or gussets to maintain bending stiffness while reducing material. Align ribs to principal load directions.  
+    - When to use: Large panels, lightweight arms, intake ducts, and 3D-printed parts that need stiffness but not full mass.  
+    - Example: A thin polycarbonate cover stiffened with molded ribs rather than a thicker plate.
+
+- Structural optimization and validation  
+    - Description: Identify low-stress regions for material removal, utilize hand-sketched bending diagrams, or FEA. FEA is an advanced option used in industry that 4143 does not currently utilize. 
+        - Always validate changes with physical tests (load test and deflection check).  
+    - When to use: Major weight-reduction efforts on critical components (arms, structural members, or other major components).  
+    - Example: Prototype two versions of an arm (one solid and one pocketed) then compare deflection and fatigue under representative loads.
+
+Guidelines:
+- Keep fastener zones, bearing holes, and interfaces full thickness.  
+- Avoid removing material inline with possible impacts and between connected pulleys.
+- Add fillets and avoid sharp corners to limit stress concentrations.  
+- Iterate and prototype lightweighted parts early and test.
+
+##### Design Techniques Examples (Onshape)
+
+##### Simple Lightening
+1. Identify part to lighten.
+<img src={Lightening_Step1} width="400"/>
+
+2. Start sketch.
+    - Bound area going to be lightened.  
+    Note: This can either be the whole part, or specific sections.
+
+    - Draw line along the suspected stress vectors.  
+    Note: The lines do not have to create an enclosed geometry.
+
+    - Complete the sketch.
+<img src={Lightening_Step2} width="400"/>
+
+3. Select Part Lightening Tool.
+Note: This is a feature script and must be added to your account (LINK).
+    - Select face to remove material from.
+    - Select lightening sketch.
+    - Modify wall and rib thickness.
+    - Select tool diameter (0.125" or 0.25").
+    - Modify cut depth for pocketing or to create lightening holes.  
+    <img src={Lightening_Step3_2} width="200"/>
+
+<img src={Lightening_Step3_1} width="400"/>
+
+    - Tool will provide percent weight reduction.
+<img src={Lightening_Step3_3} width="400"/>
+
+
+4. Review Lightened part for any issues.
+    - Check bearing and fastener holes for correct thickness and diameter.
+    - Check for any remaining stress vectors not considered.
+<img src={Lightening_Step4} width="400"/>
+
+
+import Lightening_Step1 from '@site/static/img/mechanical/design/lightweighting/Lightening_Step1.png';
+import Lightening_Step2 from '@site/static/img/mechanical/design/lightweighting/Lightening_Step2.png';
+import Lightening_Step3_1 from '@site/static/img/mechanical/design/lightweighting/Lightening_Step3_1.png';
+import Lightening_Step3_2 from '@site/static/img/mechanical/design/lightweighting/Lightening_Step3_2.png';
+import Lightening_Step3_3 from '@site/static/img/mechanical/design/lightweighting/Lightening_Step3_3.png';
+import Lightening_Step4 from '@site/static/img/mechanical/design/lightweighting/Lightening_Step4.png';
