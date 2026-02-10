@@ -5,11 +5,198 @@ hide_table_of_contents: true
 sidebar_position: 6
 ---
 
-:::note WIP
-This section is under development. Content may change frequently.
-:::
-
 # Autonomous
 Autonomous programming is a critical aspect of FRC robots, as it covers the first 15 seconds of the match where the robot operates without human intervention. During this period,
 the robot must perform a series of pre-programmed actions to score points, navigate the field, and interact with game pieces. Effective autonomous routines can provide a significant
 advantage in matches, as they allow the robot to maximize the points scored during this crucial phase where activity scores are higher.
+
+This page documents how our autonomous stack works using MWLib and the mainbot code. The examples below are pulled directly from the 2026 robot code.
+
+---
+
+## Core Concepts
+
+Our autonomous flow is split into three layers:
+
+- **Auto routines** (`com.marswars.auto.Auto`): A command-based sequence (extends `SequentialCommandGroup`) that can run any robot commands (drive, shooter, intake, LEDs, etc.) and optionally load Choreo trajectories.
+- **Auto manager** (`com.marswars.auto.AutoManager`): Handles the SendableChooser, displays the selected path, and returns the selected auto in `autonomousInit()`.
+- **Drive integration** (`SwerveSubsystem`): Executes Choreo trajectories, exposes helpers like `setDesiredChoreoTrajectoryCommand`, and provides event triggers.
+
+### Auto Lifecycle in Mainbot
+
+The robot initializes autos once, registers them, and schedules the selected auto in `autonomousInit()`.
+
+:::warning
+Autos must be registered with `AutoManager` to appear in the chooser. If you don’t register them in `Robot.java`, they won’t show up on the dashboard.
+:::
+
+```java
+// Robot.java
+AutoManager.getInstance()
+	.registerAutos(
+		new Left_Start_Neutral_Outpost_Climb(),
+		new Left_Start_With_Events());
+
+@Override
+public void autonomousInit() {
+    Auto selected_auto = AutoManager.getInstance().getSelectedAuto();
+    CommandScheduler.getInstance().schedule(selected_auto);
+}
+```
+
+---
+
+## Building an Auto Routine
+
+Every auto extends `Auto` and follows the same pattern. Here’s a beginner-friendly breakdown of the flow:
+
+1. **Decide what the robot should do (drive + actions)**
+	- An auto can run any command: drive paths, spin up a shooter, run intake, set LEDs, or set subsystem state machines.
+	- Think of it as a normal `SequentialCommandGroup` with autonomous-specific helpers.
+
+2. **Pick your path files in Choreo (only if you want path following)**
+	- Decide which trajectories you want the robot to drive in order.
+	- Make sure those paths exist in the generated `ChoreoTraj` record.
+
+3. **Load the trajectories at the top of the constructor**
+	- Call `loadTrajectory(name)` for each path in the order you plan to run them.
+	- This also caches poses for field display, so it must happen first.
+
+4. **Tell the swerve subsystem which path to drive**
+	- Use `setDesiredChoreoTrajectoryCommand(getTrajectory(name))` before starting each segment.
+
+5. **Start the drive state that actually follows the path**
+	- Switch to `CHOREO_PATH` (or `CHOREO_PATH_ROTATION_LOCK` if you need fixed heading).
+	- End that command when `isAtChoreoSetpoint()` is true.
+
+6. **Add any extra actions between or during paths**
+	- Examples: shooting, intaking, waiting, or triggering events.
+	- These are normal commands added to the sequence.
+
+7. **Repeat for each additional path segment**
+	- Set the next trajectory, switch the state, then wait for completion.
+
+:::note
+Choreo is just one tool in your auto. You can run any WPILib command and set any subsystem state machine state alongside (or instead of) trajectories.
+:::
+
+### Basic Path-Following Example
+
+```java
+public class Left_Start_Neutral_Outpost_Climb extends Auto {
+    public Left_Start_Neutral_Outpost_Climb() {
+	// 1) Load trajectories in the order they will run
+	loadTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name());
+	loadTrajectory(ChoreoTraj.OutpostClimb.name());
+
+	// 2) Build the command sequence
+	addCommands(
+		// Set the initial trajectory
+		SwerveSubsystem.getInstance()
+			.setDesiredChoreoTrajectoryCommand(
+				getTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name())),
+
+		// Start following the trajectory
+		Commands.startEnd(
+				() -> SwerveSubsystem.getInstance()
+					.setWantedState(SwerveStates.CHOREO_PATH),
+				() -> SwerveSubsystem.getInstance()
+					.setWantedState(SwerveStates.FIELD_CENTRIC))
+			.until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint),
+
+		// Move to the climb position
+		SwerveSubsystem.getInstance()
+			.setDesiredChoreoTrajectoryCommand(
+				getTrajectory(ChoreoTraj.OutpostClimb.name())),
+		Commands.startEnd(
+				() -> SwerveSubsystem.getInstance()
+					.setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK),
+				() -> SwerveSubsystem.getInstance()
+					.setWantedState(SwerveStates.FIELD_CENTRIC))
+			.until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint));
+    }
+}
+```
+
+### What the `Auto` Base Class Provides
+
+MWLib’s `Auto` class handles Choreo trajectory loading and basic helpers:
+
+- `loadTrajectory(name)`: Loads a Choreo trajectory and stores its poses for path display.
+- `getTrajectory(name)`: Returns the typed `Trajectory<SwerveSample>` for swerve following.
+- `getStartPose()`: First pose of the first trajectory (used for sim resets).
+- `getPath(alliance)`: Poses for display in `Field2d`, auto-flipped for red alliance.
+
+---
+
+## Choreo Event Markers (Time and Pose)
+
+The swerve subsystem integrates MWLib’s `ChoreoEventTracker`, which provides triggers for event markers defined in Choreo. There are two kinds of triggers:
+
+- **Time Trigger**: Fires once the event timestamp has passed.
+- **Pose Trigger**: Fires when the robot is within tolerances of the event’s pose (ignores time).
+
+:::note
+Triggers are meant for actions that happen while the robot is still following a path (like spinning up the shooter during a drive). If you want to run something after the path is finished, you can just wait for `isAtChoreoSetpoint()` and then schedule the next command in the sequence.
+:::
+
+### Example: Binding Actions to Events
+
+```java
+public class ExampleAutoWithEvents extends Auto {
+    public ExampleAutoWithEvents() {
+	loadTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name());
+
+	addCommands(
+		SwerveSubsystem.getInstance()
+			.setDesiredChoreoTrajectoryCommand(
+				getTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name())),
+		Commands.startEnd(
+				() -> SwerveSubsystem.getInstance()
+					.setWantedState(SwerveStates.CHOREO_PATH),
+				() -> SwerveSubsystem.getInstance()
+					.setWantedState(SwerveStates.FIELD_CENTRIC))
+			.until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint));
+
+	// Time-based trigger (fires after the event timestamp)
+	SwerveSubsystem.getInstance()
+		.getChoreoEventTimeTrigger("Shooting")
+		.onTrue(Commands.print("Shooting event time reached!"));
+
+	// Pose-based trigger (fires when near the event pose)
+	SwerveSubsystem.getInstance()
+		.getChoreoEventPoseTrigger(
+			"Shooting",
+			Units.inchesToMeters(6),
+			Units.degreesToRadians(5))
+		.onTrue(Commands.print("At shooting pose!"));
+    }
+}
+```
+
+### Event API Reference
+
+These helpers live on `SwerveSubsystem`:
+
+- `getChoreoEventTimeTrigger(String eventName)` → `Trigger`
+- `getChoreoEventPoseTrigger(String eventName, double translationTol, double rotationTol)` → `Trigger`
+- `hasChoreoEventBeenPassed(String eventName)` → `boolean`
+
+---
+
+## Field Display and Alliance Flipping
+
+`AutoManager` keeps a `SendableChooser` and a `Field2d` display on the dashboard. It also flips
+trajectories for red alliance when building the display path. This is automatic as long as you load
+trajectories using `loadTrajectory()` in your auto.
+
+---
+
+## Tips and Gotchas
+
+- **Load trajectories first**: `loadTrajectory()` pulls in poses and events, so call it before setting the desired trajectory.
+- **Set the drive state**: The robot must be in `CHOREO_PATH` (or rotation lock) to follow the trajectory.
+- **End condition**: `isAtChoreoSetpoint()` is a common end condition for `Commands.startEnd` blocks.
+- **Alliance flipping**: The swerve subsystem uses `SwerveConstants.FLIP_TRAJECTORY_ON_RED` (set when operator perspective changes).
+
+If you need new trajectories, generate them in Choreo and update the generated `ChoreoTraj` record before using them in autos.
