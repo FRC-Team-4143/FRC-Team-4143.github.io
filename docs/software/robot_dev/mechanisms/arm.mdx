@@ -1,0 +1,34 @@
+---
+title: Arm
+description: Pivoting arm mechanism wrapper in MWLib
+hide_table_of_contents: true
+---
+
+# Arm Mechanism
+Rotary mechanisms enable the pivoting of mechanisms through rotational movement. These mechanisms come in many shapes and sizes.
+The arm mechanism is designed to control a pivot joint that rotates to a desired angle. It supports position control, velocity control, and duty cycle control while handling sensor conversions and simulation behind the scenes.
+<div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center", width: "100%" }}>
+	<img src="/img/software/robot_dev/mechanisms/2910pivot.gif" alt="2910 pivot arm" style={{ height: "300px", width: "auto" }} />
+	<img src="/img/software/robot_dev/mechanisms/6036pivot.gif" alt="6036 pivot arm" style={{ height: "300px", width: "auto" }} />
+</div>
+
+## Common Use Cases
+- Intake pivots
+- Shooter or hood pivots
+- Climber arms
+
+## Typical Controls
+- **Position control** for moving to a fixed angle.
+- **Velocity control** for constant-speed motions.
+- **Duty cycle** for manual/teleop override.
+
+## Common Methods
+- `setTargetPosition(angle)`
+- `setTargetVelocity(angularVelocity)`
+- `setTargetDutyCycle(dutyCycle)`
+- `getCurrentPosition()`
+- `getCurrentVelocity()`
+
+## Tips
+- Use motion constraints in your higher-level subsystem if you need soft limits.
+- Always keep units consistent (radians for angles).
