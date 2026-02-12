@@ -1,0 +1,30 @@
+---
+title: Flywheel
+description: High-speed flywheel wrapper in MWLib
+hide_table_of_contents: true
+---
+
+# Flywheel Mechanism
+Shooters are used in FRC games when you need to score in high places but are not allowed to physically reach up to the scoring position. A flywheel is the most common method of scoring an object that needs launched.
+The flywheel mechanism is built for high-speed rotating wheels (shooters, launchers). It focuses on velocity control and supports duty cycle output for testing.
+<div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center", width: "100%" }}>
+	<img src="/img/software/robot_dev/mechanisms/1690shooter.gif" alt="1690 shooter flywheel" style={{ height: "300px", width: "auto" }} />
+	<img src="/img/software/robot_dev/mechanisms/2910shooter.gif" alt="2910 shooter flywheel" style={{ height: "300px", width: "auto" }} />
+</div>
+
+## Common Use Cases
+- Shooter wheels
+- Catapult/flywheel launchers
+
+## Typical Controls
+- **Velocity control** for stable RPM.
+- **Duty cycle** for simple open-loop testing.
+
+## Common Methods
+- `setTargetVelocity(angularVelocity)`
+- `setTargetDutyCycle(dutyCycle)`
+- `getCurrentVelocity()`
+
+## Tips
+- Use a spin-up command that waits for a velocity tolerance.
+- Log actual vs target velocity to tune control.

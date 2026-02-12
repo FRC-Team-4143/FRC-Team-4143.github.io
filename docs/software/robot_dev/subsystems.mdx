@@ -10,7 +10,7 @@ The subsystem execution concept discussed on this page are part of our custom MW
 :::
 
 :::warning Mechanism Library
-It is recommended to read through the Mechanism Library documentation before diving into Subsystems, as our subsystem implementation heavily utilizes mechanisms. You can find the Mechanism Library documentation [here](./mechanisms.mdx)
+It is recommended to read through the Mechanism Library documentation before diving into Subsystems, as our subsystem implementation heavily utilizes mechanisms. You can find the Mechanism Library documentation [here](./mechanisms/)
 :::
 
 :::warning State Machines
@@ -231,7 +231,7 @@ If this method is left empty none of your mechanism will be ticked. Ensure that 
 
 ### Using the Mechanisms
 With the mechanisms added to your subsystem, you can now use them within the `updateLogic()` method to implement the desired behavior. This may involve reading sensor data, controlling motor outputs, and implementing state machine logic based on the subsystem's current state.
-See [Mechanisms](./mechanisms.mdx) for more details on the interworkings of mechanims. Below is a simple example of using the indexer mechanism in the `updateLogic()` method:
+See [Mechanisms](./mechanisms/) for more details on the interworkings of mechanims. Below is a simple example of using the indexer mechanism in the `updateLogic()` method:
 ```java
 @Override
 public void updateLogic(double timestamp) {

@@ -1,5 +1,9 @@
 {
   "label": "System Controls",
   "position": 2,
-  "collapsed": true
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "software/controls/system-control/control-types"
+  }
 }

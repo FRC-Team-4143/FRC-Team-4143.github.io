@@ -1,0 +1,9 @@
+{
+  "label": "Mechanisms",
+  "position": 2,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "software/robot_dev/mechanisms/index"
+  }
+}

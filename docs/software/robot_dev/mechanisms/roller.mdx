@@ -1,0 +1,29 @@
+---
+title: Roller
+description: Intake/outtake roller mechanism wrapper in MWLib
+hide_table_of_contents: true
+---
+
+# Roller Mechanism
+The roller mechanism is designed for rotating drums or wheels that intake or outtake game pieces. It supports position, velocity, and duty cycle control.
+
+## Common Use Cases
+- Intakes
+- Indexers
+- Conveyors
+
+## Typical Controls
+- **Velocity control** for consistent intake/outtake.
+- **Duty cycle** for manual control.
+- **Position control** if you need a precise indexer rotation.
+
+## Common Methods
+- `setTargetPosition(angle)`
+- `setTargetVelocity(angularVelocity)`
+- `setTargetDutyCycle(dutyCycle)`
+- `getCurrentPosition()`
+- `getCurrentVelocity()`
+
+## Tips
+- Use current sensing or beam break sensors in your subsystem to detect game pieces.
+- Position control is useful for indexers with fixed pockets.
