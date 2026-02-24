@@ -18,13 +18,52 @@ The flywheel mechanism is built for high-speed rotating wheels (shooters, launch
 
 ## Typical Controls
 - **Velocity control** for stable RPM.
+- **Motion profile velocity control** for faster spin-up times (TalonFX only).
 - **Duty cycle** for simple open-loop testing.
 
+## Constructor Parameters
+The `FlywheelMech` constructor requires the following parameters:
+- `logging_prefix` - String prefix for logging (typically from `getSubsystemKey()`)
+- `mech_name` - Optional name for multiple instances (pass `null` if only one flywheel)
+- `motor_configs` - List of motor configuration objects (`FxMotorConfig` or `NovaMotorConfig`)
+- `gear_ratio` - Gear ratio as motor rotations / mechanism rotations
+- `wheel_inertia` - Moment of inertia of the wheel in kg·m² (used for simulation)
+- `wheel_radius` - Radius of the wheel in meters (used for simulation)
+
+### Example Construction
+```java
+// In your subsystem constructor
+flywheel_ = new FlywheelMech(
+    getSubsystemKey(),           // Logging prefix
+    "Flywheel",                   // Mechanism name
+    List.of(
+        CONSTANTS.SHOOTER_LEADER_MOTOR_CONFIG,
+        CONSTANTS.SHOOTER_FOLLOWER_MOTOR_1_CONFIG,
+        CONSTANTS.SHOOTER_FOLLOWER_MOTOR_2_CONFIG,
+        CONSTANTS.SHOOTER_FOLLOWER_MOTOR_3_CONFIG
+    ),
+    CONSTANTS.FLYWHEEL_GEAR_RATIO,           // Gear ratio
+    CONSTANTS.FLYWHEEL_INERTIA,              // Wheel inertia (kg·m²)
+    CONSTANTS.FLYWHEEL_WHEEL_RADIUS_METERS   // Wheel radius (m)
+);
+```
+
 ## Common Methods
-- `setTargetVelocity(angularVelocity)`
-- `setTargetDutyCycle(dutyCycle)`
-- `getCurrentVelocity()`
+
+### Control Methods
+- `setTargetVelocity(velocity_rad_per_sec)` - Standard velocity control
+- `setTargetVelocityMotionProfile(velocity_rad_per_sec)` - Velocity control with motion profiling
+- `setTargetVelocityWithFF(velocity_rad_per_sec, feedforward)` - Velocity control with arbitrary feedforward
+- `setTargetDutyCycle(duty_cycle)` - Open-loop voltage control (-1.0 to 1.0)
+
+### Feedback Methods
+- `getCurrentVelocity()` - Returns current velocity in radians per second
+- `getLeaderCurrent()` - Returns leader motor current draw in amps
 
 ## Tips
-- Use a spin-up command that waits for a velocity tolerance.
+- Use a spin-up command that waits for a velocity tolerance before shooting.
 - Log actual vs target velocity to tune control.
+- Motion profile velocity control can reduce spin-up time significantly.
+- Multiple motors can be configured as leader-follower for more power.
+- Use feedforward to compensate for back-EMF and improve velocity tracking.
+- Convert between linear and angular velocity: `v = ω × r` where r is wheel radius.

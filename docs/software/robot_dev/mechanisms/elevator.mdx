@@ -19,16 +19,66 @@ The elevator mechanism controls a linear translation system, such as a carriage 
 
 ## Typical Controls
 - **Position control** for set heights.
+- **Motion profile position control** for smoother movements with controlled acceleration.
 - **Velocity control** for smooth motion.
 - **Duty cycle** for manual control.
 
+## Constructor Parameters
+The `ElevatorMech` constructor requires the following parameters:
+- `logging_prefix` - String prefix for logging (typically from `getSubsystemKey()`)
+- `mech_name` - Optional name for multiple instances (pass `null` if only one elevator)
+- `motor_configs` - List of motor configuration objects (`FxMotorConfig` or `NovaMotorConfig`)
+- `gear_ratio` - Gear ratio as motor rotations / mechanism rotations
+- `drum_radius` - Radius of the drum/pulley in meters
+- `carriage_mass` - Mass of the carriage in kg (used for simulation)
+- `min_height` - Minimum height in meters (used for simulation)
+- `max_height` - Maximum height in meters (used for simulation)
+- `is_vertical` - Boolean indicating if elevator is vertical (affects gravity compensation)
+
+### Example Construction
+```java
+// In your subsystem constructor
+elevator_ = new ElevatorMech(
+    getSubsystemKey(),                // Logging prefix
+    "Elevator",                       // Mechanism name (optional)
+    List.of(CONSTANTS.ELEVATOR_LEADER_MOTOR_CONFIG,
+            CONSTANTS.ELEVATOR_FOLLOWER_MOTOR_CONFIG),
+    CONSTANTS.ELEVATOR_GEAR_RATIO,    // Gear ratio
+    CONSTANTS.ELEVATOR_DRUM_RADIUS,   // Drum radius (m)
+    CONSTANTS.CARRIAGE_MASS,          // Carriage mass (kg)
+    CONSTANTS.MIN_HEIGHT,             // Min height (m)
+    CONSTANTS.MAX_HEIGHT,             // Max height (m)
+    true                              // Is vertical
+);
+// Set initial position (for zeroing)
+elevator_.setCurrentPosition(CONSTANTS.ELEVATOR_HOME_POSITION);
+```
+
 ## Common Methods
-- `setTargetPosition(distance)`
-- `setTargetVelocity(velocity)`
-- `setTargetDutyCycle(dutyCycle)`
-- `getCurrentPosition()`
-- `getCurrentVelocity()`
+
+### Control Methods
+- `setTargetPosition(position_m)` - Standard position control in meters
+- `setTargetPositionMotionProfile(position_m)` - Position control with motion profiling
+- `setTargetPositionWithFF(position_m, feedforward)` - Position control with arbitrary feedforward
+- `setTargetPositionMotionProfileWithFF(position_m, feedforward)` - Motion profile with feedforward
+- `setTargetVelocity(velocity_mps)` - Velocity control in meters per second
+- `setTargetDutyCycle(duty_cycle)` - Open-loop voltage control (-1.0 to 1.0)
+
+### Feedback Methods
+- `getCurrentPosition()` - Returns current position in meters
+- `getCurrentVelocity()` - Returns current velocity in meters per second
+- `getLeaderCurrent()` - Returns leader motor current draw in amps
+
+### Calibration
+- `setCurrentPosition(position_m)` - Sets the current position (for zeroing/homing)
+
+### Simulation
+- `applyLoadForce(force_n)` - Applies external load force at the carriage (simulation only)
 
 ## Tips
-- Tune feedforward/feedback in the subsystem if you need gravity compensation.
+- The mechanism automatically handles gravity compensation for vertical elevators.
+- Use motion profile control for smoother movements with large height changes.
+- Always set an initial position using `setCurrentPosition()` after construction to establish a known zero point.
 - Keep distances in meters for consistency.
+- Use feedforward control to improve tracking performance on demanding trajectories.
+- For multiple elevators (e.g., left/right sides), provide unique `mech_name` values to distinguish them in logs.

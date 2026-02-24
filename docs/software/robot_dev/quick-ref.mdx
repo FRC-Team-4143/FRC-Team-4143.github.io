@@ -71,6 +71,10 @@ src/main/java/frc/robot/
 public class TemplateSubsystem extends MwSubsystem<TemplateStates, TemplateConstants> {
     private static TemplateSubsystem instance_ = null;
 
+    // Mechanisms (declare your mechanism IOs here)
+    // private RollerMech roller_;
+    // private ArmMech pivot_;
+
     // Singleton Accessor
     public static TemplateSubsystem getInstance() {
         if (instance_ == null) {
@@ -82,17 +86,25 @@ public class TemplateSubsystem extends MwSubsystem<TemplateStates, TemplateConst
     public TemplateSubsystem() {
         // (Default State, Constants Class)
         super(TemplateStates.IDLE, new TemplateConstants());
+        
+        // Initialize mechanisms here
+        // roller_ = new RollerMech(
+        //     getSubsystemKey(),
+        //     "Roller",
+        //     List.of(CONSTANTS.ROLLER_MOTOR_CONFIG),
+        //     CONSTANTS.ROLLER_GEAR_RATIO
+        // );
     }
 
     @Override
     public List<SubsystemIoBase> getIos() {
-        // Comma separated list of all the IO objects used by this subsystem
-        return Arrays.asList(null);
+        // Return all mechanism IO objects used by this subsystem
+        return Arrays.asList(/* roller_, pivot_ */);
     }
 
     @Override
     public void reset() {
-        // Reset any user added variables here or systems to a known state
+        // Reset subsystem to initial state
         system_state_ = TemplateStates.IDLE;
     }
 
@@ -101,31 +113,41 @@ public class TemplateSubsystem extends MwSubsystem<TemplateStates, TemplateConst
         switch (system_state_) {
             // Handle each state behavior
             case IDLE:
-                // Do nothing
+                // Stop all mechanisms
+                // roller_.setTargetDutyCycle(0.0);
                 break;
             case CUSTOM_STATE:
                 // Custom behavior here
+                // roller_.setTargetVelocity(target_velocity);
                 break;
         }
 
         // Log Data
-        DogLog.log(getSubsystemKey() + "CustomString", data_value);
+        DogLog.log(getSubsystemKey() + "/State", system_state_.toString());
+        // DogLog.log(getSubsystemKey() + "/CustomValue", custom_value);
     }
 
     // Only override if you need custom state transitions!
     // @Override
-    // public void handleStateTransition(TemplateStates wanted) {
+    // protected void handleStateTransition(TemplateStates wanted) {
+    //     system_state_ = wanted;
     // }
 
     // Public Methods for Subsystem Behavior
+    // public void customMethod() { }
 
     // Private Helper Methods
+    // private boolean isReady() { return true; }
 }
 ```
 
 ### Constants Class Template
 ```java title="TemplateConstants.java"
 public class TemplateConstants extends MwConstants {
+
+    // =============================================================================
+    // ENUMS AND STATE DEFINITIONS
+    // =============================================================================
 
     // Subsystem States
     public enum TemplateStates {
@@ -134,13 +156,44 @@ public class TemplateConstants extends MwConstants {
         EXAMPLE_STATE
     }
 
-    // All Subsystem specific constants go here
-    public final int CONSTANT_EXAMPLE = 0;
-    public final double ANOTHER_CONSTANT_EXAMPLE = 0.0;
-    public final boolean ADDITIONAL_CONSTANT_EXAMPLE = false;
+    // =============================================================================
+    // CAN IDS AND HARDWARE CONFIGURATION
+    // =============================================================================
+
+    // Motor CAN IDs
+    // public final int ROLLER_MOTOR_ID = 10;
+
+    // =============================================================================
+    // MECHANICAL CONSTANTS
+    // =============================================================================
+
+    // public final boolean ROLLER_INVERTED = false;
+    // public final double ROLLER_GEAR_RATIO = 1.0;
+
+    // =============================================================================
+    // CONTROL SETPOINTS
+    // =============================================================================
+
+    // public final double TARGET_VELOCITY = 100.0;
+
+    // =============================================================================
+    // MOTOR CONFIGURATION OBJECTS
+    // =============================================================================
+
+    // public final FxMotorConfig ROLLER_MOTOR_CONFIG = new FxMotorConfig();
+
+    // =============================================================================
+    // CONSTRUCTOR - MOTOR CONFIGURATION INITIALIZATION
+    // =============================================================================
 
     public TemplateConstants() {
-        // Some constants require dynamic initialization like through the JSON loader
+        // Configure motor settings here
+        // ROLLER_MOTOR_CONFIG.can_id = ROLLER_MOTOR_ID;
+        // ROLLER_MOTOR_CONFIG.motor_type = FxMotorType.X60;
+        // ROLLER_MOTOR_CONFIG.canbus_name = "rio";
+        // ROLLER_MOTOR_CONFIG.config = new TalonFXConfiguration();
+        // ROLLER_MOTOR_CONFIG.config.MotorOutput.Inverted = 
+        //     PhoenixUtil.toInvertedValue(ROLLER_INVERTED);
     }
 }
 ```
@@ -151,8 +204,21 @@ public class TemplateCommands {
     // Example Command to set the subsystem to a specific state
     public static Command setCustomStateCommand() {
         return Commands.runOnce(() -> {
-            TemplateSubsystem.getInstance().setWantedState(ExampleStates.CUSTOM_STATE);
+            TemplateSubsystem.getInstance().setWantedState(TemplateStates.CUSTOM_STATE);
         });
+    }
+
+    // Example Command that waits for a condition
+    public static Command waitForReadyCommand() {
+        return Commands.waitUntil(() -> TemplateSubsystem.getInstance().isReady());
+    }
+
+    // Example Command that runs while a condition is true
+    public static Command runWhileActiveCommand() {
+        return Commands.run(
+            () -> TemplateSubsystem.getInstance().setWantedState(TemplateStates.CUSTOM_STATE),
+            TemplateSubsystem.getInstance()
+        ).until(() -> !TemplateSubsystem.getInstance().isActive());
     }
 }
 ```
