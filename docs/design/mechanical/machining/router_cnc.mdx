@@ -1,0 +1,85 @@
+---
+title: CNC Router
+hide_table_of_contents: true
+sidebar_position: 3
+---
+# CNC Router
+
+Computer numerical control (CNC) Router is a form of [milling](./milling_manual) with an emphasis on 2D shapes.
+
+
+## CNC Safety
+
+A CNC Router is a dangerous piece of industrial equipment and safety must be considered during operation.  
+:::danger
+
+The dangers include
+
+- ***High Rotational Energy***  
+    A **moderate risk** in CNC Router during operations and setup.  
+    This can cause lacerations.  
+    This is generally caused by **contact with the tooling**.  
+    To reduce the risk of harm, utilize a brush to move any material from around the tool and do not use your hands.
+    When dealing with large cutouts that have a chance of jamming the spindle utilize a wooden plank to remove debris or hold down material.  
+
+- ***Flying Debris***  
+    A **minor risk** in CNC Router operations is being struck by debris.  
+    This debris can be metal/plastic/wood shavings, objects that have been parted off, or shattered tooling.  
+    This can cause minor lacerations and eye injury.  
+    To reduce the risk of harm, always **wear safety glasses** while in proximity of an operational CNC Router, and confirm the shield is in place.
+
+- ***Sharp Edges***  
+    A **minor risk** in CNC Router operations in being cut by sharp edges.  
+    Objects like metal shavings, cutting surfaces, and machined edges have sharp edges.  
+    This can cause minor lacerations.  
+    To avoid being hurt do not handle metal shavings with bare hands, utilize cleaning tools and gloves.  
+    To avoid being hurt machined parts should be sanded/filed to remove sharp edges. 
+
+    :::note
+    **Gloves** should never be worn during CNC Router operation due to risk of entanglement.  
+    Only when the spindle has come to a complete stop is it ok to wear gloves and handle parts.
+:::
+
+## CNC Router Operation
+
+### Machine Bootup
+**Initialize the machine.**
+1. Lift Router spindle above the bed.
+2. Twist **E-Stop** to switched Router ON.
+3. Power up connect PC.
+4. Login as LanClub.
+5. Launch Carbide Motion.
+6. Press Initialize Machine.
+    - Machine will home again the back right corner.
+    - Machine will request to calibrate tooling height.
+
+
+### Program Setup
+To begin CNC setup first you must import a file from a flash drive prepared by the fusion programmer.  
+
+1. Click on
+2. Navigate to the desired g-code file on the right side.
+3. Open the desired file.
+4. Click on **Top View** and view part orientation and origin.
+5. Navigate to the **Jog** menu.
+6. Position the spindle above the desired origin point.
+7. Click on **Set Zero X & Y** and confirm the origin point is set.
+    - Z Zero must only be set if you believe the height is off.
+
+### Chucking Material
+
+1. Place material on the bed.
+2. Utilize green clamps to hold material in place.
+3. Ensure material is secure and will not move during operation.
+    - If material is not secure, it can cause damage to the machine and/or injury to the operator.
+4. 
+
+### Confirm Setup
+
+
+### Run Program
+When all setup checks have been completed, the program is ready to run.  
+It is important to step through the start of the program and each machining operation to check for any issues.
+1.
+2. Reduce **speed to 10%** to confirm first pass depth.
+3. 
