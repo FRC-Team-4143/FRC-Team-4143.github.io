@@ -6,7 +6,7 @@ sidebar_position: 2
 ---
 
 In this training module, we will explore the various motors and drivetrains commonly used in FRC robots. 
-We will also cover how to control these motors through programming in Java using WPILib.
+We will also write our first Java: reading a controller and driving a simulated differential drive robot through MWLib, the team's robot library, so we never program a motor directly.
 
 ---
 
@@ -16,13 +16,23 @@ We will also cover how to control these motors through programming in Java using
 
 ---
 
+:::tip Do this lesson in Scriptum
+The exercises below are the **Motors and Drivetrains** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** calling methods, `double` variables and the arithmetic operators `+ - * /`.
+:::
+
 ## Exercises
 ### Motors
-- Spin a brushed motor using a motor controller and a joystick from your own code.
+- Read the controller sticks from your own code
+    - Declare `double` variables and store the stick values in them
+    - Remember that pushing a stick forward gives a negative number
 ### Drivetrains
-- Set up a leader and a follower motor controller configuration in code.
-- Move motors on both sides of a tank drive drivetrain to drive forward, backward, and turn.
-    - For an extra challenge, try to implement arcade drive controls!
+- Tank drive: the left stick drives the left side and the right stick drives the right side
+    - Drive forward, backward, and spin in place
+- Arcade drive: one stick drives forward and backward and the other turns
+    - Use arithmetic: `left = forward + turn` and `right = forward - turn`
+- Bonus: add a speed limit, and try squaring the stick values for finer control
 
 ---
 
@@ -31,6 +41,9 @@ We will also cover how to control these motors through programming in Java using
 - [Motor Controllers](../hardware/motor_controllers/index.mdx): Overview of the motor controllers we use on our robots.
 ### Hardware Interfacing
 - [Hardware Configurators](../tools/hw-config.mdx): Guide on how to configure hardware components in the FRC ecosystem.
+### Software
+- [Variables and Data Types](../java/vars-dt.mdx): Declaring variables and choosing a type.
+- [Operators](../java/operators.mdx): Arithmetic and comparison operators.
 ### Software Tools
 - [VSCode](../tools/vscode.mdx): Our primary Integrated Development Environment (IDE) for programming.
 - [Driver Station](../tools/driver-station.mdx): Software used to control and monitor the robot during competitions.

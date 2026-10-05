@@ -2,7 +2,7 @@
 title: Autonomous
 description: An overview of autonomous programming in FRC robots. This includes strategies for designing autonomous routines, using sensors, and implementing autonomous behavior.
 hide_table_of_contents: true
-sidebar_position: 11
+sidebar_position: 10
 ---
 
 # Autonomous
@@ -13,7 +13,16 @@ advantage in matches, as they allow the robot to maximize the points scored duri
 # Presentation
 <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vQORXMc-2loyPNWEt8aRnwd9bLQeTtZYi56Rw_X7IODoQQigHqBcz8TmfeWD5-faz6jFCOyp_qoPGPj/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
 
-# Excercises
+:::tip Do this lesson in Scriptum
+The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** writing your own command with `extends Command`, plus `for` loops and command groups.
+:::
+
+## Exercises
+- Finish a DriveDistance command
+    - Remember the starting pose
+    - Drive faster the farther you are from the goal, then stop within a tolerance
 - Create an Auto that does the following (Left Auto)
    - Drive forward 5 meters (0 Heading)
    - Turn 45 degrees
@@ -24,8 +33,9 @@ advantage in matches, as they allow the robot to maximize the points scored duri
    - Turn -45 degrees
    - Drive forward 2 meters (-45 Heading)
    - Shoot
-- Add both Autos to the Sendable Chooser
-
+- Create a Square Auto that drives a 1 meter square
+   - Use a `for` loop instead of writing the same commands four times
+- Add all the Autos to the Sendable Chooser
 
 # Related Documentation
 ## Software Tools

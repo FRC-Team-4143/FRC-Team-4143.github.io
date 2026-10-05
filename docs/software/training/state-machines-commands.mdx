@@ -15,21 +15,27 @@ State machines are a powerful way to manage complex robot behaviors by breaking 
 
 ---
 
+:::tip Do this lesson in Scriptum
+The exercises below are the **State Machines and Commands** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** `&&`, `||` and `!`, boolean helper methods, and lambdas.
+:::
+
 ## Exercises
 ### State Machines
 - Write a State Machine in ShooterSubsystem
     - **IDLE** State: System idle
     - **SPIN_UP** State: Flywheel spinning up to desired speed
     - **SHOOT** State: Index balls into flywheel
-    - Add an automated transition from **SPIN_UP** -> **SHOOT**
-    - Add an automated transition from **SHOOT** -> **SPIN_UP**
+    - Add an automated transition from **SPIN_UP** -> **SHOOT** when the flywheel is at speed
+    - Add an automated transition from **SHOOT** -> **SPIN_UP** when the flywheel slows down
     - Prevent **IDLE** -> **SHOOT** transition
 
 ### Commands
 - Add a ShooterCommands file in the shooter package
-    - Create a command to set the wanted state of the shooter to SHOOT
+    - Create a command to set the wanted state of the shooter to SHOOT while a button is held
     - Bind the command to a button in OI
-- Create a Instant Command to simulate applied load from launching a ball
+- Create an Instant Command to simulate applied load from launching a ball
     - See available methods for the flywheel mech!
     - Bind the command to a button in OI
 

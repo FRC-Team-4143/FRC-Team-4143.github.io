@@ -17,22 +17,35 @@ robot control in our software.
 
 ---
 
+:::tip Do this lesson in Scriptum
+The exercises below are the **Sensors and Feedback** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** `if` / `else` statements, comparison operators, and `static final` constants.
+:::
+
 ## Exercises
 ### Sensors
-- Show chassis speeds on SmartDashboard
+- Convert the encoder readings from wheel rotations to meters
+- Show chassis speeds in AdvantageScope
     - Linear speed in m/s (forward / backward)
     - Angular speed in rad/s (rotation)
-- Show distance traveled by driving on SmartDashboard
+- Show distance traveled by driving
     - Use encoders to measure distance
+### Conditions
+- Add a deadband so the robot ignores small stick drift
+    - Declare a `DEADBAND` constant
+    - Use an `if` statement on each stick to set small values to zero
 ### Feedback
-- Implement a simple Bang Bang controller to drive a set distance
+- Implement a simple Bang Bang controller to drive 2 meters in autonomous
     - Use encoders to measure distance
-    - Use a constant speed until the robot reaches the target distance
+    - Use an `if` / `else`: a constant speed until the robot reaches the target distance, then stop
+    - Where does the robot actually stop? Why?
 
 ---
 
 ## Related Documentation
 ### Software
+- [Variables and Data Types](../java/vars-dt.mdx): Declaring variables and constants.
 - [Conditions](../java/conditions.mdx): Explanation of conditional statements in programming.
 - [Control Types](../controls/system-control/control-types.mdx): Overview of different control types used in robotics.
 - [VSCode](../tools/vscode.mdx): Our primary Integrated Development Environment (IDE) for programming.

@@ -6,7 +6,7 @@ sidebar_position: 5
 ---
 
 # Object Oriented Programming and WPILib
-In this module we will cover the basics of Object Oriented Programming. This will include creating classes, methods, and using objects. We will then cover some of the WPILib classes used for controlling a differential drive robot, including kinematics and odometry. Finally, we will cover how to simulate a differential drive robot using WPILib's simulation tools.
+In this module we will cover the basics of Object Oriented Programming: classes, objects and `static` methods. We will then use WPILib classes for controlling a differential drive robot, including kinematics and a pose estimator that tracks where the robot is. Finally, we will compare that estimate with the simulator's true position.
 
 ---
 
@@ -15,36 +15,32 @@ In this module we will cover the basics of Object Oriented Programming. This wil
 
 ---
 
+:::tip Do this lesson in Scriptum
+The exercises below are the **OOP and WPILib** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** classes and objects, `new`, `import`, `static` and `abstract`.
+:::
+
 ## Exercises
 ### Classes
-- Create an abstract OI class
-    - Add a getter for a joystick Y axis
-    - Add a getter for a joystick X axis
+- Finish an abstract OI class
+    - Add a static getter for forward (the left stick Y axis) with a deadband
+    - Add a static getter for turn (the right stick X axis) with a deadband
 - Update your code to use the OI class methods and remove the XboxController from Robot.java
-### Objects
-- Create a Drivetrain Class
-    - Create the class in a new folder called “subsystems”
-    - Move all content related to your drivetrain and its methods to the new class
-    - Your readInputs and writeOutputs should now be your primary methods
-    - Add a new method to reset wheel encoders
-    - Add a new helper method to convert from ticks to meters
-- Create a Drivetrain Object in Robot
-    - Use it to call readInputs and writeOutputs in robotPeriodic
-    - Use it to call arcadeDrive in teleopPeriodic and autonomousPeriodic
-    - Use it to call getDistance in autonomous
 ### WPILib
-- Create a [DifferentialDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html) Object
-    - Use the [arcadeDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html#arcadeDrive(double,double)) method to drive the robot in auto/tele
-- Create a [DifferentKinematics](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/DifferentialDriveKinematics.html) Object
-    - Write a getChassisSpeeds methods
-    - Use this object to get the [ChassisSpeeds](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/ChassisSpeeds.html) of the robot
-- Create a [DifferentialDrivePoseEstimator](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/estimator/DifferentialDrivePoseEstimator.html) Object
-    - Publish the estimated pose to NetworkTables
-    - Use the x segment from the estimated pose for auto drive distance
+- Use a [DifferentialDriveKinematics](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/DifferentialDriveKinematics.html) object in the drive mechanism
+    - Write a getChassisSpeeds method
+    - Use it to get the [ChassisSpeeds](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/ChassisSpeeds.html) of the robot and compare it with your hand-written speeds
+- Write a getYaw method that works out the robot's heading from how far each side has driven
+    - Return it as a [Rotation2d](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Rotation2d.html)
+- Use a [DifferentialDrivePoseEstimator](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/estimator/DifferentialDrivePoseEstimator.html) object
+    - Update it every loop and log the estimated pose
+    - Use the x value from the estimated pose to drive 3 meters in autonomous
 ### Simulation
-- Setup a [DifferentialDrivetrainSim](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/simulation/DifferentialDrivetrainSim.html) Object
-    - Add a [Rotation2d](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Rotation2d.html) based calculation for yaw in simulation
-    - Drive the robot in simulation using AdvantageScope!
+- Drive the robot in simulation and watch the pose on the AdvantageScope 2D field
+- Compare your estimated pose with the simulator's true pose
+    - Why do they drift apart? What would a real robot add to fix it?
+- Optional: try WPILib's [DifferentialDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html) `arcadeDriveIK` method and compare it with your own arcade math
 
 ---
 

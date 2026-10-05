@@ -15,15 +15,31 @@ Control theory is a branch of engineering and mathematics that deals with the be
 
 ---
 
-# Exercises
+:::tip Do this lesson in Scriptum
+The exercises below are the **Control Theory** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** no new syntax. You practice enums, `switch`, small methods and unit conversion.
+:::
+
+## Exercises
+### Three ways to hold a speed
+- Write a Bang Bang controller for the flywheel
+    - Full power when too slow, no power when fast enough
+- Write a Feed Forward controller for the flywheel
+    - Work out the power from the target speed and `kV`, with no measuring
+    - Find a good `kV` by experiment
+- Use PID (feed forward plus feedback) to hold the speed
+    - Tune `kP` and compare how each style recovers from a simulated ball launch
+### Tuning
+- Tune the flywheel for velocity control in simulation
+    - Make sure your system measurements like MOI and radius are close to the real robot
+        - Wheel Radius: 3 in
+        - Wheel Mass: 2.3 kg
+    - Spin up in under about 1.5 seconds without overshooting the target
+    - Once you have tuned in simulation try final values on the robot
+### WPILib exercises
 - [Elevator Tuning Exercise](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/introduction/tuning-elevator.html)
 - [Arm Tuning Exercise](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/introduction/tuning-vertical-arm.html)
-- Tune the flywheel for velocity control on the Onboarding Bot
-    - Tune in Simulation first to get a rough estimation
-    - Make sure your system measurements like MOI and radius are close to the real robot
-        - Wheel Radius: 3.5 in
-        - Wheel Mass: 2.3 kg
-    - Once you have tuned in simulation try final values on the robot
 
 ---
 
