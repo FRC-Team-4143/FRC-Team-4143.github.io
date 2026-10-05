@@ -2,7 +2,7 @@
 title: Autonomous
 description: An overview of autonomous programming in FRC robots. This includes strategies for designing autonomous routines, using sensors, and implementing autonomous behavior.
 hide_table_of_contents: true
-sidebar_position: 11
+sidebar_position: 10
 ---
 
 # Autonomous
@@ -17,10 +17,17 @@ advantage in matches, as they allow the robot to maximize the points scored duri
 
 ---
 
-# Excercises
+# Exercises
+:::tip Do this lesson in Scriptum
+The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** writing your own command with `extends Command`, plus `for` loops and command groups.
+:::
+
 ## Accuracy and Precision
 - Create a way to turn to a specific heading
 - Create a way to drive ***straight*** a specific distance
+    - Remember the starting pose, drive faster the farther you are from the goal, and stop within a tolerance
 - Create dynamic commands for these actions
    - driveDistance(double distance)
    - turnToAngle(Rotation2d angle)
@@ -35,9 +42,11 @@ advantage in matches, as they allow the robot to maximize the points scored duri
    - Turn -45 degrees
    - Drive forward 2 meters (-45 Heading)
    - Shoot
+- Create a Square Auto that drives a 1 meter square
+   - Use a `for` loop instead of writing the same commands four times
 ## Auto Manager
-- Add both Autos to the Sendable Chooser
-- Test both Autos in Simulation
+- Add all the Autos to the Sendable Chooser
+- Test all the Autos in Simulation
    - Test on robot if everything looks correct
 
 ---

@@ -15,21 +15,25 @@ In this module, we will explore the concept of mechanisms and subsystems in FRC 
 
 ---
 
+:::tip Do this lesson in Scriptum
+The exercises below are the **Mechanisms and Subsystems** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** enums and `switch`, inheritance (`extends` and `@Override`), constructors, and lists.
+:::
+
 ## Exercises
-### GitHub Repo
-- Fork the [onboarding](https://github.com/FRC-Team-4143/onboarding) repo.
-- Clone the onboarding repo to your folder in the share drive
-- Update the readme and create / push a commit
+### Subsystems
+- Read the DrivetrainSubsystem: its states, its `switch`, and its `getInstance()`
+- Drive from the subsystem by finishing the `ARCADE` state
 ### Mechanisms and Subsystems
-- Create a shooter package under subsystems
-- Create a ShooterConstants class
-    - Add all constants for the flywheel and roller
-    - Update the OI class to allow reading buttons
+- Finish the ShooterConstants class
+    - Add the roller motor configuration and its index duty cycle
 - Create a Shooter Subsystem
     - Add a flywheel Mechanism
     - Add a roller mechanism
     - Create logic to allow a button press to shoot
     - Create logic to allow a button press to index
+- Update OI to read the shoot and index buttons
 - Update the RobotContainer to register your subsystem
 
 ---

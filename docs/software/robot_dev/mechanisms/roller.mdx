@@ -11,19 +11,64 @@ The roller mechanism is designed for rotating drums or wheels that intake or out
 - Intakes
 - Indexers
 - Conveyors
+- Hood angle adjustments
 
 ## Typical Controls
 - **Velocity control** for consistent intake/outtake.
 - **Duty cycle** for manual control.
-- **Position control** if you need a precise indexer rotation.
+- **Position control** if you need a precise indexer rotation or hood angle.
+- **Motion profile** for smooth position changes (TalonFX only).
+
+## Constructor Parameters
+The `RollerMech` constructor requires the following parameters:
+- `logging_prefix` - String prefix for logging (typically from `getSubsystemKey()`)
+- `mech_name` - Optional name for multiple instances (pass `null` if only one roller)
+- `motor_configs` - List of motor configuration objects (`FxMotorConfig` or `NovaMotorConfig`)
+- `gear_ratio` - Gear ratio as motor rotations / mechanism rotations
+- `roller_inertia` - Optional moment of inertia in kg·m² (default: 0.00001, used for simulation)
+
+### Example Construction
+```java
+// Simple roller for intake
+roller_ = new RollerMech(
+    getSubsystemKey(),           // Logging prefix
+    "Roller",                     // Mechanism name
+    List.of(CONSTANTS.ROLLER_MOTOR_CONFIG),  // Motor configs
+    CONSTANTS.ROLLER_GEAR_RATIO   // Gear ratio
+);
+
+// Hood roller with position control
+hood_ = new RollerMech(
+    getSubsystemKey(),
+    "Hood",
+    List.of(CONSTANTS.HOOD_MOTOR_CONFIGS),
+    CONSTANTS.HOOD_GEAR_RATIO
+);
+hood_.setCurrentPosition(CONSTANTS.HOOD_HOME_POSITION);
+```
 
 ## Common Methods
-- `setTargetPosition(angle)`
-- `setTargetVelocity(angularVelocity)`
-- `setTargetDutyCycle(dutyCycle)`
-- `getCurrentPosition()`
-- `getCurrentVelocity()`
+
+### Control Methods
+- `setTargetPosition(angle_rad)` - Standard position control
+- `setTargetPositionMotionProfile(angle_rad)` - Position control with motion profiling
+- `setTargetPositionWithFF(angle_rad, feedforward)` - Position control with arbitrary feedforward
+- `setTargetPositionMotionProfileWithFF(angle_rad, feedforward)` - Motion profile with feedforward
+- `setTargetVelocity(velocity_rad_per_sec)` - Velocity control
+- `setTargetVelocityMotionProfile(velocity_rad_per_sec)` - Velocity control with motion profiling
+- `setTargetDutyCycle(duty_cycle)` - Open-loop voltage control (-1.0 to 1.0)
+
+### Feedback Methods
+- `getCurrentPosition()` - Returns current angle in radians
+- `getCurrentVelocity()` - Returns current velocity in radians per second
+- `getLeaderCurrent()` - Returns leader motor current draw in amps
+
+### Calibration
+- `setCurrentPosition(angle_rad)` - Sets the current position (for zeroing/homing)
 
 ## Tips
 - Use current sensing or beam break sensors in your subsystem to detect game pieces.
-- Position control is useful for indexers with fixed pockets.
+- Position control is useful for indexers with fixed pockets or adjustable hoods.
+- For simple intake/outtake, duty cycle control is often sufficient.
+- Use motion profile control when you need smooth, controlled position changes.
+- Keep units consistent (radians for angles, radians per second for velocities).

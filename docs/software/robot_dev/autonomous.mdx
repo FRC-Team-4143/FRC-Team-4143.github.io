@@ -83,8 +83,8 @@ Choreo is just one tool in your auto. You can run any WPILib command and set any
 ### Basic Path-Following Example
 
 ```java
-public class Left_Start_Neutral_Outpost_Climb extends Auto {
-    public Left_Start_Neutral_Outpost_Climb() {
+public class TestAuto extends Auto {
+    public TestAuto() {
 	// 1) Load trajectories in the order they will run
 	loadTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name());
 	loadTrajectory(ChoreoTraj.OutpostClimb.name());
@@ -110,7 +110,7 @@ public class Left_Start_Neutral_Outpost_Climb extends Auto {
 				getTrajectory(ChoreoTraj.OutpostClimb.name())),
 		Commands.startEnd(
 				() -> SwerveSubsystem.getInstance()
-					.setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK),
+					.setWantedState(SwerveStates.CHOREO_PATH),
 				() -> SwerveSubsystem.getInstance()
 					.setWantedState(SwerveStates.FIELD_CENTRIC))
 			.until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint));
@@ -142,45 +142,266 @@ Triggers are meant for actions that happen while the robot is still following a 
 
 ### Example: Binding Actions to Events
 
+In a real auto, you can bind subsystem states to event markers that happen during path following. **Event triggers should be registered before `addCommands()`**:
+
 ```java
-public class ExampleAutoWithEvents extends Auto {
-    public ExampleAutoWithEvents() {
-	loadTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name());
+public class Left_Start_Neutral_Outpost_Climb extends Auto {
+    public Left_Start_Neutral_Outpost_Climb() {
+        // Register trajectories first
+        loadTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name());
+        loadTrajectory(ChoreoTraj.OutpostClimb.name());
 
-	addCommands(
-		SwerveSubsystem.getInstance()
-			.setDesiredChoreoTrajectoryCommand(
-				getTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name())),
-		Commands.startEnd(
-				() -> SwerveSubsystem.getInstance()
-					.setWantedState(SwerveStates.CHOREO_PATH),
-				() -> SwerveSubsystem.getInstance()
-					.setWantedState(SwerveStates.FIELD_CENTRIC))
-			.until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint));
+        // Bind event triggers BEFORE addCommands
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Intake Out")
+            .onTrue(
+                Commands.runOnce(
+                    () -> IntakeSubsystem.getInstance()
+                        .setWantedState(IntakeStates.INTAKE)));
+        
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Intake In")
+            .onTrue(
+                Commands.runOnce(
+                    () -> IntakeSubsystem.getInstance()
+                        .setWantedState(IntakeStates.STORE)));
+        
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Shooting")
+            .onTrue(
+                Commands.runOnce(
+                    () -> {
+                        ShooterSubsystem.getInstance()
+                            .setWantedState(ShooterStates.SHOOT);
+                        SwerveSubsystem.getInstance()
+                            .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK);
+                    }));
+        
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Stop Shooting")
+            .onTrue(
+                Commands.runOnce(
+                    () -> {
+                        ShooterSubsystem.getInstance()
+                            .setWantedState(ShooterStates.TRACKING);
+                        SwerveSubsystem.getInstance()
+                            .setWantedState(SwerveStates.CHOREO_PATH);
+                    }));
 
-	// Time-based trigger (fires after the event timestamp)
-	SwerveSubsystem.getInstance()
-		.getChoreoEventTimeTrigger("Shooting")
-		.onTrue(Commands.print("Shooting event time reached!"));
-
-	// Pose-based trigger (fires when near the event pose)
-	SwerveSubsystem.getInstance()
-		.getChoreoEventPoseTrigger(
-			"Shooting",
-			Units.inchesToMeters(6),
-			Units.degreesToRadians(5))
-		.onTrue(Commands.print("At shooting pose!"));
+        // Build the command sequence
+        addCommands(
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setTarget(FieldTargets.Shooter.HUB)),
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setWantedState(ShooterStates.TRACKING)),
+            
+            // First path
+            SwerveSubsystem.getInstance()
+                .setDesiredChoreoTrajectoryCommand(
+                    getTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name())),
+            Commands.startEnd(
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.CHOREO_PATH),
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.FIELD_CENTRIC))
+                .until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint),
+            
+            new WaitCommand(3),  // Wait for shooting
+            
+            // Second path
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setWantedState(ShooterStates.SHOOT)),
+            SwerveSubsystem.getInstance()
+                .setDesiredChoreoTrajectoryCommand(
+                    getTrajectory(ChoreoTraj.OutpostClimb.name())),
+            Commands.startEnd(
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK),
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.FIELD_CENTRIC))
+                .until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint));
     }
 }
 ```
 
-### Event API Reference
+**Key patterns shown here:**
+
+- Event triggers are registered **before** `addCommands()` so they're active during path following.
+- Use `CHOREO_PATH_ROTATION_LOCK` when you need to maintain a specific heading (e.g., shooting while moving).
+- Switch between subsystem states using event markers during the path.
+- After each path finishes, you can run additional commands (waiting, shooting, etc.).
+
+### Pose-based Triggers
+
+You can also trigger on proximity to an event pose instead of time:
+
+```java
+SwerveSubsystem.getInstance()
+    .getChoreoEventPoseTrigger(
+        "Shooting",
+        Units.inchesToMeters(6),     // Position tolerance
+        Units.degreesToRadians(5))   // Rotation tolerance
+    .onTrue(Commands.print("At shooting pose!"));
+```
+
+---
+
+## Building Complex Cycling Autos
+
+For competitive autos with multiple scoring cycles, you'll typically run multiple trajectories in sequence, each with its own event markers. Here's a simplified version of a 3-cycle auto:
+
+```java
+public class Neutral_Cycles extends Auto {
+    public Neutral_Cycles() {
+        // Load all trajectories in sequence
+        loadTrajectory(ChoreoTraj.CycleNeutralFirst.name());
+        loadTrajectory(ChoreoTraj.CycleNeutralThird.name());
+        loadTrajectory(ChoreoTraj.OutpostClimbNeutral.name());
+
+        // Bind event triggers
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Intake Out")
+            .onTrue(Commands.runOnce(
+                () -> IntakeSubsystem.getInstance()
+                    .setWantedState(IntakeStates.INTAKE)));
+        
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Intake In")
+            .onTrue(Commands.runOnce(
+                () -> IntakeSubsystem.getInstance()
+                    .setWantedState(IntakeStates.STORE)));
+        
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Shooting")
+            .onTrue(Commands.runOnce(
+                () -> {
+                    ShooterSubsystem.getInstance()
+                        .setWantedState(ShooterStates.SHOOT);
+                    SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK);
+                }));
+        
+        SwerveSubsystem.getInstance()
+            .getChoreoEventTimeTrigger("Stop Shooting")
+            .onTrue(Commands.runOnce(
+                () -> {
+                    ShooterSubsystem.getInstance()
+                        .setWantedState(ShooterStates.TRACKING);
+                    SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.CHOREO_PATH);
+                }));
+
+        addCommands(
+            // Initialize subsystems
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setTarget(FieldTargets.Shooter.HUB)),
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setWantedState(ShooterStates.TRACKING)),
+            
+            // Cycle 1: Pick up first batch of game pieces
+            SwerveSubsystem.getInstance()
+                .setDesiredChoreoTrajectoryCommand(
+                    getTrajectory(ChoreoTraj.CycleNeutralFirst.name())),
+            Commands.startEnd(
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.CHOREO_PATH),
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.FIELD_CENTRIC))
+                .until(
+                    () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
+                        && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1)),
+            
+            // Shoot
+            Commands.runOnce(
+                () -> {
+                    ShooterSubsystem.getInstance().setWantedState(ShooterStates.SHOOT);
+                    SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.FIELD_CENTRIC_ROTATION_LOCK);
+                }),
+            new WaitCommand(3),
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setWantedState(ShooterStates.TRACKING)),
+            
+            // Cycle 2: Pick up more game pieces
+            SwerveSubsystem.getInstance()
+                .setDesiredChoreoTrajectoryCommand(
+                    getTrajectory(ChoreoTraj.CycleNeutralThird.name())),
+            Commands.startEnd(
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.CHOREO_PATH),
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.FIELD_CENTRIC))
+                .until(
+                    () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
+                        && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1)),
+            
+            // Final climb position
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setWantedState(ShooterStates.SHOOT)),
+            SwerveSubsystem.getInstance()
+                .setDesiredChoreoTrajectoryCommand(
+                    getTrajectory(ChoreoTraj.OutpostClimbNeutral.name())),
+            Commands.startEnd(
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK),
+                    () -> SwerveSubsystem.getInstance()
+                        .setWantedState(SwerveStates.FIELD_CENTRIC))
+                .until(
+                    () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
+                        && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1)),
+            Commands.runOnce(
+                () -> ShooterSubsystem.getInstance()
+                    .setWantedState(ShooterStates.TRACKING)));
+    }
+}
+```
+
+**Key techniques in this auto:**
+
+- **Multiple trajectories**: Each cycle is a separate loaded trajectory.
+- **Shared event triggers**: All trajectories can use the same event names (e.g., "Intake Out").
+- **Time buffers**: Use `hasChoreoTimeElapsed()` to ensure the robot dwells at pickup points.
+- **State coordination**: Switch between `CHOREO_PATH` and `CHOREO_PATH_ROTATION_LOCK` as needed.
+- **Sequential shooting**: Wait commands between paths for shooting to complete.
+
+---
+
+## Event API Reference
+
 
 These helpers live on `SwerveSubsystem`:
 
 - `getChoreoEventTimeTrigger(String eventName)` → `Trigger`
 - `getChoreoEventPoseTrigger(String eventName, double translationTol, double rotationTol)` → `Trigger`
 - `hasChoreoEventBeenPassed(String eventName)` → `boolean`
+
+### Advanced Pattern: Time-Based Path Completion
+
+For smoother transitions between paths (especially when cycling game pieces), you can add a time buffer to `isAtChoreoSetpoint()`:
+
+```java
+Commands.startEnd(
+        () -> SwerveSubsystem.getInstance()
+            .setWantedState(SwerveStates.CHOREO_PATH),
+        () -> SwerveSubsystem.getInstance()
+            .setWantedState(SwerveStates.FIELD_CENTRIC))
+    .until(
+        () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
+            && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1));
+```
+
+This pattern waits until:
+1. The robot reaches the trajectory setpoint, **and**
+2. At least 1 additional second has elapsed
+
+This is useful when you want to dwell at the end of a path (e.g., to finish intaking) before moving to the next action.
 
 ---
 
@@ -194,9 +415,40 @@ trajectories using `loadTrajectory()` in your auto.
 
 ## Tips and Gotchas
 
-- **Load trajectories first**: `loadTrajectory()` pulls in poses and events, so call it before setting the desired trajectory.
-- **Set the drive state**: The robot must be in `CHOREO_PATH` (or rotation lock) to follow the trajectory.
-- **End condition**: `isAtChoreoSetpoint()` is a common end condition for `Commands.startEnd` blocks.
-- **Alliance flipping**: The swerve subsystem uses `SwerveConstants.FLIP_TRAJECTORY_ON_RED` (set when operator perspective changes).
+### General Patterns
 
-If you need new trajectories, generate them in Choreo and update the generated `ChoreoTraj` record before using them in autos.
+- **Load trajectories first**: Call `loadTrajectory()` in constructor before `addCommands()`. This pulls in poses and events.
+- **Event triggers before commands**: Register all `getChoreoEventTimeTrigger()` and `getChoreoEventPoseTrigger()` bindings **before** calling `addCommands()`.
+- **Set the drive state**: The robot must be in `CHOREO_PATH` (or `CHOREO_PATH_ROTATION_LOCK`) to follow the trajectory.
+- **End condition**: `isAtChoreoSetpoint()` is the standard way to wait for path completion.
+
+### Swerve Drive States
+
+- **`CHOREO_PATH`**: Follows both translation and rotation from the trajectory.
+- **`CHOREO_PATH_ROTATION_LOCK`**: Follows translation but locks rotation (useful when shooting on the move).
+- **`FIELD_CENTRIC`**: Normal driver control (used as end state after path following).
+- **`FIELD_CENTRIC_ROTATION_LOCK`**: Field-centric but maintains heading (useful for stationary shooting).
+
+### Time Buffers
+
+Use `hasChoreoTimeElapsed(seconds)` in your `.until()` condition when you want to dwell at a position:
+
+```java
+.until(() -> 
+    SwerveSubsystem.getInstance().isAtChoreoSetpoint() 
+    && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1))
+```
+
+This is especially useful at game piece pickup locations where you need to wait for the intake to complete.
+
+### Alliance Flipping
+
+The swerve subsystem uses `SwerveConstants.FLIP_TRAJECTORY_ON_RED` (set when operator perspective changes) to automatically flip trajectories. `AutoManager` also flips the display path, so you only need to plan for blue alliance in Choreo.
+
+### Debugging Tips
+
+- **Visualize in sim**: The `Field2d` display shows your loaded trajectory before the match starts.
+- **Check event names**: Make sure event marker names in Choreo match exactly what you use in `getChoreoEventTimeTrigger()`.
+- **Start simple**: Begin with a single trajectory before adding multiple paths and event markers.
+
+If you need new trajectories, generate them in Choreo and make sure the generated `ChoreoTraj` record is updated before using them in autos.

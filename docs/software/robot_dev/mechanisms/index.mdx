@@ -22,7 +22,23 @@ The primary benefit to this architecture is to allow for easier adoption of robo
 ---
 
 ## Architecture
-The mechanism in MWLib are built using a exclusive read and write architecture. This means that each mechanism has a dedicated method for reading sensor data and another for writing outputs to actuators. This separation helps to ensure that the mechanisms operate smoothly and efficiently, reducing the risk of conflicts between reading and writing operations. The also handle the necessary conversions between sensor units and physical units, making it easier to work with the mechanisms at a higher level. This high level concept is called an IO or Input/Output Container. Each *Mechanism* class is ultimately an IO container that handles the IO for a specific mechanism type.
+The mechanisms in MWLib are built using an exclusive read and write architecture. This means that each mechanism has a dedicated method for reading sensor data and another for writing outputs to actuators. This separation helps to ensure that the mechanisms operate smoothly and efficiently, reducing the risk of conflicts between reading and writing operations. They also handle the necessary conversions between sensor units and physical units, making it easier to work with the mechanisms at a higher level. This high level concept is called an IO or Input/Output Container. Each *Mechanism* class is ultimately an IO container that handles the IO for a specific mechanism type.
+
+### Delegate Pattern
+The mechanism classes use a **delegate pattern** to support multiple motor controller types. When you create a mechanism (e.g., `ArmMech`), it automatically detects the motor configuration type you provide (FxMotorConfig for CTRE TalonFX or Thrifty Nova for REV Spark) and creates the appropriate underlying implementation. This means you write code once, and it works with different motor controllers.
+
+```java
+// Example: Creating an arm with TalonFX motors
+ArmMech arm = new ArmMech(
+    logging_prefix,
+    List.of(fx_motor_config),  // FxMotorConfig detected -> uses FxArmMech internally
+    gear_ratio,
+    arm_length,
+    arm_mass,
+    min_angle,
+    max_angle
+);
+```
 
 The base functionality of the read and write methods can be visualized in the following diagram:
 
@@ -127,65 +143,71 @@ public void logData() {
 ---
 
 ## Available Mechanisms
-We have a couple of mechanisms available in MWLib. These mechanisms should be the base for most common robot designs. If you have a unique mechanism that is not covered, consider extending the existing classes or creating a new one based on the provided structure. This may require support from a mentor or team lead.
+We have several mechanisms available in MWLib. These mechanisms should be the base for most common robot designs. If you have a unique mechanism that is not covered, consider extending the existing classes or creating a new one based on the provided structure. This may require support from a mentor or team lead.
 
 - **Arm**: The arm mechanism is designed to control a pivot joint that can rotate to various angles. See [Arm](./arm).
 - **Elevator**: The elevator mechanism is designed to control a linear translation system that can move up and down. See [Elevator](./elevator).
 - **Flywheel**: The flywheel mechanism is designed to control a high-speed rotating wheel, typically used for launching projectiles. See [Flywheel](./flywheel).
 - **Roller**: The roller mechanism is designed to control a rotating drum or wheel used for intaking or outtaking game pieces. See [Roller](./roller).
 
+### Mechanism Architecture
+
+The mechanisms use a delegate pattern where the main mechanism class (e.g., `ArmMech`) automatically selects the appropriate implementation based on the motor controller type:
+
 ```mermaid
 classDiagram
-    class MechBase {
-        + readInputs()*
-        + writeOutputs()*
+    class SubsystemIoBase {
+        <<interface>>
+        + readInputs(timestamp)*
+        + writeOutputs(timestamp)*
         + logData()*
     }
+    
     class ArmMech {
-        + sensor data*
-        + actuator commands*
-        readInputs()
-        writeOutputs()
-        logData()
-        + setTargetPosition(angle)*
-        + setTargetVelocity(angular_velocity)*
-        + setTargetDutyCycle(dutyCycle)*
+        - delegate_: SubsystemIoBase
+        + ArmMech(configs...)
+        + readInputs(timestamp)
+        + writeOutputs(timestamp)
+        + logData()
+        + setTargetPosition(angle)
+        + setTargetVelocity(velocity)
+        + setTargetDutyCycle(dutyCycle)
+        + getCurrentPosition()
+        + getCurrentVelocity()
     }
-    class ElevatorMech {
-        + sensor data*
-        + actuator commands*
-        readInputs()
-        writeOutputs()
-        logData()
-        + setTargetPosition(distance)*
-        + setTargetVelocity(velocity)*
-        + setTargetDutyCycle(dutyCycle)*
+    
+    class FxArmMech {
+        - motors_: TalonFX[]
+        + readInputs(timestamp)
+        + writeOutputs(timestamp)
+        + logData()
+        + setTargetPosition(angle)
+        + setTargetVelocity(velocity)
     }
-    class FlywheelMech {
-        + sensor data*
-        + actuator commands*
-        readInputs()
-        writeOutputs()
-        logData()
-        + setTargetVelocity(angular_velocity)*
-        + setTargetDutyCycle(dutyCycle)*
+    
+    class NovaArmMech {
+        - motors_: ThriftyNova[]
+        + readInputs(timestamp)
+        + writeOutputs(timestamp)
+        + logData()
+        + setTargetPosition(angle)
+        + setTargetVelocity(velocity)
     }
-    class RollerMech {
-        + sensor data*
-        + actuator commands*
-        readInputs()
-        writeOutputs()
-        logData()
-        + setTargetPosition(angle)*
-        + setTargetVelocity(angular_velocity)*
-        + setTargetDutyCycle(dutyCycle)*
-    }
-
-    MechBase <|-- ArmMech
-    MechBase <|-- ElevatorMech
-    MechBase <|-- FlywheelMech
-    MechBase <|-- RollerMech
+    
+    SubsystemIoBase <|.. ArmMech : implements
+    SubsystemIoBase <|.. FxArmMech : implements
+    SubsystemIoBase <|.. NovaArmMech : implements
+    ArmMech --> FxArmMech : delegates to
+    ArmMech --> NovaArmMech : delegates to
+    
+    note for ArmMech "Automatically creates FxArmMech or NovaArmMech\nbased on motor config type"
 ```
+
+**Key Points:**
+- All mechanisms implement the `SubsystemIoBase` interface
+- The generic mechanism classes (e.g., `ArmMech`, `RollerMech`) delegate to implementation-specific classes
+- Implementation-specific classes (e.g., `FxArmMech`, `NovaArmMech`) handle motor controller specifics
+- You only interact with the generic mechanism class - the delegation is automatic
 
 There are additional "mechanisms" that are more utility-based and not full mechanisms by themselves. These include things like a Time of Flight sensor or other single-purpose devices. These are generally not full mechanisms but can be used as components within a larger mechanism or subsystem. A distance sensor may be used in an intake, but does not belong to the pivot or the rollers directly.
 
@@ -193,11 +215,45 @@ There are additional "mechanisms" that are more utility-based and not full mecha
 
 ## Interacting with Mechanisms
 Interacting with mechanisms in MWLib is straightforward. Each mechanism class provides methods to set target positions, velocities, or duty cycles, depending on the type of mechanism. There are also methods to retrieve the current state of the mechanism, such as its position or velocity. These methods tend to follow a consistent naming convention across different mechanism classes, making it easier to switch between them:
+
+### Basic Control Methods
 - **Set Target Position**: `setTargetPosition(value)` - Sets the desired position for mechanisms that support position control.
-    - `value` is typically in physical units such as radians for arms or meters for elevators.
+    - `value` is typically in physical units such as radians for arms/rollers or meters for elevators.
 - **Set Target Velocity**: `setTargetVelocity(value)` - Sets the desired velocity for mechanisms that support velocity control.
     - `value` is typically in physical units such as radians per second or meters per second.
 - **Set Target Duty Cycle**: `setTargetDutyCycle(value)` - Sets the desired duty cycle for mechanisms that support duty cycle control.
+    - `value` ranges from -1.0 to 1.0 representing percentage of available voltage.
+
+### Advanced Control Methods
+Many mechanisms also support advanced control features for smoother motion and better performance:
+
+- **Motion Profile Control**: `setTargetPositionMotionProfile(value)` or `setTargetVelocityMotionProfile(value)` - Uses trapezoidal motion profiling for smoother acceleration and deceleration (TalonFX only).
+- **Feedforward Control**: `setTargetPositionWithFF(value, feedforward)` or `setTargetVelocityWithFF(value, feedforward)` - Adds arbitrary feedforward to improve control accuracy.
+  - The feedforward value units depend on the motor controller and slot configuration.
+
+### Getter Methods
+- **Get Current Position**: `getCurrentPosition()` - Retrieves the current position of the mechanism.
+- **Get Current Velocity**: `getCurrentVelocity()` - Retrieves the current velocity of the mechanism.
+- **Set Current Position**: `setCurrentPosition(value)` - Zeros/calibrates the mechanism to a known position.
+
+### Example Usage
+```java
+// Basic position control
+arm_.setTargetPosition(Units.degreesToRadians(90));
+
+// Motion profile position control (smoother motion)
+arm_.setTargetPositionMotionProfile(Units.degreesToRadians(90));
+
+// Position control with gravity compensation feedforward
+arm_.setTargetPositionWithFF(Units.degreesToRadians(90), 0.5);
+
+// Get current state
+double current_angle = arm_.getCurrentPosition();
+double current_velocity = arm_.getCurrentVelocity();
+
+// Zero the mechanism
+arm_.setCurrentPosition(Units.degreesToRadians(0));
+```
 - **Get Current Position**: `getCurrentPosition()` - Retrieves the current position of the mechanism.
 - **Get Current Velocity**: `getCurrentVelocity()` - Retrieves the current velocity of the mechanism.
 
@@ -207,6 +263,87 @@ It is important to note that the mechanism classes are designed to be interacted
 
 :::tip Example Implementation
 For an example of how to implement and use these mechanisms in a subsystem, refer to the [Subsystems Documentation](../subsystems/#using-the-mechanisms).
+:::
+
+---
+
+## Motor Configuration
+
+Before creating mechanism instances, you need to configure the motor controllers. Motor configurations should be defined in your subsystem's constants class.
+
+### FxMotorConfig (CTRE TalonFX)
+
+```java
+// In your constants class
+public final FxMotorConfig PIVOT_MOTOR_CONFIG = new FxMotorConfig();
+
+public YourConstants() {
+    // Configure the motor
+    PIVOT_MOTOR_CONFIG.can_id = 31;
+    PIVOT_MOTOR_CONFIG.motor_type = FxMotorType.X44;  // or X60
+    PIVOT_MOTOR_CONFIG.canbus_name = "CANivore";       // or "rio"
+    PIVOT_MOTOR_CONFIG.config = new TalonFXConfiguration();
+    
+    // Set motor inversion
+    PIVOT_MOTOR_CONFIG.config.MotorOutput.Inverted = 
+        PhoenixUtil.toInvertedValue(false);
+    
+    // Configure current limits
+    PIVOT_MOTOR_CONFIG.config.CurrentLimits.StatorCurrentLimit = 60;
+    PIVOT_MOTOR_CONFIG.config.CurrentLimits.StatorCurrentLimitEnable = true;
+    
+    // Configure PID gains (Slot0 for position control)
+    PIVOT_MOTOR_CONFIG.config.Slot0 = new Slot0Configs()
+        .withKP(250.0)
+        .withKI(0.0)
+        .withKD(0.0)
+        .withKG(0.12);  // Gravity compensation
+}
+```
+
+### NovaMotorConfig (REV Thrifty Nova)
+
+```java
+// In your constants class
+public final NovaMotorConfig ROLLER_MOTOR_CONFIG = new NovaMotorConfig();
+
+public YourConstants() {
+    ROLLER_MOTOR_CONFIG.can_id = 30;
+    ROLLER_MOTOR_CONFIG.canbus_name = "rio";
+    ROLLER_MOTOR_CONFIG.inverted = false;
+    ROLLER_MOTOR_CONFIG.current_limit = 40;
+    
+    // Configure PID gains
+    ROLLER_MOTOR_CONFIG.position_pid = new NovaMotorConfig.PIDConfig()
+        .withP(0.1)
+        .withI(0.0)
+        .withD(0.0);
+}
+```
+
+### Leader-Follower Configuration
+
+For multi-motor mechanisms, pass multiple configs with the leader first:
+
+```java
+// In subsystem constructor
+flywheel_ = new FlywheelMech(
+    getSubsystemKey(),
+    "Flywheel",
+    List.of(
+        CONSTANTS.SHOOTER_LEADER_MOTOR_CONFIG,      // Leader
+        CONSTANTS.SHOOTER_FOLLOWER_MOTOR_1_CONFIG,  // Follower 1
+        CONSTANTS.SHOOTER_FOLLOWER_MOTOR_2_CONFIG,  // Follower 2
+        CONSTANTS.SHOOTER_FOLLOWER_MOTOR_3_CONFIG   // Follower 3
+    ),
+    gear_ratio,
+    inertia,
+    radius
+);
+```
+
+:::note Automatic Follower Configuration
+The mechanism automatically configures follower motors to mirror the leader. You only need to provide the motor configs - the mechanism handles the leader-follower relationship.
 :::
 
 ---

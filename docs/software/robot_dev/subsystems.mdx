@@ -55,8 +55,13 @@ Within the newly created package, create a constants class to hold all the confi
 It is important to define a new enum at the top of the class called `ShooterStates` in this example. This enum will define all the states that the shooter subsystem state machine can be in.
 
 Below is an example of what the constants class might look like:
+
 ```java
 public class ShooterConstants extends MwConstants {
+
+    // =============================================================================
+    // ENUMS AND STATE DEFINITIONS
+    // =============================================================================
 
     public enum ShooterStates {
         IDLE,
@@ -64,28 +69,80 @@ public class ShooterConstants extends MwConstants {
         SHOOTING
     }
 
-    // Shooter Mech Configs
-    public final int SHOOTER_ID = 10;
-    public final boolean SHOOTER_INVERTED = false;
-    public final double SHOOTER_GEAR_RATIO = 1.0;
-    public final double SHOOTER_WHEEL_RADIUS_METERS = Units.inchesToMeters(3);
-    public final double SHOOTER_WHEEL_MASS_KG = 2.3; // kg, approximate
-    public final double SHOOTER_WHEEL_INERTIA = 0.5 * SHOOTER_WHEEL_MASS_KG * Math.pow(SHOOTER_WHEEL_RADIUS_METERS, 2.0); // kg m^2, approximate
+    // =============================================================================
+    // CAN IDS AND HARDWARE CONFIGURATION
+    // =============================================================================
 
-    // Indexer Mech Config
+    // Motor CAN IDs
+    public final int SHOOTER_ID = 10;
     public final int INDEXER_ID = 11;
+
+    // =============================================================================
+    // MECHANICAL CONSTANTS - FLYWHEEL
+    // =============================================================================
+
+    public final boolean SHOOTER_INVERTED = false;
+    public final double FLYWHEEL_GEAR_RATIO = 1.0;
+    public final double FLYWHEEL_WHEEL_RADIUS_METERS = Units.inchesToMeters(3);
+    public final double FLYWHEEL_WHEEL_MASS_KG = 2.3; // kg, approximate
+    public final double FLYWHEEL_INERTIA = 0.5 * FLYWHEEL_WHEEL_MASS_KG 
+        * Math.pow(FLYWHEEL_WHEEL_RADIUS_METERS, 2.0); // kg m^2
+
+    // =============================================================================
+    // MECHANICAL CONSTANTS - INDEXER
+    // =============================================================================
+
     public final boolean INDEXER_INVERTED = false;
     public final double INDEXER_GEAR_RATIO = 1.0;
 
-    // Control Setpoints
-    public final double SHOOT_DUTY_CYCLE = 0.5; // 50% power for shooting
+    // =============================================================================
+    // CONTROL SETPOINTS
+    // =============================================================================
+
+    public final double SHOOT_VELOCITY = Units.rotationsPerMinuteToRadiansPerSecond(5000);
     public final double INDEXER_DUTY_CYCLE = 0.3; // 30% power for indexing
 
-    public ShooterConstants() {}
+    // =============================================================================
+    // MOTOR CONFIGURATION OBJECTS
+    // =============================================================================
+
+    public final FxMotorConfig SHOOTER_MOTOR_CONFIG = new FxMotorConfig();
+    public final FxMotorConfig INDEXER_MOTOR_CONFIG = new FxMotorConfig();
+
+    // =============================================================================
+    // CONSTRUCTOR - MOTOR CONFIGURATION INITIALIZATION
+    // =============================================================================
+
+    public ShooterConstants() {
+        // Configure Shooter Motor
+        SHOOTER_MOTOR_CONFIG.can_id = SHOOTER_ID;
+        SHOOTER_MOTOR_CONFIG.motor_type = FxMotorType.X60;
+        SHOOTER_MOTOR_CONFIG.canbus_name = "rio";
+        SHOOTER_MOTOR_CONFIG.config = new TalonFXConfiguration();
+        SHOOTER_MOTOR_CONFIG.config.MotorOutput.Inverted = 
+            PhoenixUtil.toInvertedValue(SHOOTER_INVERTED);
+
+        // Configure Indexer Motor
+        INDEXER_MOTOR_CONFIG.can_id = INDEXER_ID;
+        INDEXER_MOTOR_CONFIG.motor_type = FxMotorType.X60;
+        INDEXER_MOTOR_CONFIG.canbus_name = "rio";
+        INDEXER_MOTOR_CONFIG.config = new TalonFXConfiguration();
+        INDEXER_MOTOR_CONFIG.config.MotorOutput.Inverted = 
+            PhoenixUtil.toInvertedValue(INDEXER_INVERTED);
+    }
 }
 ```
+
 :::warning Class Inheritance
 Ensure that your constants class extends `MwConstants` to inherit necessary functionality. The subsystem framework relies on this inheritance for proper operation.
+:::
+
+:::tip Organization with Comments
+Use section comments (like the ones shown above) to organize your constants into logical groups. This makes the file much easier to navigate and maintain as your subsystem grows in complexity.
+:::
+
+:::note Motor Configuration Pattern
+Motor configurations should be created as public final fields and initialized in the constructor. This pattern allows you to configure all motor parameters (CAN ID, inversion, current limits, PID gains, etc.) in one place before passing them to the mechanism constructors.
 :::
 
 ### Create the Subsystem Class
@@ -94,6 +151,10 @@ Next, create the subsystem class itself within the same package. Below is an exa
 ```java
 public class ShooterSubsystem extends MwSubsystem<ShooterStates, ShooterConstants> {
     private static ShooterSubsystem instance_ = null;
+
+    // Mechanisms
+    private FlywheelMech flywheel_;
+    private RollerMech indexer_;
 
     public static ShooterSubsystem getInstance() {
         if (instance_ == null) {
@@ -104,24 +165,57 @@ public class ShooterSubsystem extends MwSubsystem<ShooterStates, ShooterConstant
 
     public ShooterSubsystem() {
         super(ShooterStates.IDLE, new ShooterConstants());
+        
+        // Initialize mechanisms
+        flywheel_ = new FlywheelMech(
+            getSubsystemKey(),
+            "Flywheel",
+            List.of(CONSTANTS.SHOOTER_MOTOR_CONFIG),
+            CONSTANTS.FLYWHEEL_GEAR_RATIO,
+            CONSTANTS.FLYWHEEL_INERTIA,
+            CONSTANTS.FLYWHEEL_WHEEL_RADIUS_METERS
+        );
+        
+        indexer_ = new RollerMech(
+            getSubsystemKey(),
+            "Indexer",
+            List.of(CONSTANTS.INDEXER_MOTOR_CONFIG),
+            CONSTANTS.INDEXER_GEAR_RATIO
+        );
     }
 
-    // @Override
-    // public void handleStateTransition(ShooterStates wanted) {
-    // }
+    @Override
+    public void handleStateTransition(ShooterStates wanted) {
+        // Add custom state transition logic if needed
+        // Otherwise, default transition occurs
+        system_state_ = wanted;
+    }
 
     @Override
     public void updateLogic(double timestamp) {
         switch (system_state_) {
-
+            case IDLE:
+                flywheel_.setTargetDutyCycle(0.0);
+                indexer_.setTargetDutyCycle(0.0);
+                break;
+                
+            case SPIN_UP:
+                flywheel_.setTargetVelocity(CONSTANTS.SHOOT_VELOCITY);
+                indexer_.setTargetDutyCycle(0.0);
+                break;
+                
+            case SHOOTING:
+                flywheel_.setTargetVelocity(CONSTANTS.SHOOT_VELOCITY);
+                indexer_.setTargetDutyCycle(CONSTANTS.INDEXER_DUTY_CYCLE);
+                break;
         }
-        // Log Data
-        DogLog.log(getSubsystemKey() + "/State", system_state_.toString());
+        
+        // Log Additional Data Here!
     }
 
     @Override
     public List<SubsystemIoBase> getIos() {
-        return Arrays.asList(null);
+        return Arrays.asList(flywheel_, indexer_);
     }
 
     @Override
@@ -130,8 +224,13 @@ public class ShooterSubsystem extends MwSubsystem<ShooterStates, ShooterConstant
     }
 }
 ```
+
 :::note @Override Annotations
-The `@Override` annotations indicate that these methods are overriding methods defined in the superclass `MwSubsystem`. This is important for ensuring that the subsystem behaves correctly within the framework. If you forget to include these methods, the subsystem while likely fail to compile.
+The `@Override` annotations indicate that these methods are overriding methods defined in the superclass `MwSubsystem`. This is important for ensuring that the subsystem behaves correctly within the framework. If you forget to include these methods, the subsystem will likely fail to compile.
+:::
+
+:::tip Mechanism Initialization
+Notice how mechanisms are initialized in the constructor with `getSubsystemKey()` as the logging prefix and a descriptive name. This ensures all mechanism logs are properly organized under the subsystem.
 :::
 
 This class extends `MwSubsystem`, specifying the state enum and constants class as type parameters. Make sure to state and constants type define in the class declaration:
@@ -197,54 +296,135 @@ private RollerMech indexer_;
 :::
 
 ### Initialize Mechanism IOs
-In the subsystem constructor, initialize the mechanism IO objects using the configuration values defined in the constants class. This typically involves creating new instances of the mechanism classes and passing in the necessary parameters such as motor IDs, inversion flags, and gear ratios.
-```java
-public ShooterSubsystem() {
-    super(ShooterStates.IDLE, new ShooterConstants());
-    indexer_ = new RollerMech(/*FX Motor Config*/);
+In the subsystem constructor, initialize the mechanism IO objects using the configuration values defined in the constants class. This typically involves creating new instances of the mechanism classes and passing in the necessary parameters such as motor configurations, gear ratios, and physical properties.
 
-    indexer_.setLoggingPrefix(getSubsystemKey());
+```java
+public IntakeSubsystem() {
+    super(IntakeStates.STORE, new IntakeConstants());
+    
+    // Initialize roller mechanism
+    roller_ = new RollerMech(
+        getSubsystemKey(),                    // Logging prefix
+        "Roller",                             // Mechanism name
+        List.of(CONSTANTS.ROLLER_MOTOR_CONFIG),  // Motor configs
+        CONSTANTS.ROLLER_GEAR_RATIO           // Gear ratio
+    );
+
+    // Initialize pivot arm mechanism
+    pivot_ = new ArmMech(
+        getSubsystemKey(),                    // Logging prefix
+        "Pivot",                              // Mechanism name
+        List.of(CONSTANTS.PIVOT_MOTOR_CONFIG), // Motor configs
+        CONSTANTS.PIVOT_GEAR_RATIO,           // Gear ratio
+        CONSTANTS.PIVOT_LENGTH,               // Arm length (m)
+        CONSTANTS.PIVOT_MASS,                 // Arm mass (kg)
+        CONSTANTS.PIVOT_MIN,                  // Min angle (rad)
+        CONSTANTS.PIVOT_MAX                   // Max angle (rad)
+    );
+    
+    // Set initial position for mechanisms that need zeroing
+    pivot_.setCurrentPosition(CONSTANTS.PIVOT_HOME_POSITION);
 }
 ```
+
 :::note Logging Prefix
-Setting a logging prefix for each mechanism helps in organizing log data and makes it easier to identify which subsystem the data belongs to.
-If you forget to set the logging prefix your log data for your mechanisms will show up under an Unknown subsystem.
+The `getSubsystemKey()` method provides the logging prefix for the subsystem. This ensures that all mechanism logs are organized under the correct subsystem in the log viewer. Each mechanism should be initialized with this prefix to maintain proper log organization.
+:::
+
+:::note Mechanism Names
+When you have multiple instances of the same mechanism type in a subsystem (e.g., left and right arms), provide unique names as the second parameter. This helps distinguish between them in logs. If you only have one instance, you can still provide a descriptive name or pass `null` to use the default.
+:::
+
+:::warning Motor Configuration Lists
+Motor configurations must be provided as `List.of(...)` containing one or more motor config objects. The first motor in the list is treated as the leader, and subsequent motors automatically follow it.
 :::
 
 ### Update the Subsystem IOs
-Override the `getIOs()` method in your subsystem class to return a list of the mechanism IO objects. This allows the subsystem framework to access and manage the hardware components of the subsystem.
+Override the `getIos()` method in your subsystem class to return a list of the mechanism IO objects. This allows the subsystem framework to access and manage the hardware components of the subsystem.
+
 ```java
 @Override
 public List<SubsystemIoBase> getIos() {
-    return Arrays.asList(indexer_);
+    return Arrays.asList(roller_, pivot_);
 }
 ```
+
 :::note Multiple Mechanisms
-If your subsystem contains multiple mechanisms, include all of them in the list returned by the `getIOs()` method. This can just be done by adding them to the `Arrays.asList()` call.
+If your subsystem contains multiple mechanisms, include all of them in the list returned by the `getIOs()` method. Simply add them as parameters to the `Arrays.asList()` call:
 ```java
-Arrays.asList(mechanism1_, mechanism2_, mechanism3_);
+// Example with three mechanisms
+@Override
+public List<SubsystemIoBase> getIos() {
+    return Arrays.asList(indexer_, flywheel_, hood_);
+}
 ```
 :::
+
 :::warning IO Management
-If this method is left empty none of your mechanism will be ticked. Ensure that you return the correct IO objects that correspond to the hardware components of your subsystem.
+The subsystem framework uses this method to automatically call `readInputs()`, `writeOutputs()`, and `logData()` on each mechanism during the robot loop. If this method returns an empty list or is not implemented correctly, none of your mechanisms will be updated. Ensure that you return all mechanism IO objects that correspond to the hardware components of your subsystem.
 :::
 
 ### Using the Mechanisms
-With the mechanisms added to your subsystem, you can now use them within the `updateLogic()` method to implement the desired behavior. This may involve reading sensor data, controlling motor outputs, and implementing state machine logic based on the subsystem's current state.
-See [Mechanisms](./mechanisms/) for more details on the interworkings of mechanims. Below is a simple example of using the indexer mechanism in the `updateLogic()` method:
+With the mechanisms added to your subsystem, you can now use them within the `updateLogic()` method to implement the desired behavior. This may involve reading sensor data, controlling motor outputs, and implementing logic based on the subsystem's needs. See [Mechanisms](./mechanisms/) for more details on the interworkings of mechanisms.
+
 ```java
 @Override
 public void updateLogic(double timestamp) {
-    switch (system_state_) {
-        case IDLE:
-            indexer_.setTargetDutyCycle(0.0);
-            break;
-        case INDEXING:
-            indexer_.setTargetDutyCycle(constants_.INDEXER_DUTY_CYCLE);
-            break;
-    }
+    // Example: Control mechanisms based on button inputs or sensor readings
+    
+    // Set pivot to a specific angle
+    pivot_.setTargetPosition(Units.degreesToRadians(45));
+    
+    // Run roller at a specific speed
+    roller_.setTargetDutyCycle(0.5);  // 50% power
+    
+    // Or use velocity control
+    roller_.setTargetVelocity(Units.rotationsPerMinuteToRadiansPerSecond(500));
+    
+    // Stop mechanisms
+    roller_.setTargetDutyCycle(0.0);
+    pivot_.setTargetDutyCycle(0.0);
 }
 ```
+
+:::note State Machines
+In practice, you'll typically use a state machine to organize your subsystem's behavior. The example above shows basic mechanism control, but for complete subsystem implementation with state machines, see [Adding the State Machine](#adding-the-state-machine) below.
+:::
+
+You can do more than just send target requests to mechanisms. Sometimes we need to see what our mechanisms are doing to make changes to our requests. All mechanisms provide getter methods to query their current state:
+
+```java
+// Query mechanism state
+double current_angle = pivot_.getCurrentPosition();
+double current_velocity = pivot_.getCurrentVelocity();
+double motor_current = pivot_.getLeaderCurrent();
+
+// Use state information for conditional logic
+if (MathUtil.isNear(target_angle, current_angle, tolerance)) {
+    // Pivot has reached target position
+    // Can now proceed with next action
+}
+
+// Check if mechanism is moving too fast
+if (Math.abs(current_velocity) > max_safe_velocity) {
+    // Slow down for safety
+    pivot_.setTargetDutyCycle(0.0);
+}
+
+// Monitor motor health
+if (motor_current > current_threshold) {
+    // High current detected - possible jam or mechanical issue
+    DogLog.log(getSubsystemKey() + "/Warning/HighCurrent", motor_current);
+}
+```
+
+This is particularly useful for:
+- **Waiting for completion**: Check if a mechanism has reached a target before proceeding
+- **Conditional control**: Adjust outputs based on current state
+- **Safety checks**: Monitor currents, velocities, or positions to prevent damage
+- **Debugging**: Log mechanism state to diagnose issues
+
+See the [Mechanisms](./mechanisms/) documentation for the complete list of getter methods available for each mechanism type.
 
 ---
 
@@ -281,23 +461,55 @@ public void updateLogic(double timestamp) {
 ```
 
 ### Implement State Transitions
-If you wish to handle state transitions explicitly, you can override the `handleStateTransition()` method. This method is called every loop and attempts to set the current state to the wanted state. If left unimplemented the subsystem will automatically transition to the wanted state.
+If you wish to handle state transitions explicitly, you can override the `handleStateTransition()` method. This method is called every loop and attempts to set the current state to the wanted state. **If left unimplemented, the subsystem will automatically transition to the wanted state immediately.**
+
 ```java
-handleStateTransition(ShooterStates wanted) {
+@Override
+protected void handleStateTransition(ShooterStates wanted) {
+    // Simple immediate transition (this is the default behavior)
     system_state_ = wanted;
 }
 ```
-We can override this method to add conditions that must be met before allowing a transition to a new state. For example, we might want to prevent transitioning to the **SHOOTING** state unless the shooter is at the desired speed.
+
+We can override this method to add conditions that must be met before allowing a transition to a new state. For example, we might want to prevent transitioning to the **SHOOTING** state unless the shooter is at the desired speed, or add an intermediate state for transitioning:
+
 ```java
 @Override
-public void handleStateTransition(ShooterStates wanted) {
-    if(wanted == ShooterStates.SHOOTING && isAtShootingSpeed()) {
-        system_state_ = wanted;
-    } else {
+protected void handleStateTransition(ShooterStates wanted) {
+    // Example 1: Conditional transition based on readiness
+    if (wanted == ShooterStates.SHOOTING && isAtShootingSpeed()) {
+        system_state_ = ShooterStates.SHOOTING;
+    } else if (wanted == ShooterStates.SHOOTING) {
         system_state_ = ShooterStates.SPIN_UP;
+    } else {
+        system_state_ = wanted;
+    }
+    
+    // Example 2: Adding intermediate states
+    if (system_state_ == ShooterStates.STORE && wanted == ShooterStates.INTAKE) {
+        system_state_ = ShooterStates.DEPLOYING;
+    } else if (system_state_ == ShooterStates.DEPLOYING 
+               && MathUtil.isNear(target_position, current_position, tolerance)) {
+        system_state_ = ShooterStates.DEPLOYED;
+    } else {
+        system_state_ = wanted;
     }
 }
 ```
+
+:::tip When to Override handleStateTransition
+You only need to override `handleStateTransition()` if you have:
+- Conditional transitions that depend on sensor readings
+- Safety checks before entering certain states
+- Intermediate states that need to complete before reaching the final state
+- Complex state machine logic that requires validation
+
+If your state machine transitions are simple and immediate, you can omit this method entirely.
+:::
+:::warning Try to Limit Conditions if possible
+This method can get complicated fast. Try to only define transition you care about and make sure everything else that isn't unique falls under a `system_state_ = wanted` statement.
+:::
+
 ### Updating the State
 To change the state of the subsystem from other parts of the code, use the `setWantedState()` method. This method sets the desired state for the subsystem, which will be processed in the next update cycle.
 ```java
@@ -310,7 +522,7 @@ This will request the subsystem to transition to the **SHOOTING** state during t
 ## Logging
 Logging is an important aspect of subsystem development, as it allows you to monitor the behavior of the subsystem and diagnose issues. Our subsystem framework provides built-in logging capabilities that can be easily integrated into your subsystem. To log data from your subsystem, you can use the `DogLog` class to log relevant information such as the current state, sensor readings, and actuator outputs. Here is an example of logging the current state of the subsystem in the `updateLogic()` method:
 ```java
-DogLog.log(getSubsystemKey() + "/State", system_state_.toString());
+DogLog.log(getSubsystemKey() + "/TargetRotation", target_.getRotation());
 ```
 This will log the current state of the subsystem under a key that includes the subsystem's name, making it easy to identify in the logs. Make sure to log any other relevant data that will help you understand the subsystem's behavior during operation. This could include variables or internal subsystem states that are important for debugging or performance analysis. See more about logging and telemetry on the [Telemetry and Logging](./telemetry.mdx) page.
 

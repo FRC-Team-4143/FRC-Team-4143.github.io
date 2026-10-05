@@ -1,0 +1,57 @@
+---
+title: Objects and Odometry
+description: This is an intro to Object Oriented Programming and WPILib.
+hide_table_of_contents: true
+sidebar_position: 5
+---
+
+# Objects and Odometry
+In this module we will cover the basics of Object Oriented Programming: classes, objects and `static` methods. We will then use WPILib classes for controlling a differential drive robot, including kinematics and a pose estimator that tracks where the robot is. Finally, we will compare that estimate with the simulator's true position.
+
+---
+
+## Presentation
+<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTyvrLPFZj8cYaDwGkbPY_WGTxrjbIHkxOXvSxk9a9HyA6k5dZknC0UT05FngsJ99Ot7c0mbulSE4dn/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+
+---
+
+:::tip Do this lesson in Scriptum
+The exercises below are the **Objects and Odometry** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** classes and objects, `new`, `import`, `static` and `abstract`.
+:::
+
+## Exercises
+### Classes
+- Finish an abstract OI class
+    - Add a static getter for forward (the left stick Y axis) with a deadband
+    - Add a static getter for turn (the right stick X axis) with a deadband
+- Update your code to use the OI class methods and remove the XboxController from Robot.java
+### WPILib
+- Use a [DifferentialDriveKinematics](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/DifferentialDriveKinematics.html) object in the drive mechanism
+    - Write a getChassisSpeeds method
+    - Use it to get the [ChassisSpeeds](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/ChassisSpeeds.html) of the robot and compare it with your hand-written speeds
+- Write a getYaw method that works out the robot's heading from how far each side has driven
+    - Return it as a [Rotation2d](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Rotation2d.html)
+- Use a [DifferentialDrivePoseEstimator](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/estimator/DifferentialDrivePoseEstimator.html) object
+    - Update it every loop and log the estimated pose
+    - Use the x value from the estimated pose to drive 3 meters in autonomous
+### Simulation
+- Drive the robot in simulation and watch the pose on the AdvantageScope 2D field
+- Compare your estimated pose with the simulator's true pose
+    - Why do they drift apart? What would a real robot add to fix it?
+- Optional: try WPILib's [DifferentialDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html) `arcadeDriveIK` method and compare it with your own arcade math
+
+---
+
+## Related Documentation
+### Software
+- [Classes and Objects](../java/classes-objs.mdx): Overview of classes and objects in Java.
+- [WPILib](../robot_dev/wpilib.mdx): The main library used for programming FRC robots.
+- [Kinematics and the ChassisSpeeds Class](https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/intro-and-chassis-speeds.html): Overview of kinematics and how to use the ChassisSpeeds class in WPILib.
+### Software Tools
+- [VSCode](../tools/vscode.mdx): Our primary Integrated Development Environment (IDE) for programming.
+- [Driver Station](../tools/driver-station.mdx): Software used to control and monitor the robot during competitions.
+- [Advantage Scope](../tools/ad-scope.mdx): Tool for analyzing robot performance data.
+
+- [Elastic](../tools/elastic.mdx): Tool for logging and visualizing robot data.
