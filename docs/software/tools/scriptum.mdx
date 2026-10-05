@@ -1,0 +1,154 @@
+---
+title: Scriptum
+description: How to use Scriptum, the team's browser-based robot IDE, for the training lessons.
+hide_table_of_contents: false
+sidebar_position: 0
+---
+
+# Scriptum
+
+Scriptum ([scriptum.marswars.org](https://scriptum.marswars.org)) is the team's **robot IDE in your browser**. You write Java,
+click **Start**, and a simulated robot runs your code while you drive it and watch its data. There is nothing to install.
+Every training lesson after the tools session is done in Scriptum, and its **Verify** button checks your work.
+
+{/* SCREENSHOT: static/img/software/tools/scriptum/workspace.png
+    The whole screen during a robot lesson: editor on the left, AdvantageScope on the right, Driver Station at the bottom.
+import workspace from '@site/static/img/software/tools/scriptum/workspace.png';
+<img src={workspace} width="900"/> */}
+
+:::tip Training path
+The [training sessions](../training/) tell you which Scriptum lesson to open. Each lesson has a README with the steps, a **session plan**
+for the 3 hours, and a short **Java you will learn** section that explains each new idea right before you use it.
+:::
+
+---
+
+## Sign in and start your workspace
+
+1. Go to [scriptum.marswars.org](https://scriptum.marswars.org) and sign in with your team account (the same one you use for the other team apps).
+2. The first time, Scriptum asks if you are **ready to start**. Click **Start my workspace**. It takes about a minute to get your own
+   private computer ready.
+3. After a while with no activity your workspace shuts itself down to save resources. Open the page again and start it again.
+   Your work is saved.
+
+{/* SCREENSHOT: static/img/software/tools/scriptum/start-workspace.png
+    The "ready to start?" page with the Start my workspace button. */}
+
+---
+
+## Load a lesson
+
+Click **Switch project** in the top bar. The lessons are grouped into tracks (Tools, Java Programming, FRC Robot) and are listed in
+order. Click **Load** on the one your session uses.
+
+- **Your work is saved for each lesson.** Switching to a different lesson does not lose it. When you come back, the lesson shows
+  **Your work is saved** and a **Resume** button.
+- **Reset** throws away your saved work for that lesson and starts it over. It cannot be undone, so only use it when you want a fresh start.
+  Checkpoints you already passed stay passed.
+- Some lessons are locked until you finish the one before it.
+
+{/* SCREENSHOT: static/img/software/tools/scriptum/switch-project.png
+    The Switch project dialog showing the FRC Robot track with a Resume and a Reset button. */}
+
+Then open **README.md** from the **Explorer** on the left. It is the lesson. You can also read it in the **Preview** tab beside the editor.
+
+---
+
+## The screen
+
+| Where | What it is |
+| --- | --- |
+| **Editor** (left) | VSCodium, the same editor as VS Code. The **Explorer** lists your project's files. Autocomplete and error underlines work. |
+| **Tool tabs** (top bar) | **AdvantageScope**, **Choreo**, **Elastic Dashboard** and **Preview**. Turn any on or off, show several at once, and drag the dividers to resize. |
+| **Driver Station** (bottom) | **Start/Stop/Restart**, the mode buttons and **Enable**. Its tabs include **Console**, **Controls** and (when your code has one) **Auto**. |
+| **Lesson chip** (top bar) | Your progress, like `3/6`. Click it to open the checkpoints. |
+
+Many lessons hide files you do not need so you can focus on the ones you write. That is normal.
+
+---
+
+## Run your robot
+
+:::warning Use the Driver Station, not the WPILib buttons
+The WPILib extension in the editor has its own simulate button. **Do not use it here.** Click **Start** in the Driver Station at the bottom
+of the page. Only that sets up the simulation the way Scriptum expects.
+:::
+
+1. Click **Start** in the Driver Station. The first start builds your project, so give it a minute.
+2. Wait for **Comms** and **Robot Code** to turn **green**.
+3. Pick **Teleop**, **Auto** or **Test**, then click **Enable**.
+4. Click **Stop** when you are done, or **Restart** to stop and re-run with the changes you just made.
+
+Build errors and your robot's printed output show up in the **Console** tab. If the build fails, read the first `error:` line. It names the file,
+the line number and what is wrong.
+
+{/* SCREENSHOT: static/img/software/tools/scriptum/driver-station.png
+    The Driver Station with Comms and Robot Code green, Teleop selected, ready to Enable. */}
+
+---
+
+## Drive the robot
+
+Open the **Controls** tab in the Driver Station and choose **Keyboard** or a plugged-in gamepad.
+
+| Keyboard | Gamepad |
+| --- | --- |
+| **W / A / S / D** | Left stick (up / left / down / right) |
+| **Arrow keys** | Right stick |
+| **Q** / **O** | Left trigger / Right trigger |
+| **E** / **U** | Left bumper / Right bumper |
+| **K / L / J / I** | A / B / X / Y buttons |
+| **R** / **Y** | Back / Start |
+| **F** / **H** | Left / Right stick click |
+| **Z / X / C / V** | D-pad up / down / left / right |
+
+When your code publishes an autonomous chooser, an **Auto** tab appears. Pick the routine there, set the mode to **Auto**, and **Enable**.
+
+---
+
+## Watch your robot
+
+- **AdvantageScope** is open by default. Every value your code logs shows up in the left list. Drag one onto a graph to plot it, or drag a
+  pose such as `Drive/Pose` onto the **2D Field** tab to watch the robot move. See [AdvantageScope](./ad-scope.mdx).
+- **Elastic Dashboard** is another way to view live values. Its layout is saved in your project. See [Elastic](./elastic.mdx).
+- **Choreo** is the path editor for autonomous routines. See [Choreo](./choreo.mdx).
+
+{/* SCREENSHOT: static/img/software/tools/scriptum/advantagescope.png
+    AdvantageScope's 2D Field showing Drive/Pose and Drive/TruePose beside a line graph of the speeds. */}
+
+---
+
+## Check your work with Verify
+
+Each lesson has **checkpoints**. Click the lesson chip (like `3/6`) in the top bar to see them. Click **Verify** on one, or **Verify all**.
+
+- Some checkpoints **read your code**, for example "the `DEADBAND` constant is used in an `if`".
+- Some **watch what your robot did**, for example "the left side reached full speed". For these, run the robot, do the thing, and then click Verify.
+  Verify looks at your **latest run**, so after you change something, **Start the robot fresh** and run it again before you verify.
+- A failed checkpoint tells you what to fix. Read it, fix it, and try again. You can verify as many times as you like.
+- Later lessons unlock once you pass all the required checkpoints in the one before.
+
+{/* SCREENSHOT: static/img/software/tools/scriptum/checkpoints.png
+    The checkpoints dialog with some passed and one failed with its hint. */}
+
+---
+
+## If something goes wrong
+
+| Problem | Try this |
+| --- | --- |
+| The build fails | Read the first `error:` line in the **Console**. Fix that one first. Missing `;`, a typo, or a missing `import` are the usual causes. |
+| **Comms** or **Robot Code** never turns green | Click **Stop**, then **Start** again. If the Console shows a build error, fix it first. |
+| The robot does not move | Make sure the mode is set and you clicked **Enable**. Check that the Controls tab has your keyboard or gamepad selected. |
+| A "watch the robot" checkpoint fails | **Restart** the robot, repeat the action, and Verify again. Verify checks your latest run. |
+| You broke the project | Use **Reset** on the lesson in **Switch project** to start it over. Your passed checkpoints stay passed. |
+| The workspace stopped | Open the page again and click **Start my workspace**. |
+
+Still stuck? Ask a mentor.
+
+---
+
+## Related
+
+- [Training sessions](../training/)
+- [AdvantageScope](./ad-scope.mdx), [Elastic](./elastic.mdx), [Choreo](./choreo.mdx), [Driver Station](./driver-station.mdx)
