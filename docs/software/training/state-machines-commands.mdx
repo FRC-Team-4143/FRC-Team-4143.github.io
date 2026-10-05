@@ -2,7 +2,7 @@
 title: State Machines and Commands
 description: An introduction to state machines and command-based programming in FRC robots. This includes how to create and manage states, transitions, and commands to control robot behavior.
 hide_table_of_contents: true
-sidebar_position: 8
+sidebar_position: 9
 ---
 
 # State Machines and Commands
@@ -35,8 +35,8 @@ The exercises below are the **State Machines and Commands** lesson in [Scriptum]
 - Add a ShooterCommands file in the shooter package
     - Create a command to set the wanted state of the shooter to SHOOT while a button is held
     - Bind the command to a button in OI
-- Create an Instant Command to simulate applied load from launching a ball
-    - See available methods for the flywheel mech!
+- Create an Instant Command that simulates the load from launching a ball
+    - Call the subsystem's `simulateBallLaunch()`, which you used in Control Theory
     - Bind the command to a button in OI
 
 ---
