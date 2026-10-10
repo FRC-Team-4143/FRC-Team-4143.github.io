@@ -2,7 +2,7 @@
 title: Computer Vision
 description: An overview of computer vision techniques used in FRC robots. This includes image processing, object detection, and how to implement vision systems on our robots.
 hide_table_of_contents: true
-sidebar_position: 11
+sidebar_position: 10
 ---
 
 # Computer Vision
@@ -16,7 +16,29 @@ In the context of FRC, computer vision is often used to help robots identify and
 
 ---
 
-# Excercises
+# Exercises
+:::tip Do this lesson in Scriptum
+The exercises below are the **Computer Vision** lesson in [Scriptum](https://scriptum.marswars.org). It starts from your finished **State Machines and Commands** robot. Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** none. You practice what you already know: a new state and `switch` case, a PID, and a `startEnd` command.
+:::
+
+## Vision
+- Give each camera tag solution to the pose estimator in `LocalizationSubsystem`
+    - Use `addVisionMeasurement(...)` with the pose the camera saw, **the time the picture was taken**, and the standard deviations
+- Choose how much to trust the cameras
+    - The starter standard deviations of 5.0 mean "ignore the cameras". Pick better numbers
+- Drive more than 5 meters, stop, and compare your estimate with the true pose on the AdvantageScope 2D field
+    - Your estimate should stay within 5 cm and 1 degree of where the robot really is
+## Aiming
+- Add an `AIM` state to the drivetrain
+    - Turn in place to face the goal at (4.0, 4.0), using your pose estimate
+    - Use a PID with continuous input, since headings wrap around
+- Write `isAimed()`: true only when the error is small **and** the robot has stopped turning
+- Create an `aim()` command that sets the `AIM` state while the left bumper is held
+- Tune `AIM_KP` and `AIM_KD` so the robot gets there quickly without swinging past
+
+## Optional: object detection
 - Sign Up for a [Roboflow](https://app.roboflow.com/login) Account
 - Get Added to the MARSWARS Robotics Program Workspace
     - Share your account email with a mentor
@@ -28,5 +50,7 @@ In the context of FRC, computer vision is often used to help robots identify and
 ## Hardware
 - [Nvidia Jetson Vision Computer](../hardware/jetsons.mdx)
 ## Vision
-- [Object Detection](../vision/obj_det.mdx)
 - [April Tags](../vision/april_tags.mdx)
+- [Object Detection](../vision/obj_det.mdx)
+## Controls
+- [State Machines](../controls/state-machines.mdx)
