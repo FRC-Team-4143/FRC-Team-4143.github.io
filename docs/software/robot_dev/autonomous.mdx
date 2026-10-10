@@ -21,6 +21,19 @@ Our autonomous flow is split into three layers:
 - **Auto routines** (`com.marswars.auto.Auto`): A command-based sequence (extends `SequentialCommandGroup`) that can run any robot commands (drive, shooter, intake, LEDs, etc.) and optionally load Choreo trajectories.
 - **Auto manager** (`com.marswars.auto.AutoManager`): Handles the SendableChooser, displays the selected path, and returns the selected auto in `autonomousInit()`.
 - **Drive integration** (`SwerveSubsystem`): Executes Choreo trajectories, exposes helpers like `setDesiredChoreoTrajectoryCommand`, and provides event triggers.
+- **Robot states** (`RobotContainer`, the [super state machine](../controls/state-machines.mdx#the-super-state-machine)): Autos ask the robot for the same states the driver's buttons do, such as `SHOOT`. Anything that coordinates more than one subsystem (aim, spin up, feed) is written once there and shared by teleop and autos.
+
+:::tip Ask the robot, not the subsystems
+For any action the driver also does, an auto should ask `RobotContainer` for the robot state instead of setting each subsystem itself:
+```java
+RobotContainer robot = RobotContainer.getInstance();
+Commands.startEnd(
+        () -> robot.setWantedState(RobotStates.SHOOT),
+        () -> robot.setWantedState(RobotStates.AUTO))
+    .withTimeout(2.0)
+```
+In a behavior-tree auto the same request is `<SetWantedState state="SHOOT"/>`. It waits until the robot is in the state (SUCCESS) or the state fails (FAILURE), so the tree can add auto-only fail handling with `Timeout`, `Fallback` or `Retry`. Setting a single subsystem directly is still fine for small one-off moves, like the intake on a path event. Some examples below predate the super state machine and set subsystems directly.
+:::
 
 ### Auto Lifecycle in Mainbot
 
@@ -51,7 +64,7 @@ public void autonomousInit() {
 Every auto extends `Auto` and follows the same pattern. Here’s a beginner-friendly breakdown of the flow:
 
 1. **Decide what the robot should do (drive + actions)**
-	- An auto can run any command: drive paths, spin up a shooter, run intake, set LEDs, or set subsystem state machines.
+	- An auto can run any command: drive paths, ask the robot for a state (shoot, aim, intake), or set LEDs.
 	- Think of it as a normal `SequentialCommandGroup` with autonomous-specific helpers.
 
 2. **Pick your path files in Choreo (only if you want path following)**
@@ -77,7 +90,7 @@ Every auto extends `Auto` and follows the same pattern. Here’s a beginner-frie
 	- Set the next trajectory, switch the state, then wait for completion.
 
 :::note
-Choreo is just one tool in your auto. You can run any WPILib command and set any subsystem state machine state alongside (or instead of) trajectories.
+Choreo is just one tool in your auto. You can run any WPILib command and ask the robot for any robot state alongside (or instead of) trajectories.
 :::
 
 ### Basic Path-Following Example

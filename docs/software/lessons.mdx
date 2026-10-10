@@ -16,6 +16,9 @@ mistakes or tips we have learned.
 - ***Attempt to make all subsystem actions in a state machine.***[^1]
     - A state machine for each subsystem can help control exactly what the robot is doing at a given point in time. It
     gives us control over how it transfers between each state and what each state does.
+    - Coordinate the subsystems with one more state machine for the whole robot, the
+    [super state machine](./controls/state-machines.mdx#the-super-state-machine) in `RobotContainer`. Buttons and autos
+    ask it for a robot state, so a scoring sequence is written once and used in both. ***(2026)***
 - ***Design the robot to work as automated as possible.***[^1]
     - This helps with both driver assist and auto integration, which greatly speeds up development when it comes time
     for auto and tuning.
@@ -31,7 +34,7 @@ mistakes or tips we have learned.
     complex.
 - ***Commands should only be used for controller buttons and auto.***[^1]
     - Commands are the easiest way to interface with buttons and should be set up to just activate a robot state and
-    nothing more.
+    nothing more (`robot.setWantedState(...)` on `RobotContainer`).
     - Auto can get more complex so commands may come in useful, but once again they should ideally only be used to set
     a robot state and nothing more.
 

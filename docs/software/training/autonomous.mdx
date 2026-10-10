@@ -32,12 +32,12 @@ The exercises below are the **Choreo Autonomous** lesson in [Scriptum](https://s
 - Generate both paths
 ## Write the sequence
 - Load both paths by name in `Autos.java`
-- Add the commands in order:
-    - Follow `ToPickup`
+- Add the commands in order. The routine asks the robot (`RobotContainer`) for states, the same way the buttons do:
+    - Follow `ToPickup` with `robot.followPath(...)`
     - Wait half a second, standing in for picking up a game piece
     - Follow `ToScore`
-    - Aim at the goal with your `aim()` command, until `isAimed`, with a timeout
-    - Shoot
+    - Aim at the goal: ask the robot for `AIM` with `Commands.startEnd(...)`, until `isAimed`, with a timeout
+    - Shoot: ask the robot for `SHOOT`, with a timeout
 ## Run it
 - Pick **Pickup And Score** in Elastic's auto chooser, then run Auto
 - Watch the true pose and your estimate on the AdvantageScope 2D field

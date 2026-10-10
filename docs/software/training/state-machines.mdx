@@ -1,0 +1,51 @@
+---
+title: State Machines
+description: An introduction to state machines in FRC robots, for a subsystem and for the whole robot. This includes how to create and manage states and transitions, and how buttons ask the robot for a state.
+hide_table_of_contents: true
+sidebar_position: 9
+---
+
+# State Machines
+State machines are a powerful way to manage complex robot behaviors by breaking them down into distinct states and defining transitions between those states. Every subsystem is a state machine, and the robot itself is one more state machine on top of them: the **super state machine** in `RobotContainer`. Buttons and autonomous routines ask the robot for a state, and the robot asks each subsystem for the state it needs. Anything that uses more than one subsystem is written once, in one place.
+
+---
+
+## Presentation
+<iframe src="https://docs.google.com/presentation/d/1c4nEEPyaS5PfIwC7LLi0srBiuDj46BVAZ2GZNF8NT5A/embed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+
+---
+
+:::tip Do this lesson in Scriptum
+The exercises below are the **State Machines** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+
+**New Java in this lesson:** `&&`, `||` and `!`, boolean helper methods, and lambdas.
+:::
+
+## Exercises
+### State Machines
+- Write a State Machine in ShooterSubsystem
+    - **IDLE** State: System idle
+    - **SPIN_UP** State: Flywheel spinning up to desired speed
+    - **SHOOT** State: Index balls into flywheel
+    - Add an automated transition from **SPIN_UP** -> **SHOOT** when the flywheel is at speed
+    - Add an automated transition from **SHOOT** -> **SPIN_UP** when the flywheel slows down
+    - Prevent **IDLE** -> **SHOOT** transition
+
+### The Robot's State Machine
+- `RobotContainer` extends `MwSuperStateMachine<RobotStates>`, with the robot states **IDLE**, **DRIVE** and **SHOOT**
+    - In `updateLogic()`, write a `switch` on the robot's state that asks the drivetrain and the shooter for the state each robot state needs
+    - `Robot.java` asks for **IDLE** when disabled and **DRIVE** when teleop starts
+- Bind a button in OI so the robot wants **SHOOT** while it is held and **DRIVE** when it is let go
+    - `Commands.startEnd(() -> robot.setWantedState(RobotStates.SHOOT), () -> robot.setWantedState(RobotStates.DRIVE))`
+- Bind a button to a `Commands.runOnce(...)` that simulates the load from launching a ball
+    - Call the shooter's `simulateBallLaunch()`, which you used in Control Theory
+
+There are no command files: buttons only ask the robot for a state.
+
+---
+
+## Related Documentation
+### Software
+- [State Machines](../controls/state-machines.mdx): Basics of state machines, and the robot's super state machine.
+- [Subsystems](../robot_dev/subsystems.mdx): Overview of subsystem-based programming in FRC robots.
+- [Commands](../robot_dev/commands.mdx): How buttons and autos ask the robot for states.

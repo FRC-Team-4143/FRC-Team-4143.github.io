@@ -59,28 +59,37 @@ if (povAngle == 0) {
 
 ---
 
-## Binding Commands to Controller Inputs
-You can bind commands to button presses using the `onTrue()`, `whileTrue()`, and their counterparts for button releases.
-This allows you to execute specific commands when a button is pressed or held down.
+## Binding Controller Inputs to Robot States
+Buttons ask the robot ([`RobotContainer`, the super state machine](../controls/state-machines.mdx#the-super-state-machine)) for a state with `setWantedState(...)`.
+Bind them using `onTrue()`, `whileTrue()`, and their counterparts for button releases, with small inline commands. There are no command files.
 ```java
-controller.a().onTrue(ExampleCommands.SomeCommand());
-controller.b().whileTrue(ExampleCommands.AnotherCommand());
+RobotContainer robot = RobotContainer.getInstance();
+// Press: ask once
+controller.a().onTrue(Commands.runOnce(() -> robot.setWantedState(RobotStates.BRAKE)));
+// Hold: SHOOT while held, DRIVE when let go
+controller.b().whileTrue(
+        Commands.startEnd(
+                () -> robot.setWantedState(RobotStates.SHOOT),
+                () -> robot.setWantedState(RobotStates.DRIVE)));
 ```
 
-Trigger axis can also be used to trigger commands when they exceed a certain threshold:
+Trigger axis can also be used when they exceed a certain threshold:
 ```java
 // Custom Threshold
-controller.rightTrigger(0.75).onTrue(ExampleCommands.TriggeredCommand());
+controller.rightTrigger(0.75).onTrue(Commands.runOnce(() -> robot.setWantedState(RobotStates.SHOOT)));
 // Default Threshold of 0.5
-controller.leftTrigger().whileTrue(ExampleCommands.HeldCommand());
+controller.leftTrigger().whileTrue(
+        Commands.startEnd(
+                () -> robot.setWantedState(RobotStates.AIM),
+                () -> robot.setWantedState(RobotStates.DRIVE)));
 ```
 
-You can also bind commands to the POV pad directions:
+You can also bind the POV pad directions. Small tuning knobs that are not robot states can call a subsystem helper directly:
 ```java
-controller.povUp().onTrue(ExampleCommands.UpCommand());
-controller.povRight().onTrue(ExampleCommands.RightCommand());
+controller.povUp().onTrue(Commands.runOnce(() -> ShooterSubsystem.getInstance().adjustFlywheel(2)));
+controller.povDown().onTrue(Commands.runOnce(() -> ShooterSubsystem.getInstance().adjustFlywheel(-2)));
 ```
 
 We try to keep all of the bindings within the `configureBindings()` method of the `OI` class for better organization and maintainability.
-Other methods can exist for getting raw input values, but all command bindings should be centralized in `configureBindings()`.
+Other methods can exist for getting raw input values, but all bindings should be centralized in `configureBindings()`.
 It not pretty, but you can see our 2025 bindings [here](https://github.com/FRC-Team-4143/mainbot-2025/blob/develop/src/main/java/frc/robot/OI.java).
