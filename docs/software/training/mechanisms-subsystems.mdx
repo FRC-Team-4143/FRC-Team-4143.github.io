@@ -11,7 +11,7 @@ In this module, we will explore the concept of mechanisms and subsystems in FRC 
 ---
 
 ## Presentation
-<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTbvSvRfeg_-zSxDjNJ2fSz3RLFuMd5oTOnJLEpuFJHxpUDmR0eOuIlMy0PuSwDA6otN7Vv8ojdo7Fm/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+<iframe src="https://docs.google.com/presentation/d/1fY9uL6dWsA94hZb_6Tv_NlnDL7F3xhptCFkY1kx4yig/embed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
 
 ---
 
@@ -24,14 +24,14 @@ The exercises below are the **Mechanisms and Subsystems** lesson in [Scriptum](h
 ## Exercises
 ### Subsystems
 - Read the DrivetrainSubsystem: its states, its `switch`, and its `getInstance()`
-- Drive from the subsystem by finishing the `ARCADE` state
+- Drive from the subsystem: call `arcadeDrive` with the OI sticks in `updateLogic()`
 ### Mechanisms and Subsystems
 - Finish the ShooterConstants class
     - Add the roller motor configuration and its index duty cycle
 - Create a Shooter Subsystem
     - Add a flywheel Mechanism
     - Add a roller mechanism
-    - Create logic to allow a button press to shoot
+    - Write the shoot button logic with an `if` / `else`: run the flywheel while the button is held, otherwise let it coast to a stop
     - Create logic to allow a button press to index
 - Update OI to read the shoot and index buttons
 - Update the RobotContainer to register your subsystem
