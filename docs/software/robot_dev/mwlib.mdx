@@ -82,12 +82,14 @@ release MWLib, bump the version in `build.gradle`, and check `./gradlew test -Pm
 1. Branch from `develop` in MW-Lib (`feat/<thing>`). Build mainbot against it with `mwlibLocal=true`.
 2. Keep the robot project honest: anything generic (a drive mode, a behavior-tree node any robot could use, a
    mechanism feature) belongs in MWLib; anything about one robot's hardware stays in the robot project.
-3. **Shared behavior-tree nodes** are registered with `registerLibraryNode` in `com.marswars.bt` and listed in
-   MWLib's shipped palette `com/marswars/bt/mwlib_nodes.xml`. After adding or changing one, regenerate it:
+3. **Shared behavior-tree nodes** are registered with `registerLibraryNode` in `com.marswars.bt`. MWLib keeps no
+   node-list file: the palette section for its nodes is generated from the registrations
+   (`MwLibNodes.nodeSpecXml()`), so there is nothing to regenerate in MWLib. Each robot's `nodes.xml` is where
+   the list lives; regenerate it in the robot project after bumping MWLib or changing a node:
    ```bash
-   ./gradlew test -PupdateNodeSpec     # in MW-Lib; the same flag regenerates a robot's nodes.xml in mainbot
+   ./gradlew test -PupdateNodeSpec     # in the robot project (mainbot)
    ```
-   Without the flag, the test fails if the file is stale, so a forgotten regeneration cannot ship.
+   Without the flag, the robot's test fails if its `nodes.xml` is stale, so a forgotten regeneration cannot ship.
 4. `./gradlew test javadoc` locally; the simulation test suite runs in CI on Java 17 and 21.
 5. Open a PR into `develop`. Put breaking changes (removed classes, renamed log keys) in the description, since it
    becomes the release notes.

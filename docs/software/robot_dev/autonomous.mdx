@@ -324,8 +324,8 @@ code that defines it.
 
 ### Node palette
 `nodes.xml` lists every node an auto can use, with its ports, defaults and descriptions. It is what the editor shows
-in its palette and what the tests check XML against. It starts with MWLib's shared nodes (MWLib ships the same list
-as `com/marswars/bt/mwlib_nodes.xml`) followed by this robot's nodes, and it is generated from the Java code:
+in its palette and what the tests check XML against. It starts with MWLib's shared nodes (generated from MWLib's own registrations) followed by this robot's
+nodes, and it is generated from the Java code. Regenerate it after adding or changing a node, or after bumping MWLib:
 
 ```bash
 ./gradlew test -PupdateNodeSpec
