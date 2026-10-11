@@ -224,7 +224,7 @@ public class RobotContainer extends MwSuperStateMachine<RobotStates> {
     // Ask each subsystem for the state the robot's state needs. Runs every loop, before the subsystems.
     @Override
     protected void updateLogic(double timestamp) {
-        switch (getSystemState()) {
+        switch (system_state_) {
             case CUSTOM:
                 template_.setWantedState(TemplateStates.CUSTOM_STATE);
                 break;
