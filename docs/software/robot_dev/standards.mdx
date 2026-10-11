@@ -12,7 +12,7 @@ This page outlines the programming standards and best practices we follow for de
 Our standards for writing java can be found in the [Java Coding Standards](../java/standards.mdx) document. Please refer to that document for detailed guidelines on naming conventions, formatting, and best practices for writing clean and maintainable code. However that only covers general java coding standards. Below are some specific standards we follow for MARS/WARS robot code.
 
 ### Subsystems
-- All subsystems should be implemented as singletons to ensure that only one instance of each subsystem exists throughout the robot code. This prevents conflicts and ensures consistent behavior when multiple commands interact with the same subsystem. This concept is explained in more detail in the [Create the Subsystem Class](./subsystems.mdx#create-the-subsystem-class) section.
+- All subsystems should be implemented as singletons to ensure that only one instance of each subsystem exists throughout the robot code. This prevents conflicts and ensures consistent behavior across the robot. This concept is explained in more detail in the [Create the Subsystem Class](./subsystems.mdx#create-the-subsystem-class) section.
 - Keep all primary methods for the subsystem at the top of the class for easy access. Helper methods and private methods should be placed below the primary methods. The preferred order is:
     - `getInstance()` method
     - Constructor
@@ -43,13 +43,15 @@ Our standards for writing java can be found in the [Java Coding Standards](../ja
     }
     ```
 
-### Commands
-- Commands should be designed to perform a single, well-defined action. Avoid creating commands that try to do too much, as this can lead to complex and hard-to-maintain code. Refer to the [Subsystem Commands](./commands.mdx#subsystem-commands) section for guidance on creating commands.
-- Never have a command require a subsystem. This can lead to deadlocks and unexpected behavior. Instead, commands should interact with subsystems through their public methods and state machine.
+### RobotContainer and Commands
+- `RobotContainer` is the robot's [super state machine](../controls/state-machines.mdx#the-super-state-machine). Anything that coordinates more than one subsystem is a robot state there, not a command.
+- Do not create command files for subsystems. Buttons and autos ask the robot for a state with `setWantedState(...)`, using small inline `Commands.startEnd(...)` / `Commands.runOnce(...)` lambdas. Refer to the [Requesting Robot States](./commands.mdx#requesting-robot-states) section.
+- Only `RobotContainer` asks subsystems for states. Subsystems should not set each other's states.
+- Never have a command require a subsystem. This can lead to deadlocks and unexpected behavior.
 
 ### Operator Interface (OI)
-- Keep the OI class focused on mapping operator inputs to commands. Avoid adding complex logic or state management in the OI class. Refer to the [Operator Interface (OI)](./oi.mdx) section for guidance on binding commands to controller inputs.
-- Avoid using the joystick and buttons directly in the Subsystem or Command classes. Most references to the controller inputs should be done in the OI class to keep a clear separation of concerns.
+- Keep the OI class focused on mapping operator inputs to robot states. Avoid adding complex logic or state management in the OI class. Refer to the [Operator Interface (OI)](./oi.mdx) section for guidance on binding commands to controller inputs.
+- Avoid using the joystick and buttons directly in the Subsystem classes or `RobotContainer`. Most references to the controller inputs should be done in the OI class to keep a clear separation of concerns.
     - An exception to this is using the joystick axis values for driving the robot in a teleoperated command. In this case it is acceptable to read the pipe the joystick values to the subsystem since they are dynamic values that change frequently.
 
 ## Logging and Telemetry
@@ -57,6 +59,6 @@ Our standards for writing java can be found in the [Java Coding Standards](../ja
 :::tip Can't See What you Don't Record
 When the robot comes back from a match or test session you can't see what you didn't record. If you didn't log it you can't analyze it later. So when in doubt log it!
 :::
-- Log using the subsystem key as a prefix. This will help organize the logs and make it easier to find relevant data later. For example, if you have a drivetrain subsystem and you want to log the left motor speed, you would use a key like `Drivetrain/LeftMotorSpeed`.
-- Use DogLog for logging custom data. Refer to the [Telemetry and Logging](./telemetry.mdx) page for more information on how to set up logging and telemetry for your robot.
+- Log using the subsystem key as a prefix (build keys off `getSubsystemKey()`, which returns `Subsystem/<Name>/`). This will help organize the logs and make it easier to find relevant data later. For example, if you have a drivetrain subsystem and you want to log the left motor speed, you would use a key like `Subsystem/Drivetrain/LeftMotorSpeed`.
+- Use MwLog for logging custom data. Refer to the [Telemetry and Logging](./telemetry.mdx) page for more information on how to set up logging and telemetry for your robot.
 - Consider logging data in trees or groups using compound keys. This can help organize related data and make it easier to analyze later. For example, you could log all path following data under a `Choreo/` prefix.

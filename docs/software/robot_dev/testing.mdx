@@ -90,3 +90,13 @@ If an issue arrives, record as much information as possible about the conditions
 
   </TabItem>
 </Tabs>
+
+## Tuning
+Tuning is a very important part of the development process. It involves adjusting various parameters in our code to achieve the desired behavior from the robot. This can include things like PID controller gains, feedforward values, and other constants that affect how the robot behaves.
+Tuning can be done both on the physical robot and in simulation, but it is often easier to do initial tuning in simulation before validating on the physical robot.
+
+:::note Tuning with Simulation
+While tuning with simulation is possible it requires accurate mechanism measurements and even then it still may not perfectly translate to the physical robot. It is recommended to use simulation for initial tuning and then validate and adjust the tuning on the physical robot.
+:::
+
+Values you expect to tune live under `/Tuning/...` on NetworkTables, so they can be changed from Elastic or AdvantageScope without a redeploy. See [Tuning Mechanisms](./mechanisms/index.mdx#tuning-mechanisms) for how a mechanism exposes its gains, and remember that tunable edits are lost on reboot: copy a value you want to keep back into the constants.

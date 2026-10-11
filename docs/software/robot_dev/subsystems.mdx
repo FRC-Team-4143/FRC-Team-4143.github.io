@@ -267,10 +267,11 @@ public void reset() {
 ```
 
 ### Register the Subsystem
-Finally, ensure that the new subsystem is registered within the robot's main subsystem manager. This typically involves adding an instance of the subsystem to a list or map of subsystems that the robot manages. This step is crucial for the subsystem to be recognized and updated during the robot's operation. This is usually done in the `RobotContainer` class. Here is an example of how to register the `ShooterSubsystem`:
+Finally, ensure that the new subsystem is registered within the robot's main subsystem manager. This typically involves adding an instance of the subsystem to a list or map of subsystems that the robot manages. This step is crucial for the subsystem to be recognized and updated during the robot's operation. This is done in the `RobotContainer` class, which is also the robot's [super state machine](../controls/state-machines.mdx#the-super-state-machine) (`RobotContainer extends MwSuperStateMachine<RobotStates>`). Here is an example of how to register the `ShooterSubsystem`:
 
 ```java
-public RobotContainer() {
+private RobotContainer() {
+    super(RobotStates.IDLE, BuildConstants.class);
     // !!!!!! ALL SUBSYSTEMS MUST BE REGISTERED HERE TO RUN !!!!!!!
     registerSubsystem(ShooterSubsystem.getInstance());
     // Add other subsystems here
@@ -414,7 +415,7 @@ if (Math.abs(current_velocity) > max_safe_velocity) {
 // Monitor motor health
 if (motor_current > current_threshold) {
     // High current detected - possible jam or mechanical issue
-    DogLog.log(getSubsystemKey() + "/Warning/HighCurrent", motor_current);
+    MwLog.log(getSubsystemKey() + "/Warning/HighCurrent", motor_current);
 }
 ```
 
@@ -476,22 +477,33 @@ We can override this method to add conditions that must be met before allowing a
 ```java
 @Override
 protected void handleStateTransition(ShooterStates wanted) {
-    // Example 1: Conditional transition based on readiness
-    if (wanted == ShooterStates.SHOOTING && isAtShootingSpeed()) {
-        system_state_ = ShooterStates.SHOOTING;
-    } else if (wanted == ShooterStates.SHOOTING) {
+    // Example 1: Conditional transition - only shoot when ready
+    if (wanted == ShooterStates.SHOOTING && !isAtShootingSpeed()) {
+        // Not ready to shoot yet, stay in SPIN_UP
         system_state_ = ShooterStates.SPIN_UP;
     } else {
+        // Ready to shoot or transitioning to any other state
         system_state_ = wanted;
     }
-    
-    // Example 2: Adding intermediate states
-    if (system_state_ == ShooterStates.STORE && wanted == ShooterStates.INTAKE) {
-        system_state_ = ShooterStates.DEPLOYING;
-    } else if (system_state_ == ShooterStates.DEPLOYING 
-               && MathUtil.isNear(target_position, current_position, tolerance)) {
-        system_state_ = ShooterStates.DEPLOYED;
-    } else {
+}
+```
+
+Here's an example with an intake subsystem that has intermediate deployment states:
+
+```java
+@Override
+protected void handleStateTransition(IntakeStates wanted) {
+    // Must deploy before intaking
+    if (wanted == IntakeStates.INTAKING && system_state_ == IntakeStates.STOWED) {
+        system_state_ = IntakeStates.DEPLOYING;
+    } 
+    // Check if deployment is complete
+    else if (system_state_ == IntakeStates.DEPLOYING 
+             && MathUtil.isNear(CONSTANTS.DEPLOY_ANGLE, pivot_.getCurrentPosition(), 0.05)) {
+        system_state_ = IntakeStates.DEPLOYED;
+    } 
+    // All other transitions happen immediately
+    else {
         system_state_ = wanted;
     }
 }
@@ -509,20 +521,26 @@ If your state machine transitions are simple and immediate, you can omit this me
 :::warning Try to Limit Conditions if possible
 This method can get complicated fast. Try to only define transition you care about and make sure everything else that isn't unique falls under a `system_state_ = wanted` statement.
 :::
+:::danger Wanted is Sticky
+The `wanted` state is sticky, meaning that until it is updated the subsystem will continue to attempt to transition to that state.
+If you setup any sort of complex transition logic in `handleStateTransition()`, make sure to account for the fact that the subsystem will keep trying to transition to the `wanted` state every loop.
+:::
 
 ### Updating the State
-To change the state of the subsystem from other parts of the code, use the `setWantedState()` method. This method sets the desired state for the subsystem, which will be processed in the next update cycle.
+To change the state of the subsystem, use the `setWantedState()` method. This method sets the desired state for the subsystem, which will be processed in the next update cycle.
 ```java
-ShooterSubsystem.getInstance().setWantedState(ShooterStates.SHOOTING);
+shooter_.setWantedState(ShooterStates.SHOOTING);
 ```
 This will request the subsystem to transition to the **SHOOTING** state during the next update cycle, provided any conditions in `handleStateTransition()` are met. It helps ensure that state changes are managed in a controlled manner.
+
+The code that asks a subsystem for a state is the robot's [super state machine](../controls/state-machines.mdx#the-super-state-machine) in `RobotContainer`. Buttons and autonomous routines don't call a subsystem's `setWantedState()` themselves: they ask `RobotContainer` for a robot state, and it asks each subsystem. RobotContainer runs before the subsystems every loop, so the subsystem sees the request in the same loop.
 
 ---
 
 ## Logging
-Logging is an important aspect of subsystem development, as it allows you to monitor the behavior of the subsystem and diagnose issues. Our subsystem framework provides built-in logging capabilities that can be easily integrated into your subsystem. To log data from your subsystem, you can use the `DogLog` class to log relevant information such as the current state, sensor readings, and actuator outputs. Here is an example of logging the current state of the subsystem in the `updateLogic()` method:
+Logging is an important aspect of subsystem development, as it allows you to monitor the behavior of the subsystem and diagnose issues. Our subsystem framework provides built-in logging capabilities that can be easily integrated into your subsystem. To log data from your subsystem, you can use the `MwLog` class to log relevant information such as the current state, sensor readings, and actuator outputs. Here is an example of logging the current state of the subsystem in the `updateLogic()` method:
 ```java
-DogLog.log(getSubsystemKey() + "/TargetRotation", target_.getRotation());
+MwLog.log(getSubsystemKey() + "/TargetRotation", target_.getRotation());
 ```
 This will log the current state of the subsystem under a key that includes the subsystem's name, making it easy to identify in the logs. Make sure to log any other relevant data that will help you understand the subsystem's behavior during operation. This could include variables or internal subsystem states that are important for debugging or performance analysis. See more about logging and telemetry on the [Telemetry and Logging](./telemetry.mdx) page.
 
