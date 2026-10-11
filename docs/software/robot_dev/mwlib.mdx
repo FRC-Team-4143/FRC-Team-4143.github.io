@@ -31,12 +31,13 @@ Javadoc for the latest release: [frc-team-4143.github.io/MW-Lib](https://frc-tea
 ---
 
 ## Depending on It
-Versions are `YY.minor.patch`: `26.18.0` is the 2026 season's 18th feature release. Tags carry a `v`
-(`v26.18.0`). The robot project pins one version in `build.gradle`:
+Versions are `YY.minor.patch`: the first number is the season the architecture is written for (`27.0.0` opens
+the 2027 season), the second a feature release within it, the third a fix. Tags carry a `v` (`v27.0.0`). The
+robot project pins one version in `build.gradle`:
 
 ```gradle
 // mainbot build.gradle: GitHub Packages (needs a token with read:packages in the repo credentials)
-implementation 'com.github.frc-team-4143:mw-lib-java:26.18.0'
+implementation 'com.github.frc-team-4143:mw-lib-java:27.0.0'
 ```
 
 Projects that cannot hold a token, such as the Scriptum lessons, use the same release through JitPack, which
@@ -44,7 +45,7 @@ builds every tag on first request with no credentials:
 
 ```gradle
 repositories { maven { url = 'https://jitpack.io' } }
-dependencies { implementation 'com.github.FRC-Team-4143.MW-Lib:mw-lib-java:26.18.0' }
+dependencies { implementation 'com.github.FRC-Team-4143.MW-Lib:mw-lib-java:27.0.0' }
 ```
 
 One thing the published package does not carry is its own dependency list, so a robot project that starts the
@@ -97,11 +98,11 @@ release MWLib, bump the version in `build.gradle`, and check `./gradlew test -Pm
 Releases are cut from `develop` by the **Make Release** GitHub Actions workflow; nothing is tagged by hand.
 
 1. Merge the PR into `develop` with CI green.
-2. **Actions** → **Make Release** → **Run workflow**; enter the version (`26.18.0`, no `v`).
+2. **Actions** → **Make Release** → **Run workflow**; enter the version (`27.0.0`, no `v`).
 3. The workflow builds `develop` with that version, runs the tests, publishes `mw-lib-java` to GitHub Packages,
-   tags `v26.18.0`, creates the GitHub Release with the jars attached, and publishes the Javadoc.
+   tags `v27.0.0`, creates the GitHub Release with the jars attached, and publishes the Javadoc.
 4. JitPack builds the tag the first time someone asks for it. Check
-   `https://jitpack.io/com/github/FRC-Team-4143/MW-Lib/mw-lib-java/26.18.0/build.log` before pointing the lessons
+   `https://jitpack.io/com/github/FRC-Team-4143/MW-Lib/mw-lib-java/27.0.0/build.log` before pointing the lessons
    at it.
 5. Bump the version in mainbot's `build.gradle` (and the lessons' `build.gradle`), remove `mwlibLocal=true`, and
    build once against the published artifact.
