@@ -94,13 +94,10 @@ Releases are cut from `develop` by the **Make Release** GitHub Actions workflow;
 
 1. Merge the PR into `develop` with CI green.
 2. **Actions** → **Make Release** → **Run workflow**; enter the version (`27.0.0`, no `v`).
-3. The workflow builds `develop` with that version, runs the tests, publishes `mw-lib-java` to GitHub Packages (a
-   mirror we no longer depend on), tags `v27.0.0`, creates the GitHub Release with the jars attached, and publishes
-   the Javadoc.
-4. JitPack builds the tag the first time someone asks for it. Check
-   `https://jitpack.io/com/github/FRC-Team-4143/MW-Lib/mw-lib-java/27.0.0/build.log` before pointing the lessons
-   at it.
-5. Bump the version in mainbot's `build.gradle` (and the lessons' `build.gradle`), remove `mwlibLocal=true`, and
+3. The workflow runs the tests on `develop`, tags `v27.0.0`, asks JitPack to build the tag and waits until
+   `mw-lib-java:27.0.0` resolves (if JitPack's build fails, the run fails and prints JitPack's build log), then
+   creates the GitHub Release and publishes the Javadoc.
+4. Bump the version in mainbot's `build.gradle` (and the lessons' `build.gradle`), remove `mwlibLocal=true`, and
    build once against the published artifact.
 
 ---
