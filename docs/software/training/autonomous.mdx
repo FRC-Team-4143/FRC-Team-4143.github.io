@@ -22,9 +22,9 @@ what the robot does and when. The tree asks the robot for the same states the dr
 
 # Exercises
 :::tip Do this lesson in Scriptum
-The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum.marswars.org). It starts from your finished **Computer Vision** robot and needs the **Choreo** lesson done first. Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum.marswars.org). It starts from your finished **Computer Vision** robot and needs the **Choreo** and **Arbor** lessons done first. Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
 
-**New Java in this lesson:** a `switch` inside a `switch` (the transition table), a step state, and a lambda that registers a tree node.
+**New Java in this lesson:** a step state, picked by an `if`/`else` inside a `switch` case.
 **New file type:** XML. You build the tree in Arbor and read the XML it writes.
 :::
 
@@ -37,20 +37,22 @@ The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum
 ## Build the tree
 - Open the **Arbor** tab. The project is the robot's `deploy/autos` folder; the palette already knows `FollowPath`,
   `SetWantedState` (with the robot's states), `Timeout` and `Sleep`
-- Create a tree named `PickupAndScore` with a `Sequence` at the top, then add in order:
-    - `FollowPath` with `trajectory` = `ToPickup`
+- Open the tree `PickupAndScore`. It is a `Sequence` that already drives `ToPickup`; add after it, in order:
     - `Sleep` for half a second, standing in for picking up a game piece
     - `FollowPath` with `trajectory` = `ToScore`
     - A `Timeout` of 3 seconds around `SetWantedState` `AIM`, so a bad aim cannot stall the auto
     - `SetWantedState` `SHOOT`, then a `Sleep` of 2 seconds, then `SetWantedState` `AUTO`
 - Save, then open `deploy/autos/trees/PickupAndScore.xml` in the editor and read what Arbor wrote
 ## Finish the aim step
-- In `RobotContainer.handleStateTransition`, fill in the `AIMING` arm of the transition table: while the robot is
-  aiming and `AIM` is still wanted, move to `AIM` once the drivetrain `isAimed()`
-- This is what makes `SetWantedState AIM` in the tree wait: it is RUNNING until the robot reaches `AIM`
+- Run the tree first: it shoots without turning, because the robot reaches `AIM` the moment it is asked
+- In `RobotContainer.handleStateTransition`, finish the `AIM` case: the robot is in the step state `AIMING` while
+  it turns, and in `AIM` only once the drivetrain `isAimed()`
+- This is what makes `SetWantedState AIM` in the tree wait: it is RUNNING until the robot reaches `AIM`. The left
+  bumper asks for the same `AIM`, so the sequence is written once
 ## Run it
 - Pick **PickupAndScore** in Elastic's **Auto Chooser**, then run Auto
 - Watch the tree light up in Arbor's live view, and the true pose and your estimate on the AdvantageScope 2D field
+- Optional: replay the run's `.btlog` (in `logs/bt`) in Arbor
 - Optional: declare a `pickup_wait_msec` tunable in the tree's `TreeNodesModel` and change it from Elastic without a rebuild
 
 ---
