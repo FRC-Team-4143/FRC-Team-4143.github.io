@@ -1,0 +1,9 @@
+{
+  "label": "📚 Training",
+  "position": 1,
+  "link": {
+    "type": "doc",
+    "id": "business_services/training/index"
+  },
+  "collapsed": true
+}
