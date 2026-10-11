@@ -360,8 +360,26 @@ BtLiveServer.start(BtLiveServer.Options.defaults().withRobotName("4143")); // li
 BehaviorTreeFileLogger.enableDefault();                             // one .btlog per run
 ```
 
-`AutoManager` owns the dashboard chooser and hands `autonomousInit()` the selected auto; `BehaviorTreeAuto` is an
-`Auto`, so the scheduler runs it like any command. The live server needs one extra dependency in `build.gradle`,
+`AutoManager` owns the dashboard chooser and runs the selected auto. `Robot` calls it in three places:
+
+```java
+public void robotPeriodic() {
+    CommandScheduler.getInstance().run();
+    AutoManager.getInstance().periodic();   // ticks the running tree, prepares the selected auto
+    robot_container_.doControlLoop();
+}
+public void autonomousInit() { AutoManager.getInstance().start(); }
+public void disabledInit()   { AutoManager.getInstance().stop(); }  // teleopInit() too
+```
+
+A tree is **not** a WPILib command. `periodic()` ticks it once per loop, just before `doControlLoop()`, so a state it
+asks for is acted on in the same loop. Ticking a tree is cheap (microseconds); the slow part, reading the XML and
+loading the Choreo paths, runs on a background thread whenever you pick an auto or the alliance changes, so it never
+causes a loop overrun.
+
+Command-based autos still work: an `Auto` subclass (a `SequentialCommandGroup`) or any command added with
+`AutoManager.getInstance().registerAuto("Name", command)` sits in the same chooser and runs through the scheduler.
+We don't write autos that way any more, but nothing stops it. The live server needs one extra dependency in `build.gradle`,
 `implementation 'org.java-websocket:Java-WebSocket:1.6.0'`, because MWLib's published package does not list it.
 
 ---
