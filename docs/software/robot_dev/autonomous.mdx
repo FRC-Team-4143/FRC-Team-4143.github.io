@@ -395,7 +395,8 @@ We don't write autos that way any more, but nothing stops it. The live server ne
   give its state. `Transitions` lists each node's status change since the last tick as `"<node>: <STATE>"`, for
   example `Follow::2: RUNNING`, so AdvantageScope can show it as a table or timeline like a `.btlog`; it is empty on
   ticks where nothing changed. The tree's shape is not logged there; open it in [Arbor](../tools/arbor.mdx) (live view or the run's `.btlog`) to
-  see it. The XML text itself is still logged as an input, so a replay runs the tree that was actually on the robot.
+  see it. Log replay reads the XML from disk, like every other piece of code, so you can change a tree and replay the same
+  match inputs to see what it would have done.
 - **Live view.** The robot streams the running tree over WebSocket at `ws://10.41.43.2:1670/` (`ws://localhost:1670/`
   in simulation). Open the project in [Arbor](../tools/arbor.mdx) and connect to watch nodes turn orange, green and
   red as the auto runs.
