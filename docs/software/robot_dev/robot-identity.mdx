@@ -32,19 +32,26 @@ matching variant.
 ---
 
 ## Mapping the Name onto Code
-`RobotContainer` owns an enum of the robots the code supports and resolves it once, at class load:
+The robot's own constants class, `RobotConstants` (what `RobotContainer` reads as `CONSTANTS`, the way a subsystem
+reads its `*Constants`), owns an enum of the robots the code supports and resolves it once, at class load:
 
 ```java
-/** The robots this code can run on; per-robot constants variants switch on ROBOT. */
-public enum Robot {
-    ALPHA_BOT,
-    BETA_BOT,
-    SIM_BOT
-}
+public class RobotConstants extends MwConstants {
+    /** The robots this code can run on; per-robot constants variants switch on ROBOT. */
+    public enum Robot {
+        ALPHA_BOT,
+        BETA_BOT,
+        SIM_BOT
+    }
 
-/** The robot the code is running on, from the burned "RobotName" (SimBot in simulation). */
-public static final Robot ROBOT = RobotIdentity.getInstance().getRobot(Robot.class);
+    /** The robot the code is running on, from the burned "RobotName" (SimBot in simulation). */
+    public static final Robot ROBOT = RobotIdentity.getInstance().getRobot(Robot.class);
+}
 ```
+
+`ROBOT` is `static` on purpose. Subsystems read it while `RobotContainer` is still being constructed (the swerve
+picks its constants variant while `RobotContainer` builds it), so it can't be an ordinary `CONSTANTS` value that only
+exists once `RobotContainer` does.
 
 `getRobot(...)` matches the name to an enum constant ignoring case and underscores, so `BetaBot` matches
 `BETA_BOT`. An unknown name falls back to the **first** constant and reports an error, so put the safest robot
@@ -58,12 +65,12 @@ Hardware values are Java, and the pattern is the same in every subsystem:
 1. The subsystem's `*Constants` class holds the **AlphaBot** values in non-final fields.
 2. A variant class per other robot (`BetaSwerveConstants`, `SimSwerveConstants`) extends it and reassigns only the
    fields that differ, in its constructor.
-3. A static `create()` switches on `RobotContainer.ROBOT` and returns the variant. The subsystem's constructor
+3. A static `create()` switches on `RobotConstants.ROBOT` and returns the variant. The subsystem's constructor
    calls it.
 
 ```java
 public static SwerveConstants create() {
-    return switch (RobotContainer.ROBOT) {
+    return switch (RobotConstants.ROBOT) {
         case BETA_BOT -> new BetaSwerveConstants();
         case SIM_BOT -> new SimSwerveConstants();
         default -> new SwerveConstants();

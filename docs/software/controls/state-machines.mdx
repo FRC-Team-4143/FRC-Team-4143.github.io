@@ -99,7 +99,7 @@ flowchart TD
 - **Write it once.** A robot state like `SHOOT` is the same whether the driver's trigger or an autonomous routine asks for it. A scoring sequence is written once, in `RobotContainer`, and used in teleop and in autos.
 
 ```java
-public class RobotContainer extends MwSuperStateMachine<RobotStates> {
+public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants> {
     @Override
     protected void updateLogic(double timestamp) {
         switch (system_state_) {

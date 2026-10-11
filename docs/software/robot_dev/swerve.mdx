@@ -72,7 +72,7 @@ public class SwerveConstants extends MwSwerveConstants {
 
     /** Builds the constants variant for the robot the code is running on. */
     public static SwerveConstants create() {
-        return switch (RobotContainer.ROBOT) {
+        return switch (RobotConstants.ROBOT) {
             case BETA_BOT -> new BetaSwerveConstants();
             case SIM_BOT -> new SimSwerveConstants();
             default -> new SwerveConstants();
@@ -133,7 +133,7 @@ such as the `SwerveDriveConfig`, must be built in a method (`getDriveConfig()`, 
 would capture the AlphaBot values before the variant changed them.
 :::
 
-How `RobotContainer.ROBOT` is decided is on the [Robot Identity](./robot-identity.mdx) page.
+How `RobotConstants.ROBOT` is decided is on the [Robot Identity](./robot-identity.mdx) page.
 
 ---
 
@@ -178,6 +178,6 @@ and bump the version. The robot project should only ever change its constants an
 ---
 
 ## Related Documentation
-- [Robot Identity](./robot-identity.mdx): how `RobotContainer.ROBOT` is decided.
+- [Robot Identity](./robot-identity.mdx): how `RobotConstants.ROBOT` is decided.
 - [Autonomous](./autonomous.mdx): `FollowTrajectory` and the other swerve nodes.
 - [Subsystems](./subsystems.mdx): the state machine every subsystem, swerve included, is built on.

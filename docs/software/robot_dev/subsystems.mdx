@@ -267,11 +267,11 @@ public void reset() {
 ```
 
 ### Register the Subsystem
-Finally, ensure that the new subsystem is registered within the robot's main subsystem manager. This typically involves adding an instance of the subsystem to a list or map of subsystems that the robot manages. This step is crucial for the subsystem to be recognized and updated during the robot's operation. This is done in the `RobotContainer` class, which is also the robot's [super state machine](../controls/state-machines.mdx#the-super-state-machine) (`RobotContainer extends MwSuperStateMachine<RobotStates>`). Here is an example of how to register the `ShooterSubsystem`:
+Finally, ensure that the new subsystem is registered within the robot's main subsystem manager. This typically involves adding an instance of the subsystem to a list or map of subsystems that the robot manages. This step is crucial for the subsystem to be recognized and updated during the robot's operation. This is done in the `RobotContainer` class, which is also the robot's [super state machine](../controls/state-machines.mdx#the-super-state-machine) (`RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants>`). Here is an example of how to register the `ShooterSubsystem`:
 
 ```java
 private RobotContainer() {
-    super(RobotStates.IDLE, BuildConstants.class);
+    super(RobotStates.IDLE, new RobotConstants(), BuildConstants.class);
     // !!!!!! ALL SUBSYSTEMS MUST BE REGISTERED HERE TO RUN !!!!!!!
     registerSubsystem(ShooterSubsystem.getInstance());
     // Add other subsystems here

@@ -58,6 +58,7 @@ src/main/java/frc/robot/
 ├── Robot.java
 ├── RobotContainer.java   (the super state machine)
 ├── RobotStates.java
+├── RobotConstants.java  (CONSTANTS for RobotContainer, plus the robot identity)
 ├── OI.java
 └── subsystems/
     ├── template/
@@ -201,7 +202,7 @@ public class TemplateConstants extends MwConstants {
 
 ### RobotContainer Template
 ```java title="RobotContainer.java"
-public class RobotContainer extends MwSuperStateMachine<RobotStates> {
+public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants> {
     private static RobotContainer instance_ = null;
 
     public static RobotContainer getInstance() {
@@ -214,7 +215,7 @@ public class RobotContainer extends MwSuperStateMachine<RobotStates> {
     private final TemplateSubsystem template_ = TemplateSubsystem.getInstance();
 
     private RobotContainer() {
-        super(RobotStates.IDLE, BuildConstants.class);
+        super(RobotStates.IDLE, new RobotConstants(), BuildConstants.class);
         // !!!!!! ALL SUBSYSTEMS MUST BE REGISTERED HERE TO RUN !!!!!!!
         registerSubsystem(template_);
         // !!!!! LEAVE reset() AS THE LAST LINE IN THE CONSTRUCTOR !!!!!!
