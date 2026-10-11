@@ -77,9 +77,13 @@ those, open the matching AdvantageKit log in [AdvantageScope](./ad-scope.mdx) at
 ---
 
 ## In Scriptum
-Scriptum opens the lesson project's `deploy/autos` in an **Arbor** tab next to the editor, with the live view
-already pointed at the simulated robot, so the autonomous lesson builds its tree there and watches it run without
-installing anything.
+Scriptum has an **Arbor** tab next to the editor, with the live view already pointed at the simulated robot, so you can
+build a tree and watch it run without installing anything. The **Arbor** lesson in the Tools track teaches the tool:
+you make your own tree, fill in a few steps, protect one with a `Timeout` and a `Fallback`, and declare a tunable
+value. The **Autonomous** lesson then uses Arbor to build the real routine.
+
+If the tab opens on Arbor's welcome screen instead of a project, choose **Open project** and pick
+`src/main/deploy/autos`; Arbor only opens it by itself when that folder already existed as the workspace started.
 
 ---
 
