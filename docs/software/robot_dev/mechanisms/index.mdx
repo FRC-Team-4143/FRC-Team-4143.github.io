@@ -196,33 +196,34 @@ For an example of how to implement and use these mechanisms in a subsystem, refe
 
 Before creating mechanism instances, you need to configure the motor controllers. Motor configurations should be defined in your subsystem's constants class.
 
-### FxMotorConfig (CTRE TalonFX)
+### MotorConfig
+
+One `MotorConfig` describes one motor: where it is on the CAN bus, what kind it is, and the Phoenix 6 configuration
+to apply to it. `motor_type` is a `TalonMotorType` (`X60`, `X44`, `FALCON500` on a TalonFX; `MINION`, `NEO_550` on a
+TalonFXS), and the type decides which Phoenix configuration object `apply(...)` accepts.
 
 ```java
 // In your constants class
-public final FxMotorConfig PIVOT_MOTOR_CONFIG = new FxMotorConfig();
+public final MotorConfig PIVOT_MOTOR_CONFIG = new MotorConfig();
 
 public YourConstants() {
-    // Configure the motor
     PIVOT_MOTOR_CONFIG.can_id = 31;
-    PIVOT_MOTOR_CONFIG.motor_type = FxMotorType.X44;  // or X60
-    PIVOT_MOTOR_CONFIG.canbus_name = "CANivore";       // or "rio"
-    PIVOT_MOTOR_CONFIG.config = new TalonFXConfiguration();
-    
-    // Set motor inversion
-    PIVOT_MOTOR_CONFIG.config.MotorOutput.Inverted = 
-        PhoenixUtil.toInvertedValue(false);
-    
-    // Configure current limits
-    PIVOT_MOTOR_CONFIG.config.CurrentLimits.StatorCurrentLimit = 60;
-    PIVOT_MOTOR_CONFIG.config.CurrentLimits.StatorCurrentLimitEnable = true;
-    
-    // Configure PID gains (Slot0 for position control)
-    PIVOT_MOTOR_CONFIG.config.Slot0 = new Slot0Configs()
+    PIVOT_MOTOR_CONFIG.motor_type = TalonMotorType.X44;   // X60, X44, FALCON500, MINION, NEO_550
+    PIVOT_MOTOR_CONFIG.canbus_name = "CANivore";          // or "rio"
+
+    TalonFXConfiguration pivot_config = new TalonFXConfiguration();
+    // Motor inversion
+    pivot_config.MotorOutput.Inverted = PhoenixUtil.toInvertedValue(false);
+    // Current limits
+    pivot_config.CurrentLimits.StatorCurrentLimit = 60;
+    pivot_config.CurrentLimits.StatorCurrentLimitEnable = true;
+    // PID gains (Slot0 for position control)
+    pivot_config.Slot0 = new Slot0Configs()
         .withKP(250.0)
         .withKI(0.0)
         .withKD(0.0)
         .withKG(0.12);  // Gravity compensation
+    PIVOT_MOTOR_CONFIG.apply(pivot_config);   // a TalonFXSConfiguration for MINION / NEO_550
 }
 ```
 

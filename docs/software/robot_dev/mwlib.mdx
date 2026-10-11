@@ -1,0 +1,114 @@
+---
+title: MWLib
+description: The team library - what is in it, how robot projects depend on it, building against a local checkout, and releasing
+hide_table_of_contents: false
+sidebar_position: 12
+---
+
+# MWLib
+[MW-Lib](https://github.com/FRC-Team-4143/MW-Lib) is the MARS/WARS robot library. Everything the other pages in this
+section describe as "ours" lives there: the subsystem state machine, the mechanisms, the super state machine, the
+swerve drive, the behavior-tree engine, logging and the vision helpers. Robot projects depend on a **released
+version** of it, and the lessons in Scriptum do too.
+
+Javadoc for the latest release: [frc-team-4143.github.io/MW-Lib](https://frc-team-4143.github.io/MW-Lib/).
+
+---
+
+## What Is in It
+| Package | What it holds | Page |
+|---|---|---|
+| `com.marswars.subsystem` | `MwSubsystem` (the state machine every subsystem extends), `MwSuperStateMachine` (RobotContainer), `SubsystemManager` | [Subsystems](./subsystems.mdx), [State Machines](../controls/state-machines.mdx) |
+| `com.marswars.mechanisms` | `ArmMech`, `ElevatorMech`, `FlywheelMech`, `RollerMech`, `TurretMech`, `MotorConfig` | [Mechanisms](./mechanisms/index.mdx) |
+| `com.marswars.swerve_lib` | `MwSwerveSubsystem`, `MwSwerveConstants`, `SwerveDriveConfig`, `SwerveStates` | [Swerve](./swerve.mdx) |
+| `com.marswars.bt` | The behavior-tree engine (`core`, `control`, `decorator`, `action`, `xml`), `RobotStateNodes`, `swerve.SwerveNodes`, `monitor`, `debug.BtLiveServer` | [Autonomous](./autonomous.mdx) |
+| `com.marswars.auto` | `Auto`, `AutoManager` (the chooser), `BehaviorTreeAuto`, Choreo trajectory loading | [Autonomous](./autonomous.mdx) |
+| `com.marswars.logging` | `MwLog`, the AdvantageKit-backed logger, tunables and replay | [Telemetry](./telemetry.mdx) |
+| `com.marswars.util` | `RobotIdentity`, preferences, alliance flipping | [Robot Identity](./robot-identity.mdx) |
+| `com.marswars.vision`, `proxy_server` | AprilTag localization, vision simulation | [Vision](../vision/april_tags.mdx) |
+| `com.marswars.dashboard`, `sensors`, `geometry`, `data_structures` | Elastic helpers, sensor wrappers, field geometry, small containers | |
+
+---
+
+## Depending on It
+Versions are `YY.minor.patch`: `26.18.0` is the 2026 season's 18th feature release. Tags carry a `v`
+(`v26.18.0`). The robot project pins one version in `build.gradle`:
+
+```gradle
+// mainbot build.gradle: GitHub Packages (needs a token with read:packages in the repo credentials)
+implementation 'com.github.frc-team-4143:mw-lib-java:26.18.0'
+```
+
+Projects that cannot hold a token, such as the Scriptum lessons, use the same release through JitPack, which
+builds every tag on first request with no credentials:
+
+```gradle
+repositories { maven { url = 'https://jitpack.io' } }
+dependencies { implementation 'com.github.FRC-Team-4143.MW-Lib:mw-lib-java:26.18.0' }
+```
+
+One thing the published package does not carry is its own dependency list, so a robot project that starts the
+behavior-tree live server adds `implementation 'org.java-websocket:Java-WebSocket:1.6.0'` itself.
+
+---
+
+## Building Against a Local Checkout
+When you are changing MWLib and the robot code together, you do not want to publish a release for every
+try. mainbot's `settings.gradle` has an opt-in **composite build** that swaps the published jar for a live compile
+of your local checkout:
+
+- **Persistent** (per developer, never committed): create `local.properties` in the mainbot project root:
+  ```properties
+  mwlibLocal=true
+  # mwlibPath=/absolute/path/to/MW-Lib   # optional; defaults to ../MW-Lib
+  ```
+- **One-off:** `./gradlew build -PmwlibLocal` (a `-P` flag overrides the file).
+- **Disable for one run:** `./gradlew build -PmwlibLocal=false`. This is what CI parity looks like, since CI
+  always builds against the published version.
+
+While local mode is on, a bold yellow banner prints at the start and end of every build, deploy and simulate so
+nobody mistakes a local build for the released library. Edit MWLib, then `./gradlew build` or `deploy` in mainbot
+recompiles and bundles it; no publish and no version bump.
+
+:::warning Finish with a release
+A robot that works only with `mwlibLocal=true` is a robot nobody else can build. Before a change is "done",
+release MWLib, bump the version in `build.gradle`, and check `./gradlew test -PmwlibLocal=false` passes.
+:::
+
+---
+
+## Making a Change in MWLib
+1. Branch from `develop` in MW-Lib (`feat/<thing>`). Build mainbot against it with `mwlibLocal=true`.
+2. Keep the robot project honest: anything generic (a drive mode, a behavior-tree node any robot could use, a
+   mechanism feature) belongs in MWLib; anything about one robot's hardware stays in the robot project.
+3. **Shared behavior-tree nodes** are registered with `registerLibraryNode` in `com.marswars.bt` and listed in
+   MWLib's shipped palette `com/marswars/bt/mwlib_nodes.xml`. After adding or changing one, regenerate it:
+   ```bash
+   ./gradlew test -PupdateNodeSpec     # in MW-Lib; the same flag regenerates a robot's nodes.xml in mainbot
+   ```
+   Without the flag, the test fails if the file is stale, so a forgotten regeneration cannot ship.
+4. `./gradlew test javadoc` locally; the simulation test suite runs in CI on Java 17 and 21.
+5. Open a PR into `develop`. Put breaking changes (removed classes, renamed log keys) in the description, since it
+   becomes the release notes.
+
+---
+
+## Releasing
+Releases are cut from `develop` by the **Make Release** GitHub Actions workflow; nothing is tagged by hand.
+
+1. Merge the PR into `develop` with CI green.
+2. **Actions** → **Make Release** → **Run workflow**; enter the version (`26.18.0`, no `v`).
+3. The workflow builds `develop` with that version, runs the tests, publishes `mw-lib-java` to GitHub Packages,
+   tags `v26.18.0`, creates the GitHub Release with the jars attached, and publishes the Javadoc.
+4. JitPack builds the tag the first time someone asks for it. Check
+   `https://jitpack.io/com/github/FRC-Team-4143/MW-Lib/mw-lib-java/26.18.0/build.log` before pointing the lessons
+   at it.
+5. Bump the version in mainbot's `build.gradle` (and the lessons' `build.gradle`), remove `mwlibLocal=true`, and
+   build once against the published artifact.
+
+---
+
+## Related Documentation
+- [Quick Reference](./quick-ref.mdx): the robot project layout that uses all of this.
+- [Autonomous](./autonomous.mdx): adding nodes to the behavior-tree engine.
+- [Swerve](./swerve.mdx): why drive behaviour changes go in MWLib.

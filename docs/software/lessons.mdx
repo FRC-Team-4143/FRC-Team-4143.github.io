@@ -35,8 +35,8 @@ mistakes or tips we have learned.
 - ***Commands should only be used for controller buttons and auto.***[^1]
     - Commands are the easiest way to interface with buttons and should be set up to just activate a robot state and
     nothing more (`robot.setWantedState(...)` on `RobotContainer`).
-    - Auto can get more complex so commands may come in useful, but once again they should ideally only be used to set
-    a robot state and nothing more.
+    - Autos are behavior trees, not commands: the tree asks for robot states with `<SetWantedState>` and adds its own
+    fail handling (`Timeout`, `Fallback`) around them. ***(2026)***
 
 ## Operation
 - ***Attempt to make the robot as simple to control as possible.***[^1]

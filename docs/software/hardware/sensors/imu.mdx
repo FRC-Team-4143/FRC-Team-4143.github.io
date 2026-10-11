@@ -98,34 +98,25 @@ public void fieldOrientedDrive(double xSpeed, double ySpeed, double rotation) {
 
 ### 2. Autonomous Navigation
 
-IMUs provide critical heading information for autonomous routines:
+IMUs provide critical heading information for autonomous routines. Turning to a heading is a drivetrain **state**:
+the state's `updateLogic` arm runs a PID on the yaw, and `isAimed()` lets the transition table (and the behavior
+tree, through the robot's `AIM` state) know when it is done:
 
 ```java
-public class TurnToAngleCommand extends CommandBase {
-    private final DriveSubsystem drivetrain;
-    private final double targetAngle;
-    private final PIDController turnController = new PIDController(0.02, 0, 0.004);
-    
-    public TurnToAngleCommand(DriveSubsystem drivetrain, double targetAngle) {
-        this.drivetrain = drivetrain;
-        this.targetAngle = targetAngle;
-        addRequirements(drivetrain);
-        
-        turnController.setTolerance(2.0); // 2 degree tolerance
-        turnController.enableContinuousInput(-180, 180);
-    }
-    
-    @Override
-    public void execute() {
-        double currentAngle = drivetrain.getHeading();
-        double turnSpeed = turnController.calculate(currentAngle, targetAngle);
-        drivetrain.arcadeDrive(0, turnSpeed);
-    }
-    
-    @Override
-    public boolean isFinished() {
-        return turnController.atSetpoint();
-    }
+// In the drivetrain subsystem's constructor
+turn_controller_ = new PIDController(0.02, 0, 0.004);
+turn_controller_.setTolerance(2.0);              // 2 degree tolerance
+turn_controller_.enableContinuousInput(-180, 180);
+
+// updateLogic: the AIM arm commands the mechanisms, nothing else
+case AIM -> {
+    double turn = turn_controller_.calculate(getHeading(), target_angle_);
+    drive_.arcadeDrive(0, turn);
+}
+
+// A condition the transition table and the robot's AIM state read
+public boolean isAimed() {
+    return turn_controller_.atSetpoint();
 }
 ```
 

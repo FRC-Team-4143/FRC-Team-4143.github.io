@@ -25,7 +25,7 @@ The flywheel mechanism is built for high-speed rotating wheels (shooters, launch
 The `FlywheelMech` constructor requires the following parameters:
 - `logging_prefix` - String prefix for logging (typically from `getSubsystemKey()`)
 - `mech_name` - Optional name for multiple instances (pass `null` if only one flywheel)
-- `motor_configs` - List of motor configuration objects (`FxMotorConfig` or `NovaMotorConfig`)
+- `motor_configs` - List of `MotorConfig` objects, leader first
 - `gear_ratio` - Gear ratio as motor rotations / mechanism rotations
 - `wheel_inertia` - Moment of inertia of the wheel in kg·m² (used for simulation)
 - `wheel_radius` - Radius of the wheel in meters (used for simulation)

@@ -106,8 +106,8 @@ public class ShooterConstants extends MwConstants {
     // MOTOR CONFIGURATION OBJECTS
     // =============================================================================
 
-    public final FxMotorConfig SHOOTER_MOTOR_CONFIG = new FxMotorConfig();
-    public final FxMotorConfig INDEXER_MOTOR_CONFIG = new FxMotorConfig();
+    public final MotorConfig SHOOTER_MOTOR_CONFIG = new MotorConfig();
+    public final MotorConfig INDEXER_MOTOR_CONFIG = new MotorConfig();
 
     // =============================================================================
     // CONSTRUCTOR - MOTOR CONFIGURATION INITIALIZATION
@@ -472,54 +472,71 @@ protected void handleStateTransition(ShooterStates wanted) {
 }
 ```
 
-We can override this method to add conditions that must be met before allowing a transition to a new state. For example, we might want to prevent transitioning to the **SHOOTING** state unless the shooter is at the desired speed, or add an intermediate state for transitioning:
+When you override it, write it as the **transition table**: an outer `switch` on `system_state_` (where the
+subsystem is now) and an inner `switch` on `wanted` (what was asked). Each arm says where to go next. A request with
+no arm is **ignored**, which is how you forbid a move. **Step states** (a timed settle, a homing move) are states
+nothing requests directly: an arm of the table enters them, and their own arm decides when they are done.
 
-```java
-@Override
-protected void handleStateTransition(ShooterStates wanted) {
-    // Example 1: Conditional transition - only shoot when ready
-    if (wanted == ShooterStates.SHOOTING && !isAtShootingSpeed()) {
-        // Not ready to shoot yet, stay in SPIN_UP
-        system_state_ = ShooterStates.SPIN_UP;
-    } else {
-        // Ready to shoot or transitioning to any other state
-        system_state_ = wanted;
-    }
-}
-```
-
-Here's an example with an intake subsystem that has intermediate deployment states:
+Here is the 2026 intake. Asking for `SQUEEZE` from `DEPLOYED` settles in `SQUEEZE_WAIT` first; while it settles,
+every request is ignored:
 
 ```java
 @Override
 protected void handleStateTransition(IntakeStates wanted) {
-    // Must deploy before intaking
-    if (wanted == IntakeStates.INTAKING && system_state_ == IntakeStates.STOWED) {
-        system_state_ = IntakeStates.DEPLOYING;
-    } 
-    // Check if deployment is complete
-    else if (system_state_ == IntakeStates.DEPLOYING 
-             && MathUtil.isNear(CONSTANTS.DEPLOY_ANGLE, pivot_.getCurrentPosition(), 0.05)) {
-        system_state_ = IntakeStates.DEPLOYED;
-    } 
-    // All other transitions happen immediately
-    else {
-        system_state_ = wanted;
+    switch (system_state_) {
+        case DEPLOYED -> {
+            switch (wanted) {
+                // Settle before the squeeze engages (a timed step state)
+                case SQUEEZE -> {
+                    system_state_ = IntakeStates.SQUEEZE_WAIT;
+                    timer.restart();
+                }
+                case STORE, INTAKE, OUTTAKE, IDLE, TUNING -> system_state_ = wanted;
+                default -> {}
+            }
+        }
+        case SQUEEZE_WAIT -> {
+            // Ignores every request until the settle time is up
+            if (timer.get() > CONSTANTS.SQUEEZE_WAIT_TIME) {
+                system_state_ = IntakeStates.SQUEEZE;
+            }
+        }
+        case STORE, INTAKE, OUTTAKE, IDLE, SQUEEZE, TUNING -> {
+            switch (wanted) {
+                case STORE, DEPLOYED, INTAKE, OUTTAKE, IDLE, SQUEEZE, TUNING -> system_state_ = wanted;
+                default -> {}
+            }
+        }
     }
 }
 ```
 
-:::tip When to Override handleStateTransition
-You only need to override `handleStateTransition()` if you have:
-- Conditional transitions that depend on sensor readings
-- Safety checks before entering certain states
-- Intermediate states that need to complete before reaching the final state
-- Complex state machine logic that requires validation
+The same shape handles a condition on the way in. A shooter that may only shoot once it is at speed keeps the
+request in `SPIN_UP` until `isAtShootingSpeed()`:
 
-If your state machine transitions are simple and immediate, you can omit this method entirely.
-:::
-:::warning Try to Limit Conditions if possible
-This method can get complicated fast. Try to only define transition you care about and make sure everything else that isn't unique falls under a `system_state_ = wanted` statement.
+```java
+case SPIN_UP -> {
+    switch (wanted) {
+        case SHOOTING -> { if (isAtShootingSpeed()) system_state_ = ShooterStates.SHOOTING; }
+        case IDLE -> system_state_ = wanted;
+        default -> {}
+    }
+}
+```
+
+The rules that make this work with [`updateLogic`](#implement-state-logic):
+- **Every condition lives here.** `updateLogic` is a `switch` with no `if` in it. If a state should behave
+  differently depending on a sensor or a setting, split it into two states and pick between them here.
+- **Decided values become fields.** A target computed from a sensor (the flywheel speed for this distance) is
+  computed here into a field that `updateLogic` reads.
+- **No enter or exit actions.** A state commands its mechanisms every loop, so there is nothing to undo when it
+  leaves. Calculations such as filters and feedforward math are fine in `updateLogic`; decisions are not.
+- **Group states that behave the same** in one arm (`case STORE, INTAKE, ... ->`) so the table stays readable. Keep
+  the arms in the enum's order.
+
+:::tip When to Override handleStateTransition
+Omit it while every request can be honoured immediately. Add the table as soon as one move needs a guard, a timed
+settle or a step state. Most real subsystems end up with one.
 :::
 :::danger Wanted is Sticky
 The `wanted` state is sticky, meaning that until it is updated the subsystem will continue to attempt to transition to that state.

@@ -1,0 +1,89 @@
+---
+title: Arbor
+description: Arbor - the behavior-tree editor and live viewer for our autos.
+hide_table_of_contents: true
+sidebar_position: 8
+---
+
+# Arbor
+[Arbor](https://github.com/coalman321/Arbor) is the editor for our [autonomous routines](../robot_dev/autonomous.mdx).
+Our autos are behavior trees stored as BehaviorTree.CPP XML, and Arbor is where you draw them, watch them run on
+the robot node by node, and replay a recorded run afterwards. It is a web app served by a small local server, also
+packaged as a desktop app, and it is the tool the autonomous lesson in [Scriptum](./scriptum.mdx) uses.
+
+---
+
+## Installing
+Download the desktop app for your machine from the
+[Arbor releases page](https://github.com/coalman321/Arbor/releases): `.AppImage` on Linux, `.dmg` on macOS, `.exe`
+on Windows. Nothing else to install.
+
+If you would rather run it from source (Node.js 22 or newer):
+
+```bash
+git clone https://github.com/coalman321/Arbor.git
+cd Arbor
+npm ci
+npm run build
+npm start          # then open http://127.0.0.1:8080
+```
+
+---
+
+## Opening the Robot's Autos
+An Arbor **project** is a folder with a `bt_project.json`, a `nodes.xml` and a `trees/` folder. The robot project's
+`src/main/deploy/autos/` is exactly that, so open it:
+
+1. **Open project** and pick `mainbot-4143-2026/src/main/deploy/autos`.
+2. The left palette lists every node the robot knows, from `nodes.xml`: the BehaviorTree.CPP built-ins, MWLib's
+   shared nodes (`FollowTrajectory`, `ParallelDeadline`, ...) and the robot's own (`SetWantedState` with the robot's
+   states as a drop-down, `SetIntakeState`, ...).
+3. Each file in `trees/` is a tab. `common.xml` holds the shared sub-trees (`IntakeOnEvent`, `ShootFor`).
+
+Drag nodes from the palette onto the canvas, connect them under a `Sequence` or `Fallback`, and fill in the ports
+(`trajectory`, `state`, `msec`) in the side panel. **Save** writes the XML back to `trees/<Name>.xml`; the file is
+what the robot runs, so it is worth opening it in the editor once to see what you drew. The XML rules (names match
+the file, `<include path="common.xml"/>`, `{name}` ports) are on the [Autonomous](../robot_dev/autonomous.mdx#anatomy-of-an-auto)
+page.
+
+:::tip The palette is generated
+If a node you just added to `AutoNodes.java` is missing from the palette, regenerate `nodes.xml` with
+`./gradlew test -PupdateNodeSpec` in the robot project and reload the project in Arbor.
+:::
+
+---
+
+## Live View
+Arbor connects to the robot and colours the tree as it runs: **orange** for running nodes, **green** and **red**
+for succeeded and failed ones, faded colours for results from before the last reset. The live log tab lists every
+transition; click one to jump to its node.
+
+- The address is in `bt_project.json` (`"live": {"url": "ws://localhost:1670"}`). On the real robot use
+  `ws://10.41.43.2:1670`; in simulation, `ws://localhost:1670`.
+- The robot code starts the server in `Robot()` with `BtLiveServer.start(...)`; it is on in mainbot already.
+- Arbor's own backend makes the connection, so the robot only has to be reachable from the computer running Arbor.
+- A badge warns when the tree running on the robot does not match the one you have open, which means you edited
+  without re-deploying or re-selecting the auto.
+
+---
+
+## Replaying a Run
+Every auto run writes a `<auto>_<date>_<time>.btlog` file (BehaviorTree.CPP's `FileLogger2` format) to `/U/logs/bt`
+on the robot's USB stick, or `logs/bt` in simulation. Copy it off and either click **Replay log…** or drag the file
+onto the Arbor window. The replay bar steps through the run: play/pause (Space), step (←/→), skip a second
+(Shift+←/→), start/end (Home/End), speed from 0.1× to 10×. A log holds node statuses only, no blackboard values; for
+those, open the matching AdvantageKit log in [AdvantageScope](./ad-scope.mdx) at the same time.
+
+---
+
+## In Scriptum
+Scriptum opens the lesson project's `deploy/autos` in an **Arbor** tab next to the editor, with the live view
+already pointed at the simulated robot, so the autonomous lesson builds its tree there and watches it run without
+installing anything.
+
+---
+
+## Related Documentation
+- [Autonomous](../robot_dev/autonomous.mdx): how the trees are written and what the nodes do.
+- [Choreo](./choreo.mdx): the paths `FollowTrajectory` drives.
+- [AdvantageScope](./ad-scope.mdx): the `BehaviorTree/*` log keys.

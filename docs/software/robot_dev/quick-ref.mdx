@@ -181,7 +181,7 @@ public class TemplateConstants extends MwConstants {
     // MOTOR CONFIGURATION OBJECTS
     // =============================================================================
 
-    // public final FxMotorConfig ROLLER_MOTOR_CONFIG = new FxMotorConfig();
+    // public final MotorConfig ROLLER_MOTOR_CONFIG = new MotorConfig();
 
     // =============================================================================
     // CONSTRUCTOR - MOTOR CONFIGURATION INITIALIZATION
@@ -261,8 +261,13 @@ Not all problems are listed here, but these are some of the most common ones we 
     - Make sure you have implemented the state transition logic in `handleStateTransition()` if you are using custom transitions.
     - Make sure `RobotContainer` asks for it: the robot's state machine requests subsystem states, so a robot state has to ask your subsystem for the new state.
 - **The auto I just created is not available from the dashboard chooser.**
-    - Once you created the auto file you need to register is with the AutoManager.
-        - See [Auto Lifecycle in Mainbot](./autonomous#auto-lifecycle-in-mainbot) for steps to register a new Auto.
-- **My code crashes with an error that says** `"choreo.trajectory.Trajectory.name()" because "trajectory" is null`
-    - This is because one of the trajectories you are trying to use in an auto has not been registered with that auto.
-        - See step 3 in [Building an Auto Routine](./autonomous#building-an-auto-routine) for steps to register a new trajectory.
+    - Every `src/main/deploy/autos/trees/*.xml` is a chooser option, so the file is somewhere else (`unlisted/` hides drafts on purpose), or it has no `main_tree_to_execute` and is being treated as a library file like `common.xml`. Deploy once so the new file is on the robot.
+        - See [Adding an Auto](./autonomous.mdx#adding-an-auto).
+- **The auto is in the chooser but the robot does nothing.**
+    - The file failed to load. Look at `BehaviorTree/<auto>/Error` in AdvantageScope and the Elastic alert, or run `./gradlew test` for the parse error with a line number. The usual causes: a misspelled node name (they are case-sensitive), a node not registered in `AutoNodes`, or a `trajectory="..."` with no matching `.traj` in `deploy/choreo`.
+        - See [Testing and Debugging](./autonomous.mdx#testing-and-debugging).
+- **The robot ignores the robot state my auto asked for.**
+    - The tree only drives the robot while it is in `AUTO`. If an earlier step left the robot in another state, add `<SetWantedState state="AUTO"/>` after it, the way `ShootFor` does.
+- **The code runs the wrong robot's constants.**
+    - `Config/RobotName` on the dashboard shows the name the code resolved at boot. Burn the right one from Test mode with `Config/Burn RobotName` and restart the code; in simulation set `ROBOT_NAME`.
+        - See [Robot Identity](./robot-identity.mdx).

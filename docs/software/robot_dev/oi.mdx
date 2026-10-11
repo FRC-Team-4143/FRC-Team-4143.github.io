@@ -2,7 +2,7 @@
 title: Operator Interface
 description: Interfacing with controllers and buttons
 hide_table_of_contents: false
-sidebar_position: 5
+sidebar_position: 7
 ---
 
 # Operator Interface
@@ -82,6 +82,26 @@ controller.leftTrigger().whileTrue(
         Commands.startEnd(
                 () -> robot.setWantedState(RobotStates.AIM),
                 () -> robot.setWantedState(RobotStates.DRIVE)));
+```
+
+When several buttons share this hold-and-release shape, wrap it once. The 2026 `OI` has a `whileHeld(button, state, release)` helper, and the detail that matters is the **conditional release**: letting go only goes back to `release` if this button's state is still the one that is wanted, so releasing one button never cancels a state another button asked for after it.
+```java
+/** While button is held the robot wants state; on release it wants release, unless another button asked since. */
+private static void whileHeld(Trigger button, RobotStates state, RobotStates release) {
+    RobotContainer robot = RobotContainer.getInstance();
+    button.whileTrue(
+            Commands.startEnd(
+                            () -> robot.setWantedState(state),
+                            () -> {
+                                if (robot.getWantedState() == state) {
+                                    robot.setWantedState(release);
+                                }
+                            })
+                    .ignoringDisable(true));
+}
+
+whileHeld(driver_controller_.rightTrigger(), RobotStates.SHOOT, RobotStates.DRIVE);
+whileHeld(driver_controller_.leftTrigger(), RobotStates.AIM, RobotStates.TRACK);   // keep the flywheel up after aiming
 ```
 
 You can also bind the POV pad directions. Small tuning knobs that are not robot states can call a subsystem helper directly:

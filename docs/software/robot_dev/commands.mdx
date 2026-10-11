@@ -2,7 +2,7 @@
 title: Commands
 description: Command basics and programming tips
 hide_table_of_contents: false
-sidebar_position: 4
+sidebar_position: 6
 ---
 
 # Commands
@@ -199,7 +199,7 @@ new FunctionalCommand(
 ## Full Custom Commands
 For more complex behaviors, you can create a full command by extending the `Command` class and implementing the necessary methods.
 These require their own class file and can encapsulate more complex logic. They function similarly to the Functional Command and allow for complete control over the command's behavior.
-Below is a template for creating a custom command that inherits from the `Command` class. We only write these for building blocks of autonomous routines (for example a `DriveDistanceCommand`), never as per-subsystem command files.
+Below is a template for creating a custom command that inherits from the `Command` class. We almost never write one: buttons use the inline commands above, and autonomous routines are [behavior trees](./autonomous.mdx), not commands. It is here so you can read WPILib code and the occasional dashboard utility.
 ```java
 public class ExampleCommand extends Command {
   /** Creates a new ExampleCommand. */
@@ -235,7 +235,6 @@ Commands can be combined into groups to create more complex behaviors. There are
 - [**ParallelDeadlineGroup**](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj2/command/ParallelDeadlineGroup.html): Runs commands in parallel, but ends when a specified "deadline" command finishes.
 
 These command groups allow you to create complex command sequences and behaviors by combining simpler commands.
-We typically use these for more complex autonomous routines or multi-step actions. They are all define the same way by passing a list of commands to the constructor.
 ```java
 new SequentialCommandGroup(
     new FirstCommand(),
@@ -243,6 +242,11 @@ new SequentialCommandGroup(
     new ThirdCommand()
 );
 ```
+
+**We do not write command groups for autos.** Our autonomous routines are [behavior trees](./autonomous.mdx): the
+same sequencing (`Sequence`, `ParallelDeadline`, `Timeout`) as XML, with the robot's states as the steps, editable
+without a code deploy. A multi-step action the driver needs is a robot state with step states in `RobotContainer`,
+not a group. If a tree ever needs an existing WPILib command, `registerCommand(...)` wraps it as a node.
 
 ---
 

@@ -2,7 +2,7 @@
 title: Programming Standards
 description: MARS/WARS programming standards for robot projects
 hide_table_of_contents: false
-sidebar_position: 10
+sidebar_position: 11
 ---
 
 # Programming Standards
@@ -19,10 +19,11 @@ Our standards for writing java can be found in the [Java Coding Standards](../ja
     - `getIos()` method
     - `reset()` method
     - `updateLogic()` method
-    - `handleStateTransitions()` method ***(only if overridden)***
+    - `handleStateTransition()` method ***(only if overridden)***
     - Any other public methods for behaviors
     - Private helper methods
 - Use the provided state machine framework to manage subsystem states. Define clear states and transitions to ensure predictable behavior. Refer to the [Adding the State Machine](./subsystems.mdx#adding-the-state-machine) section for guidance.
+- Every condition lives in `handleStateTransition()`, written as the transition table (`switch` on the current state, then on the request). `updateLogic()` is a `switch` on the state with no `if` in it: a state that would behave differently on a condition is split into step states. No enter or exit actions. Refer to [Implement State Transitions](./subsystems.mdx#implement-state-transitions).
 - All user added objects and variables should be declared at the top of the class and given a default value.
 - All user added objects and variables should be declared as private. If they need to be read outside the class create a public getter method, but should not be modified outside the class.
 - The the wanted state of the state machine should only be changed using the `setWantedState()` method. Directly modifying the current state can lead to unpredictable behavior.
@@ -48,6 +49,12 @@ Our standards for writing java can be found in the [Java Coding Standards](../ja
 - Do not create command files for subsystems. Buttons and autos ask the robot for a state with `setWantedState(...)`, using small inline `Commands.startEnd(...)` / `Commands.runOnce(...)` lambdas. Refer to the [Requesting Robot States](./commands.mdx#requesting-robot-states) section.
 - Only `RobotContainer` asks subsystems for states. Subsystems should not set each other's states.
 - Never have a command require a subsystem. This can lead to deadlocks and unexpected behavior.
+- `RobotContainer` follows the same transition-table rules as a subsystem: decisions in `handleStateTransition()`, a condition-free `switch` in `updateLogic()` that asks every subsystem for a state, `AUTO` and `MAINTENANCE` hands-off.
+
+### Autonomous
+- Autos are behavior-tree XML in `src/main/deploy/autos/trees/`, never Java routines or command groups. Refer to [Autonomous](./autonomous.mdx).
+- An auto asks for robot states (`<SetWantedState>`) for anything the driver also does; it sets a single subsystem only for small one-off moves such as the intake on a path event.
+- Nodes any robot could use go in MWLib; robot-only nodes go in `AutoNodes.java`. Regenerate `nodes.xml` (`./gradlew test -PupdateNodeSpec`) and commit it with the node.
 
 ### Operator Interface (OI)
 - Keep the OI class focused on mapping operator inputs to robot states. Avoid adding complex logic or state management in the OI class. Refer to the [Operator Interface (OI)](./oi.mdx) section for guidance on binding commands to controller inputs.

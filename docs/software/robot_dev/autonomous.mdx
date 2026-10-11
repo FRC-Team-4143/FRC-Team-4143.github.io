@@ -1,467 +1,393 @@
 ---
 title: Autonomous
-description: Interfacing with controllers and buttons
-hide_table_of_contents: true
-sidebar_position: 6
+description: Behavior-tree autos - XML trees in deploy/autos that ask the robot for states and drive Choreo paths
+hide_table_of_contents: false
+sidebar_position: 8
 ---
 
 # Autonomous
-Autonomous programming is a critical aspect of FRC robots, as it covers the first 15 seconds of the match where the robot operates without human intervention. During this period,
-the robot must perform a series of pre-programmed actions to score points, navigate the field, and interact with game pieces. Effective autonomous routines can provide a significant
-advantage in matches, as they allow the robot to maximize the points scored during this crucial phase where activity scores are higher.
+Autonomous covers the first 15 seconds of the match, when the robot runs with no driver. A good auto scores while
+the field is still empty, so it is worth a lot, and it has to work the same every match.
 
-This page documents how our autonomous stack works using MWLib and the mainbot code. The examples below are pulled directly from the 2026 robot code.
+Our autos are **behavior trees**. Each auto is one XML file in the robot project's `src/main/deploy/autos/trees/`
+folder, written in the [BehaviorTree.CPP v4](https://www.behaviortree.dev/) format and run by MWLib's
+behavior-tree engine (`com.marswars.bt`). There is no Java auto code to write for a new routine: the tree asks
+the robot for the same [robot states](../controls/state-machines.mdx#the-super-state-machine) the driver's
+buttons do, and drives Choreo paths with a built-in node. The examples on this page come from the 2026 robot.
+
+:::note MARS/WARS Custom Implementation
+The behavior-tree engine, the `SetWantedState` node and the Choreo driving nodes are part of MWLib, not WPILib.
+The XML format is the standard BehaviorTree.CPP one, so the trees open in [Arbor](../tools/arbor.mdx) and Groot2.
+:::
 
 ---
 
-## Core Concepts
+## Why Trees
+- **No code deploy for a new auto.** The robot re-reads the XML when you pick the auto on the dashboard, so a
+  change to the order of steps, a wait time or a path name is a file save, not a build.
+- **The same sequence as teleop.** `<SetWantedState state="SHOOT"/>` runs exactly what the driver's right trigger
+  runs. The aim-spin-feed sequence is written once, in `RobotContainer`, and an auto cannot drift from it.
+- **You can see it run.** Every node lights up in [Arbor's](../tools/arbor.mdx) live view while the auto runs, and
+  each run is recorded for replay.
+- **Failure handling is in the tree.** `Timeout`, `Fallback` and `RetryUntilSuccessful` wrap any step, so an
+  auto decides what to do when aiming never finishes, without touching robot code.
 
-Our autonomous flow is split into three layers:
+---
 
-- **Auto routines** (`com.marswars.auto.Auto`): A command-based sequence (extends `SequentialCommandGroup`) that can run any robot commands (drive, shooter, intake, LEDs, etc.) and optionally load Choreo trajectories.
-- **Auto manager** (`com.marswars.auto.AutoManager`): Handles the SendableChooser, displays the selected path, and returns the selected auto in `autonomousInit()`.
-- **Drive integration** (`SwerveSubsystem`): Executes Choreo trajectories, exposes helpers like `setDesiredChoreoTrajectoryCommand`, and provides event triggers.
-- **Robot states** (`RobotContainer`, the [super state machine](../controls/state-machines.mdx#the-super-state-machine)): Autos ask the robot for the same states the driver's buttons do, such as `SHOOT`. Anything that coordinates more than one subsystem (aim, spin up, feed) is written once there and shared by teleop and autos.
+## Where Things Live
+`src/main/deploy/autos/` is an [Arbor](../tools/arbor.mdx) project:
 
-:::tip Ask the robot, not the subsystems
-For any action the driver also does, an auto should ask `RobotContainer` for the robot state instead of setting each subsystem itself:
-```java
-RobotContainer robot = RobotContainer.getInstance();
-Commands.startEnd(
-        () -> robot.setWantedState(RobotStates.SHOOT),
-        () -> robot.setWantedState(RobotStates.AUTO))
-    .withTimeout(2.0)
+| Path | What it is |
+|---|---|
+| `trees/*.xml` | The autos. Every file here is an option in the dashboard **Auto Chooser**, named after the file |
+| `trees/common.xml` | Shared building blocks (sub-trees) every auto can use. A *library* file: several trees and no `main_tree_to_execute`, so it is not in the chooser |
+| `trees/unlisted/*.xml` | Finished autos kept out of the chooser. Still checked by the tests; move one up a level to list it |
+| `nodes.xml` | Generated list of every node an auto can use, with ports and descriptions, for the editor (see [Node Palette](#node-palette)) |
+| `bt_project.json` | Arbor project file: where the nodes and trees are, and the robot's live-view address |
+| `README.md` | The authoring guide that ships with the robot code |
+
+Paths come from [Choreo](../tools/choreo.mdx) and live next door in `src/main/deploy/choreo/*.traj`.
+
+---
+
+## Anatomy of an Auto
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="CitrusSynergy">
+  <include path="common.xml"/>
+
+  <BehaviorTree ID="CitrusSynergy">
+    <Sequence>
+      <SetShooterTarget target="HUB"/>
+      <SetIntakeState state="STORE"/>
+      <Sleep msec="1000"/>
+
+      <!-- drive the first path; turn the intake on when it passes "Intake Out" -->
+      <ParallelDeadline>
+        <FollowTrajectory trajectory="SynergyP1" end_state="IDLE"/>
+        <SubTree ID="IntakeOnEvent" event="Intake Out" state="INTAKE"/>
+      </ParallelDeadline>
+
+      <!-- wait a tunable time, then drive the second path -->
+      <Delay delay_msec="{middle_wait_msec}">
+        <FollowTrajectory trajectory="SynergyP2" end_state="IDLE"/>
+      </Delay>
+
+      <SubTree ID="ShootFor" duration_msec="2000"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- tunable values for this auto (see "Tunable Values") -->
+  <TreeNodesModel>
+    <SubTree ID="CitrusSynergy">
+      <input_port name="middle_wait_msec" type="int" default="3000">Wait for partners</input_port>
+    </SubTree>
+  </TreeNodesModel>
+</root>
 ```
-In a behavior-tree auto the same request is `<SetWantedState state="SHOOT"/>`. It waits until the robot is in the state (SUCCESS) or the state fails (FAILURE), so the tree can add auto-only fail handling with `Timeout`, `Fallback` or `Retry`. Setting a single subsystem directly is still fine for small one-off moves, like the intake on a path event. Some examples below predate the super state machine and set subsystems directly.
+
+Rules for every file:
+- **Names match.** The file name, `main_tree_to_execute` and the `<BehaviorTree ID>` are all the auto's name.
+- **Shared blocks come from `common.xml`.** Pull them in with `<include path="common.xml"/>` (`../common.xml` from
+  `unlisted/`) and call them with `<SubTree ID="...">`. A block only one auto needs can be another
+  `<BehaviorTree>` in that auto's own file.
+- **Attributes are ports.** A literal (`msec="1000"`) is used as written. `{name}` reads the blackboard entry
+  `name`, which is how tunable values and sub-tree inputs arrive.
+
+### How a tree runs
+The engine *ticks* the root every robot loop. A node returns **RUNNING**, **SUCCESS** or **FAILURE**. `Sequence`
+runs its children in order and stops at the first failure; `Fallback` tries them in order until one succeeds.
+That is enough to read most autos. The full node list is in [Nodes](#nodes).
+
+---
+
+## Robot States First
+For anything the driver can also do, ask the robot, not the subsystems:
+
+```xml
+<SetWantedState state="SHOOT"/>
+```
+
+`SetWantedState` calls `RobotContainer.setWantedState(...)` and then mirrors the robot's
+`getStateResult()`: **RUNNING** while the robot works through the sequence, **SUCCESS** once it is in the state,
+**FAILURE** if the robot called `failWantedState()` (no game piece, aiming never settled). Because the result is
+real, the tree can add fail handling that only autos need, while teleop keeps using the exact same sequence:
+
+```xml
+<Fallback>
+  <Timeout msec="3000"><SetWantedState state="AIM"/></Timeout>
+  <FollowTrajectory trajectory="ToBackupSpot"/>
+</Fallback>
+```
+
+Some robot states keep going until something else is asked for (`SHOOT` on the 2026 robot never "finishes"; the
+driver lets go of the trigger). In an auto, put a `Sleep` next to it in a `ParallelDeadline` so the time decides,
+then hand the robot back to `AUTO`. That is exactly what the shared `ShootFor` sub-tree does:
+
+```xml
+<BehaviorTree ID="ShootFor">
+  <Sequence>
+    <ParallelDeadline>
+      <Sleep msec="{duration_msec}"/>
+      <SetWantedState state="SHOOT"/>
+    </ParallelDeadline>
+    <SetWantedState state="AUTO"/>
+  </Sequence>
+</BehaviorTree>
+```
+
+:::tip AUTO is a hands-off state
+While the robot is in `AUTO`, `RobotContainer.updateLogic` asks the subsystems for nothing, so the tree's
+subsystem nodes (`SetIntakeState` on a path event, `FollowTrajectory`) are in charge. When the tree asks for a robot
+state, the robot takes over; when it asks for `AUTO` again, the tree is back in charge. `Robot.autonomousInit()`
+puts the robot in `AUTO` before the tree starts.
 :::
 
-### Auto Lifecycle in Mainbot
+Setting a **single subsystem** directly is still right for small one-off moves that are not a robot state, such as
+stowing the intake when a path passes an event marker: `SetIntakeState`, `SetShooterState`, `SetSwerveState`.
 
-The robot initializes autos once, registers them, and schedules the selected auto in `autonomousInit()`.
+---
 
-:::warning
-Autos must be registered with `AutoManager` to appear in the chooser. If you don’t register them in `Robot.java`, they won’t show up on the dashboard.
-:::
+## Driving Paths
+`FollowTrajectory` drives a Choreo path by name:
+
+```xml
+<FollowTrajectory trajectory="SynergyP1" end_state="IDLE"/>
+```
+
+- `trajectory` is the `.traj` file name in `deploy/choreo`. Every trajectory an auto names is loaded when the auto
+  is selected and **flipped for the alliance automatically**, so draw paths for one alliance only.
+- It requests the swerve's `path_state` (`CHOREO_PATH` by default, or `CHOREO_PATH_ROTATION_LOCK` to hold a
+  heading), finishes when `isAtChoreoSetpoint()` holds and at least `min_time` seconds have passed, then
+  requests `end_state` (`IDLE` by default).
+
+### Choreo events
+Choreo event markers fire while a path runs. Handle them *next to the path* in a `ParallelDeadline`, path first.
+The path decides when the group ends, and a handler still waiting for an event that never came is stopped with it:
+
+```xml
+<ParallelDeadline>
+  <FollowTrajectory trajectory="SlopAutoStart" end_state="FIELD_CENTRIC_ROTATION_LOCK"/>
+  <SubTree ID="IntakeOnEvent" event="Intake Out" state="INTAKE"/>
+  <SubTree ID="IntakeOnEvent" event="Intake In" state="STORE"/>
+</ParallelDeadline>
+```
+
+`IntakeOnEvent` (in `common.xml`) is a `Sequence` of `WaitForChoreoEvent` and `SetIntakeState`. For a different
+action, write the same two-step `Sequence` inline. `WaitForChoreoEvent` only works while its path is running, so
+keep handlers inside the `ParallelDeadline`.
+
+---
+
+## Shared Sub-trees
+`trees/common.xml` holds the blocks several autos use. Each one is a `<BehaviorTree ID="...">` that reads its inputs
+as `{name}`, with the inputs declared in the file's `<TreeNodesModel>` so the editor shows them:
+
+| Sub-tree | Ports | What it does |
+|---|---|---|
+| `IntakeOnEvent` | `event`, `state`=INTAKE | Waits for a Choreo event on the running path, then sets the intake state |
+| `ShootFor` | `duration_msec`=2000 | Robot `SHOOT` (feeds once the shooter is ready) for `duration_msec`, then robot `AUTO` |
+
+```xml
+<TreeNodesModel>
+  <SubTree ID="ShootFor">
+    <input_port name="duration_msec" type="int" default="2000">How long to shoot</input_port>
+    <description>Robot SHOOT for a fixed time, then back to AUTO</description>
+  </SubTree>
+</TreeNodesModel>
+```
+
+---
+
+## Tunable Values
+Any number in an auto can be tuned from the dashboard without a code deploy. Declare it as a port of the auto's own
+tree in `<TreeNodesModel>`, then read it with `{name}`:
+
+```xml
+<Delay delay_msec="{middle_wait_msec}"> ... </Delay>
+...
+<TreeNodesModel>
+  <SubTree ID="CitrusSynergy">
+    <input_port name="middle_wait_msec" type="int" default="3000">Wait for partners</input_port>
+  </SubTree>
+</TreeNodesModel>
+```
+
+- Each value appears at `/Tuning/Autos/<auto>/<name>` as soon as the robot boots. Edit it in
+  [Elastic](../tools/elastic.mdx) or [AdvantageScope](../tools/ad-scope.mdx).
+- The value when the auto **starts** is the one used for that run.
+- Edits are logged and replay correctly, but they reset on reboot. Copy a value you want to keep into `default`.
+- Types: `int`, `double`, `bool`, `std::string`. Times are milliseconds, like BehaviorTree.CPP's `Sleep` and `Delay`.
+
+---
+
+## Adding an Auto
+1. **Draw the paths** in [Choreo](../tools/choreo.mdx). They end up in `src/main/deploy/choreo/<name>.traj`.
+2. **Copy an existing auto** to `src/main/deploy/autos/trees/<NewName>.xml`, and rename the file, the
+   `main_tree_to_execute` and the `<BehaviorTree ID>` to match. Or open the project in [Arbor](../tools/arbor.mdx)
+   and create a new tree there.
+3. **Edit the steps.** Robot states for anything the driver does, `FollowTrajectory` for paths, `ShootFor` to score.
+   Drafts can live in `trees/unlisted/` until they are ready.
+4. **Run `./gradlew test`.** It loads every auto with the robot's real node set and fails on a typo, an unknown
+   node, a bad port value or a path missing from `deploy/choreo`.
+5. **Deploy once** so the new file is on the robot. After that, XML edits only need the file re-deployed and the
+   auto re-selected.
+
+---
+
+## Nodes
+### Flow control and timing (BehaviorTree.CPP built-ins)
+| Node | What it does |
+|---|---|
+| `Sequence` | Run children in order. Stops at the first failure |
+| `Fallback` | Try children in order until one succeeds |
+| `ReactiveSequence` / `ReactiveFallback` | Same, but re-check earlier children every tick |
+| `Parallel success_count failure_count` | Run all children together; finish on those counts |
+| `ParallelAll max_failures` | Run all children to completion |
+| `IfThenElse` / `WhileDoElse` | Branch on the first child |
+| `Sleep msec` | Wait |
+| `Delay delay_msec` | Wait, then run its child |
+| `Timeout msec` | Stop the child and fail if it takes too long |
+| `Repeat num_cycles`, `RetryUntilSuccessful num_attempts` | Loop the child |
+| `Inverter`, `ForceSuccess`, `ForceFailure`, `KeepRunningUntilFailure`, `RunOnce` | Change the child's result |
+| `SetBlackboard`, `UnsetBlackboard` | Write or clear blackboard entries |
+| `SubTree ID` | Run another `<BehaviorTree>`. Its other attributes are its ports |
+
+BehaviorTree.CPP scripting (`Script`, `_skipIf`, `Precondition`) is not supported.
+
+### MWLib shared nodes (any robot)
+| Node | Ports | What it does |
+|---|---|---|
+| `ParallelDeadline` | | Runs its children together until the **first** child finishes, then stops the rest and returns that child's result (WPILib's `deadline`) |
+| `FollowTrajectory` | `trajectory`, `path_state`=CHOREO_PATH, `end_state`=IDLE, `min_time`=0 | Drives a Choreo path, then requests `end_state` |
+| `WaitForChoreoEvent` | `event` | Waits until the running path passes a Choreo event marker |
+| `SetSwerveState` | `state` | Requests a swerve state |
+| `IsAtChoreoSetpoint`, `IsChassisStationary` | | Conditions |
+| `HasChoreoTimeElapsed` | `seconds` | Condition |
+| `HasChoreoEventPassed` | `event` | Condition |
+
+### Robot nodes (2026, `frc.robot.autos.bt.AutoNodes`)
+| Node | Ports | What it does |
+|---|---|---|
+| `SetWantedState` | `state` (a `RobotStates`) | Asks `RobotContainer` for the state and waits for SUCCESS or FAILURE. Use it for anything teleop also does |
+| `IsSystemState` | `state` | The robot is in `state` |
+| `SetIntakeState` / `SetShooterState` | `state` | `setWantedState(state)` on that subsystem, for small one-off moves |
+| `SetShooterTarget` | `target`=HUB (HUB, LEFT_PASS, RIGHT_PASS) | Points the shooter at a named field target |
+| `IsShooterReady` | | Condition |
+
+---
+
+## Adding a Node
+Most autos never need a new node; a robot state or a sub-tree covers it. When you do need one, decide where it
+belongs:
+
+- **Any robot could use it** (a drive move, a generic wait): it goes in [MWLib](./mwlib.mdx), registered with
+  `registerLibraryNode`, so every robot gets it.
+- **Only this robot** (an intake state, a shooter target): it goes in `frc/robot/autos/bt/AutoNodes.java`.
+
+`AutoNodes.registerNodes(factory)` has one call per node. The factory offers a helper for each shape:
 
 ```java
-// Robot.java
+// An enum request: <SetIntakeState state="STORE"/>
+factory.registerSetState(
+        "SetIntakeState",
+        "Request an intake state",
+        IntakeStates.class,
+        s -> IntakeSubsystem.getInstance().setWantedState(s));
+
+// A condition: <IsShooterReady/>
+factory.registerSimpleCondition(
+        "IsShooterReady",
+        "Flywheel, hood and aim are within tolerance",
+        List.of(),
+        n -> ShooterSubsystem.getInstance().isShooterReady());
+
+// An instant action with a choice port: <SetShooterTarget target="HUB"/>
+factory.registerInstantAction(
+        "SetShooterTarget",
+        "Point the shooter at a named field target",
+        List.of(PortInfo.choiceInput("target", List.copyOf(SHOOTER_TARGETS.keySet()), "HUB", "Field target to aim at")),
+        n -> RobotContainer.getInstance().setAutoShooterTarget(SHOOTER_TARGETS.get(n.getString("target"))));
+```
+
+`registerCommand(id, description, ports, node -> Command)` wraps a WPILib `Command` as a node (RUNNING until it
+finishes), and `registerNodeType` takes a full `StatefulActionNode` for anything with its own start/running/halt
+logic.
+
+:::warning Never call `getInstance()` in a node constructor
+Trees are instantiated to validate XML, in the unit tests and in the editor's palette build, with no hardware.
+Reach for a subsystem only inside the node's tick, start, running or halt code.
+:::
+
+After adding or changing a node, regenerate the palette (below) and check the new node into `nodes.xml` with the
+code that defines it.
+
+### Node palette
+`nodes.xml` lists every node an auto can use, with its ports, defaults and descriptions. It is what the editor shows
+in its palette and what the tests check XML against. It starts with MWLib's shared nodes (MWLib ships the same list
+as `com/marswars/bt/mwlib_nodes.xml`) followed by this robot's nodes, and it is generated from the Java code:
+
+```bash
+./gradlew test -PupdateNodeSpec
+```
+
+---
+
+## Wiring (once per robot project)
+`Robot()` builds the factory, loads the trees and turns on the monitoring. This is already done on the 2026 robot;
+a new project copies it:
+
+```java
+BehaviorTreeFactory bt_factory = AutoNodes.createFactory();        // BT.CPP built-ins + MWLib + robot nodes
+BehaviorTreeMonitor.publishNodeModels(bt_factory);
 AutoManager.getInstance()
-	.registerAutos(
-		new Left_Start_Neutral_Outpost_Climb(),
-		new Left_Start_With_Events());
-
-@Override
-public void autonomousInit() {
-    Auto selected_auto = AutoManager.getInstance().getSelectedAuto();
-    CommandScheduler.getInstance().schedule(selected_auto);
-}
+        .registerAutos(BehaviorTreeAuto.loadAll(
+                bt_factory, Filesystem.getDeployDirectory().toPath().resolve("autos/trees")));
+BtLiveServer.start(BtLiveServer.Options.defaults().withRobotName("4143")); // live view, port 1670
+BehaviorTreeFileLogger.enableDefault();                             // one .btlog per run
 ```
+
+`AutoManager` owns the dashboard chooser and hands `autonomousInit()` the selected auto; `BehaviorTreeAuto` is an
+`Auto`, so the scheduler runs it like any command. The live server needs one extra dependency in `build.gradle`,
+`implementation 'org.java-websocket:Java-WebSocket:1.6.0'`, because MWLib's published package does not list it.
 
 ---
 
-## Building an Auto Routine
+## Testing and Debugging
+- **`./gradlew test`** (`BtAutosParseTest`) loads every auto, including `unlisted/` and the `common.xml` sub-trees,
+  with the robot's real node set. It checks every trajectory file exists, that the chooser lists exactly the
+  expected autos, and that `nodes.xml` is up to date.
+- **Broken files still show up.** An auto that fails to load still appears in the chooser. It raises an Elastic
+  alert, logs `BehaviorTree/<auto>/Error` and does nothing when run, so a typo is visible instead of silent.
+- **No code deploy for XML changes.** Re-selecting an auto, or changing alliance, re-reads its file.
+- **AdvantageScope.** `BehaviorTree/Active` is the running auto. `BehaviorTree/<auto>/{Status,Structure,Xml,Result}`
+  describe the tree and its state. `Status` has one letter per node in tree order: I(dle), R(unning), S(uccess),
+  F(ailure), K (skipped). The XML text itself is logged, so a replay runs the tree that was actually on the robot.
+- **Live view.** The robot streams the running tree over WebSocket at `ws://10.41.43.2:1670/` (`ws://localhost:1670/`
+  in simulation). Open the project in [Arbor](../tools/arbor.mdx) and connect to watch nodes turn orange, green and
+  red as the auto runs.
+- **Run logs.** Every run writes `<auto>_<date>_<time>.btlog`, in BehaviorTree.CPP's `FileLogger2` format, to
+  `/U/logs/bt` on the robot (next to the AdvantageKit logs) and `logs/bt` in simulation. Open one in Arbor or
+  Groot2 to step through the run node by node. It is written as the auto runs, so a power loss mid-auto still
+  leaves a usable file.
 
-Every auto extends `Auto` and follows the same pattern. Here’s a beginner-friendly breakdown of the flow:
-
-1. **Decide what the robot should do (drive + actions)**
-	- An auto can run any command: drive paths, ask the robot for a state (shoot, aim, intake), or set LEDs.
-	- Think of it as a normal `SequentialCommandGroup` with autonomous-specific helpers.
-
-2. **Pick your path files in Choreo (only if you want path following)**
-	- Decide which trajectories you want the robot to drive in order.
-	- Make sure those paths exist in the generated `ChoreoTraj` record.
-
-3. **Load the trajectories at the top of the constructor**
-	- Call `loadTrajectory(name)` for each path in the order you plan to run them.
-	- This also caches poses for field display, so it must happen first.
-
-4. **Tell the swerve subsystem which path to drive**
-	- Use `setDesiredChoreoTrajectoryCommand(getTrajectory(name))` before starting each segment.
-
-5. **Start the drive state that actually follows the path**
-	- Switch to `CHOREO_PATH` (or `CHOREO_PATH_ROTATION_LOCK` if you need fixed heading).
-	- End that command when `isAtChoreoSetpoint()` is true.
-
-6. **Add any extra actions between or during paths**
-	- Examples: shooting, intaking, waiting, or triggering events.
-	- These are normal commands added to the sequence.
-
-7. **Repeat for each additional path segment**
-	- Set the next trajectory, switch the state, then wait for completion.
-
-:::note
-Choreo is just one tool in your auto. You can run any WPILib command and ask the robot for any robot state alongside (or instead of) trajectories.
-:::
-
-### Basic Path-Following Example
-
-```java
-public class TestAuto extends Auto {
-    public TestAuto() {
-	// 1) Load trajectories in the order they will run
-	loadTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name());
-	loadTrajectory(ChoreoTraj.OutpostClimb.name());
-
-	// 2) Build the command sequence
-	addCommands(
-		// Set the initial trajectory
-		SwerveSubsystem.getInstance()
-			.setDesiredChoreoTrajectoryCommand(
-				getTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name())),
-
-		// Start following the trajectory
-		Commands.startEnd(
-				() -> SwerveSubsystem.getInstance()
-					.setWantedState(SwerveStates.CHOREO_PATH),
-				() -> SwerveSubsystem.getInstance()
-					.setWantedState(SwerveStates.FIELD_CENTRIC))
-			.until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint),
-
-		// Move to the climb position
-		SwerveSubsystem.getInstance()
-			.setDesiredChoreoTrajectoryCommand(
-				getTrajectory(ChoreoTraj.OutpostClimb.name())),
-		Commands.startEnd(
-				() -> SwerveSubsystem.getInstance()
-					.setWantedState(SwerveStates.CHOREO_PATH),
-				() -> SwerveSubsystem.getInstance()
-					.setWantedState(SwerveStates.FIELD_CENTRIC))
-			.until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint));
-    }
-}
-```
-
-### What the `Auto` Base Class Provides
-
-MWLib’s `Auto` class handles Choreo trajectory loading and basic helpers:
-
-- `loadTrajectory(name)`: Loads a Choreo trajectory and stores its poses for path display.
-- `getTrajectory(name)`: Returns the typed `Trajectory<SwerveSample>` for swerve following.
-- `getStartPose()`: First pose of the first trajectory (used for sim resets).
-- `getPath(alliance)`: Poses for display in `Field2d`, auto-flipped for red alliance.
+### Troubleshooting
+- **The auto is not in the chooser.** The file is not in `trees/` (drafts in `unlisted/` are hidden on purpose), or
+  it has no `main_tree_to_execute` and is being treated as a library file.
+- **The auto is in the chooser but does nothing.** Look at `BehaviorTree/<auto>/Error` and the Elastic alert; run
+  `./gradlew test` to see the parse error with a line number.
+- **"Unknown node".** The node is not registered in `AutoNodes` (or its ID is misspelled; names are case-sensitive).
+  After adding one, regenerate `nodes.xml`.
+- **A path is missing.** `trajectory="..."` must match a `.traj` in `deploy/choreo` exactly; the test lists the
+  missing names.
+- **The robot ignores a robot state.** The tree must be running while the robot is in `AUTO`; if an earlier step
+  left the robot in another state, add `<SetWantedState state="AUTO"/>` after it (`ShootFor` does this).
 
 ---
 
-## Choreo Event Markers (Time and Pose)
-
-The swerve subsystem integrates MWLib’s `ChoreoEventTracker`, which provides triggers for event markers defined in Choreo. There are two kinds of triggers:
-
-- **Time Trigger**: Fires once the event timestamp has passed.
-- **Pose Trigger**: Fires when the robot is within tolerances of the event’s pose (ignores time).
-
-:::note
-Triggers are meant for actions that happen while the robot is still following a path (like spinning up the shooter during a drive). If you want to run something after the path is finished, you can just wait for `isAtChoreoSetpoint()` and then schedule the next command in the sequence.
-:::
-
-### Example: Binding Actions to Events
-
-In a real auto, you can bind subsystem states to event markers that happen during path following. **Event triggers should be registered before `addCommands()`**:
-
-```java
-public class Left_Start_Neutral_Outpost_Climb extends Auto {
-    public Left_Start_Neutral_Outpost_Climb() {
-        // Register trajectories first
-        loadTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name());
-        loadTrajectory(ChoreoTraj.OutpostClimb.name());
-
-        // Bind event triggers BEFORE addCommands
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Intake Out")
-            .onTrue(
-                Commands.runOnce(
-                    () -> IntakeSubsystem.getInstance()
-                        .setWantedState(IntakeStates.INTAKE)));
-        
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Intake In")
-            .onTrue(
-                Commands.runOnce(
-                    () -> IntakeSubsystem.getInstance()
-                        .setWantedState(IntakeStates.STORE)));
-        
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Shooting")
-            .onTrue(
-                Commands.runOnce(
-                    () -> {
-                        ShooterSubsystem.getInstance()
-                            .setWantedState(ShooterStates.SHOOT);
-                        SwerveSubsystem.getInstance()
-                            .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK);
-                    }));
-        
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Stop Shooting")
-            .onTrue(
-                Commands.runOnce(
-                    () -> {
-                        ShooterSubsystem.getInstance()
-                            .setWantedState(ShooterStates.TRACKING);
-                        SwerveSubsystem.getInstance()
-                            .setWantedState(SwerveStates.CHOREO_PATH);
-                    }));
-
-        // Build the command sequence
-        addCommands(
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setTarget(FieldTargets.Shooter.HUB)),
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setWantedState(ShooterStates.TRACKING)),
-            
-            // First path
-            SwerveSubsystem.getInstance()
-                .setDesiredChoreoTrajectoryCommand(
-                    getTrajectory(ChoreoTraj.LeftStartNeutralOutpost.name())),
-            Commands.startEnd(
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.CHOREO_PATH),
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.FIELD_CENTRIC))
-                .until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint),
-            
-            new WaitCommand(3),  // Wait for shooting
-            
-            // Second path
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setWantedState(ShooterStates.SHOOT)),
-            SwerveSubsystem.getInstance()
-                .setDesiredChoreoTrajectoryCommand(
-                    getTrajectory(ChoreoTraj.OutpostClimb.name())),
-            Commands.startEnd(
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK),
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.FIELD_CENTRIC))
-                .until(SwerveSubsystem.getInstance()::isAtChoreoSetpoint));
-    }
-}
-```
-
-**Key patterns shown here:**
-
-- Event triggers are registered **before** `addCommands()` so they're active during path following.
-- Use `CHOREO_PATH_ROTATION_LOCK` when you need to maintain a specific heading (e.g., shooting while moving).
-- Switch between subsystem states using event markers during the path.
-- After each path finishes, you can run additional commands (waiting, shooting, etc.).
-
-### Pose-based Triggers
-
-You can also trigger on proximity to an event pose instead of time:
-
-```java
-SwerveSubsystem.getInstance()
-    .getChoreoEventPoseTrigger(
-        "Shooting",
-        Units.inchesToMeters(6),     // Position tolerance
-        Units.degreesToRadians(5))   // Rotation tolerance
-    .onTrue(Commands.print("At shooting pose!"));
-```
-
----
-
-## Building Complex Cycling Autos
-
-For competitive autos with multiple scoring cycles, you'll typically run multiple trajectories in sequence, each with its own event markers. Here's a simplified version of a 3-cycle auto:
-
-```java
-public class Neutral_Cycles extends Auto {
-    public Neutral_Cycles() {
-        // Load all trajectories in sequence
-        loadTrajectory(ChoreoTraj.CycleNeutralFirst.name());
-        loadTrajectory(ChoreoTraj.CycleNeutralThird.name());
-        loadTrajectory(ChoreoTraj.OutpostClimbNeutral.name());
-
-        // Bind event triggers
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Intake Out")
-            .onTrue(Commands.runOnce(
-                () -> IntakeSubsystem.getInstance()
-                    .setWantedState(IntakeStates.INTAKE)));
-        
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Intake In")
-            .onTrue(Commands.runOnce(
-                () -> IntakeSubsystem.getInstance()
-                    .setWantedState(IntakeStates.STORE)));
-        
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Shooting")
-            .onTrue(Commands.runOnce(
-                () -> {
-                    ShooterSubsystem.getInstance()
-                        .setWantedState(ShooterStates.SHOOT);
-                    SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK);
-                }));
-        
-        SwerveSubsystem.getInstance()
-            .getChoreoEventTimeTrigger("Stop Shooting")
-            .onTrue(Commands.runOnce(
-                () -> {
-                    ShooterSubsystem.getInstance()
-                        .setWantedState(ShooterStates.TRACKING);
-                    SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.CHOREO_PATH);
-                }));
-
-        addCommands(
-            // Initialize subsystems
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setTarget(FieldTargets.Shooter.HUB)),
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setWantedState(ShooterStates.TRACKING)),
-            
-            // Cycle 1: Pick up first batch of game pieces
-            SwerveSubsystem.getInstance()
-                .setDesiredChoreoTrajectoryCommand(
-                    getTrajectory(ChoreoTraj.CycleNeutralFirst.name())),
-            Commands.startEnd(
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.CHOREO_PATH),
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.FIELD_CENTRIC))
-                .until(
-                    () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
-                        && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1)),
-            
-            // Shoot
-            Commands.runOnce(
-                () -> {
-                    ShooterSubsystem.getInstance().setWantedState(ShooterStates.SHOOT);
-                    SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.FIELD_CENTRIC_ROTATION_LOCK);
-                }),
-            new WaitCommand(3),
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setWantedState(ShooterStates.TRACKING)),
-            
-            // Cycle 2: Pick up more game pieces
-            SwerveSubsystem.getInstance()
-                .setDesiredChoreoTrajectoryCommand(
-                    getTrajectory(ChoreoTraj.CycleNeutralThird.name())),
-            Commands.startEnd(
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.CHOREO_PATH),
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.FIELD_CENTRIC))
-                .until(
-                    () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
-                        && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1)),
-            
-            // Final climb position
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setWantedState(ShooterStates.SHOOT)),
-            SwerveSubsystem.getInstance()
-                .setDesiredChoreoTrajectoryCommand(
-                    getTrajectory(ChoreoTraj.OutpostClimbNeutral.name())),
-            Commands.startEnd(
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.CHOREO_PATH_ROTATION_LOCK),
-                    () -> SwerveSubsystem.getInstance()
-                        .setWantedState(SwerveStates.FIELD_CENTRIC))
-                .until(
-                    () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
-                        && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1)),
-            Commands.runOnce(
-                () -> ShooterSubsystem.getInstance()
-                    .setWantedState(ShooterStates.TRACKING)));
-    }
-}
-```
-
-**Key techniques in this auto:**
-
-- **Multiple trajectories**: Each cycle is a separate loaded trajectory.
-- **Shared event triggers**: All trajectories can use the same event names (e.g., "Intake Out").
-- **Time buffers**: Use `hasChoreoTimeElapsed()` to ensure the robot dwells at pickup points.
-- **State coordination**: Switch between `CHOREO_PATH` and `CHOREO_PATH_ROTATION_LOCK` as needed.
-- **Sequential shooting**: Wait commands between paths for shooting to complete.
-
----
-
-## Event API Reference
-
-
-These helpers live on `SwerveSubsystem`:
-
-- `getChoreoEventTimeTrigger(String eventName)` → `Trigger`
-- `getChoreoEventPoseTrigger(String eventName, double translationTol, double rotationTol)` → `Trigger`
-- `hasChoreoEventBeenPassed(String eventName)` → `boolean`
-
-### Advanced Pattern: Time-Based Path Completion
-
-For smoother transitions between paths (especially when cycling game pieces), you can add a time buffer to `isAtChoreoSetpoint()`:
-
-```java
-Commands.startEnd(
-        () -> SwerveSubsystem.getInstance()
-            .setWantedState(SwerveStates.CHOREO_PATH),
-        () -> SwerveSubsystem.getInstance()
-            .setWantedState(SwerveStates.FIELD_CENTRIC))
-    .until(
-        () -> SwerveSubsystem.getInstance().isAtChoreoSetpoint()
-            && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1));
-```
-
-This pattern waits until:
-1. The robot reaches the trajectory setpoint, **and**
-2. At least 1 additional second has elapsed
-
-This is useful when you want to dwell at the end of a path (e.g., to finish intaking) before moving to the next action.
-
----
-
-## Field Display and Alliance Flipping
-
-`AutoManager` keeps a `SendableChooser` and a `Field2d` display on the dashboard. It also flips
-trajectories for red alliance when building the display path. This is automatic as long as you load
-trajectories using `loadTrajectory()` in your auto.
-
----
-
-## Tips and Gotchas
-
-### General Patterns
-
-- **Load trajectories first**: Call `loadTrajectory()` in constructor before `addCommands()`. This pulls in poses and events.
-- **Event triggers before commands**: Register all `getChoreoEventTimeTrigger()` and `getChoreoEventPoseTrigger()` bindings **before** calling `addCommands()`.
-- **Set the drive state**: The robot must be in `CHOREO_PATH` (or `CHOREO_PATH_ROTATION_LOCK`) to follow the trajectory.
-- **End condition**: `isAtChoreoSetpoint()` is the standard way to wait for path completion.
-
-### Swerve Drive States
-
-- **`CHOREO_PATH`**: Follows both translation and rotation from the trajectory.
-- **`CHOREO_PATH_ROTATION_LOCK`**: Follows translation but locks rotation (useful when shooting on the move).
-- **`FIELD_CENTRIC`**: Normal driver control (used as end state after path following).
-- **`FIELD_CENTRIC_ROTATION_LOCK`**: Field-centric but maintains heading (useful for stationary shooting).
-
-### Time Buffers
-
-Use `hasChoreoTimeElapsed(seconds)` in your `.until()` condition when you want to dwell at a position:
-
-```java
-.until(() -> 
-    SwerveSubsystem.getInstance().isAtChoreoSetpoint() 
-    && SwerveSubsystem.getInstance().hasChoreoTimeElapsed(1))
-```
-
-This is especially useful at game piece pickup locations where you need to wait for the intake to complete.
-
-### Alliance Flipping
-
-The swerve subsystem uses `SwerveConstants.FLIP_TRAJECTORY_ON_RED` (set when operator perspective changes) to automatically flip trajectories. `AutoManager` also flips the display path, so you only need to plan for blue alliance in Choreo.
-
-### Debugging Tips
-
-- **Visualize in sim**: The `Field2d` display shows your loaded trajectory before the match starts.
-- **Check event names**: Make sure event marker names in Choreo match exactly what you use in `getChoreoEventTimeTrigger()`.
-- **Start simple**: Begin with a single trajectory before adding multiple paths and event markers.
-
-If you need new trajectories, generate them in Choreo and make sure the generated `ChoreoTraj` record is updated before using them in autos.
+## Related Documentation
+- [State Machines](../controls/state-machines.mdx): the super state machine that autos ask for states.
+- [Arbor](../tools/arbor.mdx): editing trees, live view and `.btlog` replay.
+- [Choreo](../tools/choreo.mdx): drawing the paths autos follow.
+- [Swerve](./swerve.mdx): the drive states `FollowTrajectory` requests.
+- [MWLib](./mwlib.mdx): where the engine and the shared nodes live, and how to change them.
