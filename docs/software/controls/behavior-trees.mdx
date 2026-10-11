@@ -1,0 +1,370 @@
+---
+title: Behavior Trees
+description: How behavior trees work - ticks, statuses, Sequence, Fallback, Timeout and friends - with animated examples.
+hide_table_of_contents: false
+sidebar_position: 6
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+export const BtAnimation = ({name, alt}) => (
+  <img
+    src={useBaseUrl(`/img/software/controls/behavior-trees/${name}.svg`)}
+    alt={alt}
+    width="640"
+    style={{maxWidth: '100%', height: 'auto'}}
+  />
+);
+
+# Behavior Trees
+
+A **behavior tree** is a way to describe what a robot should do as a tree of small steps. It is how we write
+[autonomous routines](../robot_dev/autonomous.mdx): "drive this path, then aim, then shoot, and if aiming takes too long,
+drive to the backup spot instead."
+
+Where a [state machine](./state-machines.mdx) answers "what mode is the robot in right now?", a behavior tree answers
+"what should happen, in what order, and what if a step goes wrong?" The two work together on our robot: the tree decides
+the *order* and handles *failure*, and the steps it runs mostly ask the robot's own state machine for a state.
+
+:::tip Every animation on this page loops
+Watch the **tick** counter in the top left, the bright ring (where the tick is right now), the bright edges (the path
+it took), and the badge on each node (its status). The caption says what just happened.
+:::
+
+---
+
+## A Tree of Steps
+
+Every box in the tree is a **node**. Nodes at the bottom do real work and are called **leaves**. Nodes that hold other
+nodes decide *how* their children run. Here is a real-looking auto:
+
+```mermaid
+flowchart TD
+    seq["→ Sequence"]
+    fb["? Fallback"]
+    drive["FollowPath ToPickup"]
+    to["Timeout 3000 ms"]
+    aim["SetWantedState AIM"]
+    shoot["SetWantedState SHOOT"]
+    back["FollowPath ToBackup"]
+
+    seq --> drive
+    seq --> fb
+    seq --> shoot
+    fb --> to
+    to --> aim
+    fb --> back
+
+    classDef control fill:#3b4357,stroke:#9ca3af,color:#fff
+    classDef leaf fill:#2563eb,stroke:#93c5fd,color:#fff
+    class seq,fb,to control
+    class drive,aim,shoot,back leaf
+```
+
+Read it from the top, left to right:
+
+1. The **Sequence** runs its children in order.
+2. First it drives to the pickup.
+3. Then the **Fallback** tries to aim, but only for 3 seconds (the **Timeout**). If aiming never finishes, the Fallback
+   gives up on it and drives to the backup spot instead.
+4. Finally it shoots.
+
+The boxes that hold other boxes (Sequence, Fallback, Timeout) are the **control flow**. The blue boxes are the **actions**
+that actually move the robot. All the cleverness in a behavior tree is in how the control flow combines simple actions.
+
+---
+
+## Ticks and Statuses
+
+A behavior tree does not run once and finish. The robot's main loop **ticks** the tree about fifty times a second.
+Each tick starts at the root and travels down into the tree. Every node it visits answers with one of three **statuses**:
+
+| Status | Meaning | Example |
+|---|---|---|
+| **RUNNING** | "I'm not done yet, ask me again next tick." | Driving a path, until the robot arrives |
+| **SUCCESS** | "I'm done, and it worked." | The path reached its end; the condition is true |
+| **FAILURE** | "I'm done, and it didn't work." | A target was not found; a timeout ran out |
+
+The answers travel back **up** the tree, and each control node uses its children's answers to decide what to do and
+what to answer *its* parent.
+
+```mermaid
+sequenceDiagram
+    participant R as Robot loop
+    participant S as Sequence
+    participant D as Drive path
+    participant A as Aim
+
+    R->>S: tick
+    S->>D: tick
+    D-->>S: RUNNING
+    S-->>R: RUNNING
+    Note over R,A: tick after tick... until the robot arrives
+    R->>S: tick
+    S->>D: tick (resumes here)
+    D-->>S: SUCCESS
+    S->>A: tick (same tick, next child)
+    A-->>S: RUNNING
+    S-->>R: RUNNING
+```
+
+A node is not always in the middle of something. Between runs it is **idle**, and a node that finishes goes back to idle
+once its parent has finished with it:
+
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> RUNNING: first tick
+    RUNNING --> RUNNING: ticked again, not done
+    RUNNING --> SUCCESS: finished and worked
+    RUNNING --> FAILURE: finished and failed
+    RUNNING --> IDLE: halted by its parent
+    SUCCESS --> IDLE: parent resets it
+    FAILURE --> IDLE: parent resets it
+```
+
+**Halted** is worth remembering: if a node is RUNNING and its parent decides it should stop (a timeout, a failed
+condition, a sibling that finished first), the parent *halts* it and it goes straight back to idle. A well-written action
+cleans up when it is halted, which is why a path-following node can stop the robot when something else wins.
+
+---
+
+## The Kinds of Nodes
+
+```mermaid
+flowchart LR
+    BT["Behavior tree nodes"]
+    BT --> C["Control<br/>how to run children"]
+    BT --> D["Decorator<br/>changes one child"]
+    BT --> L["Leaf"]
+    L --> A["Action<br/>does something"]
+    L --> Co["Condition<br/>asks a yes/no question"]
+    C --> C1["Sequence<br/>ReactiveSequence"]
+    C --> C2["Fallback"]
+    C --> C3["Parallel<br/>ParallelDeadline"]
+    D --> D1["Timeout, Delay"]
+    D --> D2["Retry, Repeat"]
+    D --> D3["Inverter<br/>ForceSuccess"]
+```
+
+| Kind | Children | What it does |
+|---|---|---|
+| **Control** | Several | Runs its children in a pattern: in order, until one works, all at once... |
+| **Decorator** | Exactly one | Wraps a child and changes how it runs or what it reports (a time limit, a retry, "flip the answer") |
+| **Action** | None | Does something: ask the robot for a state, follow a path, wait |
+| **Condition** | None | Answers SUCCESS or FAILURE right away, never RUNNING: "do we have a game piece?" |
+| **SubTree** | None | Runs another tree by name, so a block like "shoot for two seconds" is written once and used everywhere |
+
+---
+
+## Sequence: Do These in Order
+
+A **Sequence** runs its children one after another. It moves on to the next child when the current one succeeds. When
+a child answers RUNNING the Sequence answers RUNNING too, and **next tick it resumes at that same child**, not at the
+start.
+
+<BtAnimation name="sequence-success" alt="Animation: a Sequence runs Drive path, Aim and Shoot in turn, each RUNNING and then SUCCESS, and finally the Sequence reports SUCCESS" />
+
+The Sequence is only SUCCESS when **all** of its children succeeded. But the moment one of them fails, it gives up:
+
+<BtAnimation name="sequence-failure" alt="Animation: Drive path succeeds, Aim fails, the Sequence reports FAILURE and Shoot is never ticked" />
+
+```mermaid
+flowchart TD
+    start([tick]) --> next{"next child"}
+    next -->|"RUNNING"| runR(["Sequence is RUNNING<br/>resume here next tick"])
+    next -->|"SUCCESS"| more{"more children?"}
+    more -->|yes| next
+    more -->|no| okS(["Sequence is SUCCESS"])
+    next -->|"FAILURE"| failS(["Sequence is FAILURE<br/>children reset"])
+```
+
+This is why a Sequence is the natural way to write "do A, then B, then C, but only if each one worked". Because Shoot
+is only reached after Aim succeeded, **Shoot never has to check whether Aim worked**.
+
+---
+
+## Fallback: Try Until Something Works
+
+A **Fallback** is "plan B" (some people call it a *selector*). It tries its children in order and stops at the first
+one that **succeeds**. It only fails if *every* child failed.
+
+<BtAnimation name="fallback" alt="Animation: a Fallback tries Aim: vision, which fails, then Aim: manual, which succeeds, so the Fallback succeeds. In a second run every child fails and the Fallback fails" />
+
+It is the mirror image of a Sequence:
+
+| | Moves on to the next child when... | Stops early when... | Is SUCCESS when... | Is FAILURE when... |
+|---|---|---|---|---|
+| **Sequence** | a child **succeeds** | a child **fails** | all children succeeded | any child failed |
+| **Fallback** | a child **fails** | a child **succeeds** | any child succeeded | all children failed |
+
+A Sequence is "AND"; a Fallback is "OR".
+
+---
+
+## Reactive Sequence: Keep Checking
+
+A plain Sequence remembers where it was. That is usually what you want, but sometimes a condition needs to stay true
+the *whole time* an action runs: "keep driving only while we still hold the game piece."
+
+A **ReactiveSequence** ticks **all** of its earlier children again on **every** tick, starting from the first. If a
+condition that used to pass now fails, the running action after it is **halted**.
+
+<BtAnimation name="reactive-sequence" alt="Animation: a ReactiveSequence checks Has game piece? on every tick while Drive path runs; on the third tick the condition fails, Drive path is halted and the ReactiveSequence fails" />
+
+:::info Only one child should be RUNNING
+A ReactiveSequence is meant for "some conditions, then one long action". Two children that both take several ticks
+would keep halting each other, and MW-Lib reports an error if it happens.
+:::
+
+---
+
+## Parallel and ParallelDeadline: At the Same Time
+
+Control nodes do not have to run children one at a time. A **Parallel** ticks all of its children on every tick and
+finishes based on how many succeeded or failed. Our own **ParallelDeadline** is the version autos use most: the **first**
+child is the *deadline*. When it finishes, every other child is halted, and the node reports the deadline's result.
+
+<BtAnimation name="parallel-deadline" alt="Animation: Follow path and Intake on event run together; when Follow path succeeds, Intake on event is halted and the ParallelDeadline succeeds" />
+
+That is exactly what "drive this path, and drop the intake when the robot passes the marker" needs: the path is the
+deadline, and the intake branch is just along for the ride. If the robot reaches the end of the path before the marker
+ever fires, the waiting branch is stopped instead of hanging the auto.
+
+---
+
+## Decorators: Change How a Child Runs
+
+A **decorator** has exactly one child and modifies it. The one you will use most is **Timeout**: it gives its child a
+time limit, and if the child is still RUNNING when time is up, it halts the child and reports FAILURE.
+
+<BtAnimation name="timeout" alt="Animation: a Timeout gives Aim three seconds; when time is up it halts Aim and fails, so the Fallback moves on to Backup path, which succeeds" />
+
+Put a Timeout under a Fallback and a step that *might* never finish becomes a step that *fails after three seconds*, which
+the Fallback turns into a plan B. This is the single most useful pattern in an auto.
+
+| Decorator | What it does |
+|---|---|
+| `Timeout msec` | Halts the child and fails if it runs longer than `msec` |
+| `Delay delay_msec` | Waits, then runs the child |
+| `RetryUntilSuccessful num_attempts` | Runs the child again if it fails, up to a limit |
+| `Repeat num_cycles` | Runs the child several times in a row |
+| `Inverter` | Swaps SUCCESS and FAILURE ("is the shooter *not* ready?") |
+| `ForceSuccess` / `ForceFailure` | Reports a fixed result whatever the child did ("try this, but never let it fail the auto") |
+| `RunOnce` | Runs the child the first time only |
+
+---
+
+## Ports and the Blackboard
+
+Nodes take settings called **ports**, written as XML attributes: `<Sleep msec="500"/>`. A port can hold a fixed value,
+or point at a named slot in a shared notebook called the **blackboard**, written with braces: `<Sleep msec="{wait_msec}"/>`.
+
+```mermaid
+flowchart LR
+    subgraph tree ["Tree: MyFirstAuto"]
+        P["input port<br/>wait_msec = 500"]
+        S["Sleep<br/>msec = #123;wait_msec#125;"]
+    end
+    BB[("Blackboard")]
+    D["Dashboard<br/>/Tuning/Autos/MyFirstAuto/wait_msec"]
+
+    P -->|"default seeds"| BB
+    D -->|"edit before the run"| BB
+    BB -->|"read when ticked"| S
+```
+
+A port declared for the tree, with a default, shows up on the dashboard, so the team can change a wait time at the
+field without rebuilding the code. The **SubTree** node uses the same idea to pass values into a reusable block:
+`<SubTree ID="ShootFor" duration_msec="2000"/>`.
+
+:::warning A typo in a port name is an error, on purpose
+If a node reads `{wait_msc}` and nothing ever sets it, the auto refuses to load and says which node and line, instead
+of waiting until mid-match to read a missing value.
+:::
+
+---
+
+## How a Tree Talks to the Robot
+
+Most leaves in an auto do not drive motors themselves. **`SetWantedState`** asks the robot's state machine
+(`RobotContainer`) for a robot state, and mirrors how that goes: RUNNING while the robot works its way there, SUCCESS
+when it is in the state, FAILURE if the state could not be reached.
+
+```mermaid
+sequenceDiagram
+    participant T as Behavior tree
+    participant N as SetWantedState AIM
+    participant R as RobotContainer
+    participant S as Subsystems
+
+    T->>N: tick
+    N->>R: setWantedState(AIM)
+    R->>S: ask each subsystem for the states AIM needs
+    N->>R: getStateResult()
+    R-->>N: RUNNING (still aiming)
+    N-->>T: RUNNING
+    Note over T,S: next ticks repeat until the robot is aimed
+    N->>R: getStateResult()
+    R-->>N: SUCCESS (in AIM)
+    N-->>T: SUCCESS
+```
+
+Because the driver's buttons ask for the same robot states, the aim-spin-up-feed sequence is written **once**, in
+`RobotContainer`, and used by both teleop and autos. The tree adds what only an auto needs: a `Timeout` so aiming can
+fail, and a `Fallback` for what to do then. See [The Super State Machine](./state-machines.mdx#the-super-state-machine).
+
+---
+
+## Reading a Real Auto
+
+Putting it all together, here is an example in the style of our autos, and what each part does:
+
+```xml
+<BehaviorTree ID="PickupAndScore">
+  <Sequence>                                       <!-- do these in order -->
+    <FollowTrajectory trajectory="ToPickup"/>      <!-- RUNNING until the path ends -->
+    <Fallback>                                     <!-- plan B for aiming -->
+      <Timeout msec="3000">
+        <SetWantedState state="AIM"/>              <!-- fails if aiming takes over 3 s -->
+      </Timeout>
+      <FollowTrajectory trajectory="ToBackup"/>
+    </Fallback>
+    <SetWantedState state="SHOOT"/>
+  </Sequence>
+</BehaviorTree>
+```
+
+When you are not sure what a tree will do, trace one tick by hand: start at the root, ask "what does this node do with
+each child's answer?", and follow the RUNNING answers down to the node that is actually busy.
+
+---
+
+## Seeing It Run
+
+[Arbor](../tools/arbor.mdx) shows exactly these animations for a real robot: connect to the robot or the simulator and each
+node turns **orange** while it is RUNNING, then **green** or **red**. If an auto stops where you did not expect, the node
+that is red, or the one that stayed orange, is where to look. The `.btlog` files the robot writes can be replayed there
+afterwards, one tick at a time.
+
+| Looks like | Usually means |
+|---|---|
+| A Sequence is red, the last children never lit up | A child before them failed; the rest were skipped on purpose |
+| One node stays orange forever | That step never finishes. Wrap it in a `Timeout` and give the Fallback a plan B |
+| The whole tree is green but the robot did not do the thing | The step succeeded without doing the work: check it asked for the right state or path name |
+| An auto does nothing and Arbor shows no colours | The file failed to load: look at `BehaviorTree/<auto>/Error` and the Elastic alert |
+
+---
+
+## Practice
+
+The **Arbor** lesson in [Scriptum](../tools/scriptum.mdx) walks you through building a tree: a Sequence of three steps,
+a Timeout with a Fallback, and a tunable wait time. The **Autonomous** lesson then builds a real routine the same way.
+
+---
+
+## Related Documentation
+- [Autonomous](../robot_dev/autonomous.mdx): our behavior-tree autos: layout, nodes, wiring and debugging.
+- [State Machines](./state-machines.mdx): the robot states a tree asks for.
+- [Arbor](../tools/arbor.mdx): the editor and live viewer.
+- [BehaviorTree.CPP](https://www.behaviortree.dev/): the open-source library whose XML format and node semantics ours follows.

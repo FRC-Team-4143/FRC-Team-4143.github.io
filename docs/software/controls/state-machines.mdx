@@ -124,7 +124,7 @@ public class RobotContainer extends MwSuperStateMachine<RobotStates> {
 ### Sequences and Failures
 A multi-step action, such as *aim, then spin up, then feed*, is one robot state with a few **step states**. While that state is wanted, `handleStateTransition` walks the robot through the steps and lands in the state itself when it is done. If it can't finish (a timeout, no game piece), it calls `failWantedState()`.
 
-`getStateResult()` reports **RUNNING**, **SUCCESS** or **FAILURE** for the wanted state. Autonomous behavior trees use the `SetWantedState` node, which waits on that result, so an auto can add its own fail handling (`Timeout`, `Fallback`, `Retry`) around the same sequence the driver uses in teleop.
+`getStateResult()` reports **RUNNING**, **SUCCESS** or **FAILURE** for the wanted state. Autonomous [behavior trees](./behavior-trees.mdx) use the `SetWantedState` node, which waits on that result, so an auto can add its own fail handling (`Timeout`, `Fallback`, `Retry`) around the same sequence the driver uses in teleop.
 
 ### Writing the Transitions
 `RobotContainer` is written like a subsystem, with the same two methods and the same split of work:

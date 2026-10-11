@@ -15,6 +15,20 @@ behavior-tree engine (`com.marswars.bt`). There is no Java auto code to write fo
 the robot for the same [robot states](../controls/state-machines.mdx#the-super-state-machine) the driver's
 buttons do, and drives Choreo paths with a built-in node. The examples on this page come from the 2026 robot.
 
+New to behavior trees? Read [Behavior Trees](../controls/behavior-trees.mdx) first: it explains ticks, statuses, Sequence,
+Fallback and Timeout with animated examples. The short version of how an auto is laid out:
+
+```mermaid
+flowchart LR
+    F["trees/*.xml<br/>one file = one auto"] --> L["BehaviorTreeAuto<br/>loads and checks it"]
+    L --> C["Dashboard<br/>Auto Chooser"]
+    C --> T["Tree ticks every loop<br/>in autonomous"]
+    T --> S["SetWantedState<br/>asks RobotContainer"]
+    T --> P["FollowTrajectory<br/>drives a Choreo path"]
+    S --> R["Subsystems"]
+    P --> R
+```
+
 :::note MARS/WARS Custom Implementation
 The behavior-tree engine, the `SetWantedState` node and the Choreo driving nodes are part of MWLib, not WPILib.
 The XML format is the standard BehaviorTree.CPP one, so the trees open in [Arbor](../tools/arbor.mdx) and Groot2.
