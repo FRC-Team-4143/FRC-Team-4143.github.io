@@ -339,7 +339,6 @@ a new project copies it:
 
 ```java
 BehaviorTreeFactory bt_factory = AutoNodes.createFactory();        // BT.CPP built-ins + MWLib + robot nodes
-BehaviorTreeMonitor.publishNodeModels(bt_factory);
 AutoManager.getInstance()
         .registerAutos(BehaviorTreeAuto.loadAll(
                 bt_factory, Filesystem.getDeployDirectory().toPath().resolve("autos/trees")));
@@ -360,9 +359,10 @@ BehaviorTreeFileLogger.enableDefault();                             // one .btlo
 - **Broken files still show up.** An auto that fails to load still appears in the chooser. It raises an Elastic
   alert, logs `BehaviorTree/<auto>/Error` and does nothing when run, so a typo is visible instead of silent.
 - **No code deploy for XML changes.** Re-selecting an auto, or changing alliance, re-reads its file.
-- **AdvantageScope.** `BehaviorTree/Active` is the running auto. `BehaviorTree/<auto>/{Status,Structure,Xml,Result}`
-  describe the tree and its state. `Status` has one letter per node in tree order: I(dle), R(unning), S(uccess),
-  F(ailure), K (skipped). The XML text itself is logged, so a replay runs the tree that was actually on the robot.
+- **AdvantageScope.** `BehaviorTree/Active` is the running auto. `BehaviorTree/<auto>/{Status,Result,Error}` give
+  its state. `Status` has one letter per node in tree order: I(dle), R(unning), S(uccess), F(ailure), K (skipped).
+  The tree's shape is not logged there; open it in [Arbor](../tools/arbor.mdx) (live view or the run's `.btlog`) to
+  see it. The XML text itself is still logged as an input, so a replay runs the tree that was actually on the robot.
 - **Live view.** The robot streams the running tree over WebSocket at `ws://10.41.43.2:1670/` (`ws://localhost:1670/`
   in simulation). Open the project in [Arbor](../tools/arbor.mdx) and connect to watch nodes turn orange, green and
   red as the auto runs.
