@@ -25,7 +25,8 @@ The exercises below are the **Sensors and Feedback** lesson in [Scriptum](https:
 
 ## Exercises
 ### Sensors
-- Convert the encoder readings from wheel rotations to meters
+- Convert the encoder readings (`getLeftPositionRad()`, `getRightPositionRad()`) from wheel radians to meters
+    - meters = wheel radians * wheel radius (0.0762 m)
 - Show chassis speeds in AdvantageScope
     - Linear speed in m/s (forward / backward)
     - Angular speed in rad/s (rotation)
