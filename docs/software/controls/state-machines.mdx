@@ -97,6 +97,7 @@ flowchart TD
 - **Buttons and autos only ask the robot.** They call `setWantedState(...)` on `RobotContainer`, the same method you use on a subsystem. They never talk to a subsystem directly, and there are no per-subsystem command files.
 - **The robot asks the subsystems.** Every loop, before the subsystems run, the super state machine looks at the robot's state and asks each subsystem for the state it needs. Each subsystem still decides for itself when it is allowed to get there (the shooter still spins up before it shoots).
 - **Write it once.** A robot state like `SHOOT` is the same whether the driver's trigger or an autonomous routine asks for it. A scoring sequence is written once, in `RobotContainer`, and used in teleop and in autos.
+- **Its states live in `RobotConstants`.** The `RobotStates` enum is nested in `RobotConstants`, the way `ShooterStates` lives in `ShooterConstants`. A new robot can start with just `DRIVE` and add states as it grows.
 
 ```java
 public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants> {

@@ -42,7 +42,7 @@ The best practice to follow when creating a new robot subsystem is:
         - This includes defining the actions to be taken in each state and how to transition between states.
         - **Remember if you don't care about any transitions just leave the default implementation alone.**
 4. Use the Subsystem from the Robot's State Machine
-    - Add or update robot states in `RobotStates` and ask your subsystem for its state from `RobotContainer`.
+    - Add or update robot states in the `RobotStates` enum in `RobotConstants` and ask your subsystem for its state from `RobotContainer`.
     - Refer to [The Super State Machine](../controls/state-machines.mdx#the-super-state-machine) for guidance.
     - Do **not** create a command file for the subsystem.
 5. Integrate with the Operator Interface (OI)
@@ -57,8 +57,7 @@ Below is an example project structure and code templates to help you get started
 src/main/java/frc/robot/
 ├── Robot.java
 ├── RobotContainer.java   (the super state machine)
-├── RobotStates.java
-├── RobotConstants.java  (CONSTANTS for RobotContainer, plus the robot identity)
+├── RobotConstants.java  (CONSTANTS for RobotContainer: the RobotStates enum, plus the robot identity)
 ├── OI.java
 └── subsystems/
     ├── template/
@@ -200,8 +199,27 @@ public class TemplateConstants extends MwConstants {
 }
 ```
 
+### RobotConstants Template
+The robot's states live in `RobotConstants`, the way a subsystem's states live in its `*Constants` class. A new robot
+starts with a basic enum and grows it as subsystems are added.
+```java title="RobotConstants.java"
+public class RobotConstants extends MwConstants {
+    /** The robot's states. RobotContainer is in exactly one of them at a time. */
+    public enum RobotStates {
+        /** Disabled: nothing moves */
+        IDLE,
+        /** Teleop driving */
+        DRIVE,
+        /** The template subsystem's custom state */
+        CUSTOM
+    }
+}
+```
+
 ### RobotContainer Template
 ```java title="RobotContainer.java"
+import frc.robot.RobotConstants.RobotStates;
+
 public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants> {
     private static RobotContainer instance_ = null;
 
@@ -230,6 +248,7 @@ public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConsta
                 template_.setWantedState(TemplateStates.CUSTOM_STATE);
                 break;
             case IDLE:
+            case DRIVE:
             default:
                 template_.setWantedState(TemplateStates.IDLE);
                 break;
@@ -243,7 +262,7 @@ RobotContainer robot = RobotContainer.getInstance();
 driver_controller_.a().whileTrue(
         Commands.startEnd(
                 () -> robot.setWantedState(RobotStates.CUSTOM),
-                () -> robot.setWantedState(RobotStates.IDLE)));
+                () -> robot.setWantedState(RobotStates.DRIVE)));
 ```
 
 ## Troubleshooting

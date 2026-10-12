@@ -33,10 +33,16 @@ matching variant.
 
 ## Mapping the Name onto Code
 The robot's own constants class, `RobotConstants` (what `RobotContainer` reads as `CONSTANTS`, the way a subsystem
-reads its `*Constants`), owns an enum of the robots the code supports and resolves it once, at class load:
+reads its `*Constants`), owns an enum of the robots the code supports and resolves it once, at class load. It also
+holds the robot's states, `RobotStates` (a new robot starts with just `DRIVE`):
 
 ```java
 public class RobotConstants extends MwConstants {
+    /** The robot's states, owned by RobotContainer. */
+    public enum RobotStates {
+        DRIVE
+    }
+
     /** The robots this code can run on; per-robot constants variants switch on ROBOT. */
     public enum Robot {
         ALPHA_BOT,
