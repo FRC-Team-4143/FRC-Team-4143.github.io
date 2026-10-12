@@ -29,12 +29,12 @@ The exercises below are the **Computer Vision** lesson in [Scriptum](https://scr
 - Choose how much to trust the cameras
     - The starter standard deviations of 5.0 mean "ignore the cameras". Pick better numbers
 - Drive more than 5 meters, stop, and compare your estimate with the true pose on the AdvantageScope 2D field
-    - Your estimate should stay within 5 cm and 1 degree of where the robot really is
+    - Your estimate should stay within 0.06 m and 0.0175 rad (about 1 degree) of where the robot really is
 ## Aiming
 - Add an `AIM` state to the drivetrain
     - Turn in place to face the goal at (4.0, 4.0), using your pose estimate
-    - Use a PID with continuous input, since headings wrap around
-- Write `isAimed()`: true only when the error is small **and** the robot has stopped turning
+    - Use a PID with continuous input from -π to π radians, since headings wrap around
+- Write `isAimed()`: true only when the error is below `AIM_TOLERANCE_RAD` (0.035 rad, about 2 degrees) **and** the robot has stopped turning
 - Add an `AIM` case to `RobotContainer` that asks the drivetrain for its `AIM` state (the left bumper already asks the robot for `AIM` while held)
 - Tune `AIM_KP` and `AIM_KD` so the robot gets there quickly without swinging past
 

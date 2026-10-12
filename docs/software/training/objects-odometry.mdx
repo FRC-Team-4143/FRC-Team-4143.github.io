@@ -32,6 +32,7 @@ The exercises below are the **Objects and Odometry** lesson in [Scriptum](https:
     - Write a getChassisSpeeds method
     - Use it to get the [ChassisSpeeds](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/ChassisSpeeds.html) of the robot and compare it with your hand-written speeds
 - Write a getYaw method that works out the robot's heading from how far each side has driven
+    - The heading in radians is (right meters - left meters) / track width (0.61 m)
     - Return it as a [Rotation2d](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Rotation2d.html)
 - Use a [DifferentialDrivePoseEstimator](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/estimator/DifferentialDrivePoseEstimator.html) object
     - Update it every loop and log the estimated pose
