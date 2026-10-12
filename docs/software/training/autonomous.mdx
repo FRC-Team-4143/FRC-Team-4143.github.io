@@ -36,19 +36,21 @@ The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum
 - Generate both paths
 ## Build the tree
 - Open the **Arbor** tab. The project is the robot's `deploy/autos` folder; the palette already knows `FollowPath`,
-  `SetWantedState` (with the robot's states), `Timeout` and `Sleep`
+  `SetWantedState` and `IsSystemState` (with the robot's states), `Timeout`, `RetryUntilSuccessful` and `Sleep`
 - Open the tree `PickupAndScore`. It is a `Sequence` that already drives `ToPickup`; add after it, in order:
     - `Sleep` for half a second, standing in for picking up a game piece
     - `FollowPath` with `trajectory` = `ToScore`
-    - A `Timeout` of 3 seconds around `SetWantedState` `AIM`, so a bad aim cannot stall the auto
+    - `SetWantedState` `AIM`. Asking is instant, so the tree then waits for it:
+    - A `Timeout` of 3 seconds around `RetryUntilSuccessful` (`num_attempts` -1) around `IsSystemState` `AIM`, so the
+      tree waits until the robot is in `AIM` and a bad aim cannot stall the auto
     - `SetWantedState` `SHOOT`, then a `Sleep` of 2 seconds, then `SetWantedState` `AUTO`
 - Save, then open `deploy/autos/trees/PickupAndScore.xml` in the editor and read what Arbor wrote
 ## Finish the aim step
 - Run the tree first: it shoots without turning, because the robot reaches `AIM` the moment it is asked
 - In `RobotContainer.handleStateTransition`, finish the `AIM` case: the robot is in the step state `AIMING` while
   it turns, and in `AIM` only once the drivetrain `isAimed()`
-- This is what makes `SetWantedState AIM` in the tree wait: it is RUNNING until the robot reaches `AIM`. The left
-  bumper asks for the same `AIM`, so the sequence is written once
+- This is what makes the tree's wait mean "aimed": `IsSystemState AIM` stays false while the robot is in `AIMING`.
+  The left bumper asks for the same `AIM`, so the sequence is written once
 ## Run it
 - Pick **PickupAndScore** in Elastic's **Auto Chooser**, then run Auto
 - Watch the tree light up in Arbor's live view, and the true pose and your estimate on the AdvantageScope 2D field

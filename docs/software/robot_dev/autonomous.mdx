@@ -122,14 +122,18 @@ For anything the driver can also do, ask the robot, not the subsystems:
 <SetWantedState state="SHOOT"/>
 ```
 
-`SetWantedState` calls `RobotContainer.setWantedState(...)` and then mirrors the robot's
-`getStateResult()`: **RUNNING** while the robot works through the sequence, **SUCCESS** once it is in the state,
-**FAILURE** if the robot called `failWantedState()` (no game piece, aiming never settled). Because the result is
-real, the tree can add fail handling that only autos need, while teleop keeps using the exact same sequence:
+`SetWantedState` calls `RobotContainer.setWantedState(...)` and succeeds the same tick: a request is instant, like
+the driver pressing a button, and the state stays wanted until something asks for another one. To wait until the
+robot has finished the sequence, retry `IsSystemState` (the robot is in the state). The robot only reaches the
+state once its step states are done (`AIM` comes after `AIMING`), so the wait ends when the work does. The tree
+adds the fail handling that only autos need, while teleop keeps using the exact same sequence:
 
 ```xml
+<SetWantedState state="AIM"/>
 <Fallback>
-  <Timeout msec="3000"><SetWantedState state="AIM"/></Timeout>
+  <Timeout msec="3000">
+    <RetryUntilSuccessful num_attempts="-1"><IsSystemState state="AIM"/></RetryUntilSuccessful>
+  </Timeout>
   <FollowTrajectory trajectory="ToBackupSpot"/>
 </Fallback>
 ```
@@ -283,8 +287,8 @@ BehaviorTree.CPP scripting (`Script`, `_skipIf`, `Precondition`) is not supporte
 ### Robot nodes (2026, `frc.robot.autos.bt.AutoNodes`)
 | Node | Ports | What it does |
 |---|---|---|
-| `SetWantedState` | `state` (a `RobotStates`) | Asks `RobotContainer` for the state and waits for SUCCESS or FAILURE. Use it for anything teleop also does |
-| `IsSystemState` | `state` | The robot is in `state` |
+| `SetWantedState` | `state` (a `RobotStates`) | Asks `RobotContainer` for the state; instant, succeeds at once. Use it for anything teleop also does |
+| `IsSystemState` | `state` | The robot is in `state`. Retry it (`RetryUntilSuccessful` `-1`, inside a `Timeout`) to wait for a state |
 | `SetIntakeState` / `SetShooterState` | `state` | `setWantedState(state)` on that subsystem, for small one-off moves |
 | `SetShooterTarget` | `target`=HUB (HUB, LEFT_PASS, RIGHT_PASS) | Points the shooter at a named field target |
 | `IsShooterReady` | | Condition |
