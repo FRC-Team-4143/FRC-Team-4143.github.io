@@ -32,7 +32,7 @@ The exercises below are the **State Machines** lesson in [Scriptum](https://scri
     - Prevent **IDLE** -> **SHOOT** transition
 
 ### The Robot's State Machine
-- `RobotContainer` extends `MwSuperStateMachine<RobotStates>`, with the robot states **IDLE**, **DRIVE** and **SHOOT**
+- `RobotContainer` extends `MwSuperStateMachine<RobotStates, RobotConstants>`, with the robot states **IDLE**, **DRIVE** and **SHOOT**
     - In `updateLogic()`, write a `switch` on the robot's state that asks the drivetrain and the shooter for the state each robot state needs
     - `Robot.java` asks for **IDLE** when disabled and **DRIVE** when teleop starts
 - Bind a button in OI so the robot wants **SHOOT** while it is held and **DRIVE** when it is let go

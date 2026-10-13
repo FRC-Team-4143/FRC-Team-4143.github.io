@@ -5,9 +5,54 @@ hide_table_of_contents: true
 sidebar_position: 7
 ---
 
-:::note WIP
-This section is under development. Content may change frequently.
-:::
-
 # Choreo
-Choreo is a trajectory generation and robot movement tool. It allows you to create, visualize, and export trajectories for your robot to follow during autonomous periods. Choreo provides a user-friendly interface to design complex paths while considering robot kinematics and constraints.
+[Choreo](https://choreo.autos/) is the tool we draw autonomous paths with. You place waypoints on the field, Choreo
+generates the fastest trajectory the robot can physically follow between them, and the robot replays that
+trajectory in autonomous. Behavior-tree autos drive a path by name with the `FollowTrajectory` node, so Choreo and
+[Arbor](./arbor.mdx) together are the whole autonomous workflow: Choreo for *where*, Arbor for *what and when*.
+
+---
+
+## The Project
+The robot project holds one Choreo project file (`.chor`) and the generated trajectories in
+`src/main/deploy/choreo/*.traj`. Open the `.chor` from the robot project so the `.traj` files land in the right
+place.
+
+**Project settings** that have to be right before anything else:
+- **Drive type**: Swerve for the competition robot, Differential for the lesson robots.
+- **Robot measurements**: mass, moment of inertia, wheel radius, track/module positions, motor and current limit.
+  A path generated with the wrong numbers is one the real robot cannot follow on time. The 2026 robot's values are
+  in the Choreo project already; a new robot copies them from CAD and the drivetrain constants.
+- **Bumper size**, so keep-out zones and wall clearance are honest.
+
+---
+
+## Drawing a Path
+1. **New trajectory**, give it the name the auto will use (`SynergyP1`, `ToPickup`). The name is the file name and
+   what an auto's `FollowTrajectory` node names in its `trajectory` port, so pick it once and keep it.
+2. Place the **start pose** where the robot sits at the start of the auto (or where the previous path ended), add
+   translation waypoints to shape the path, and finish on a **pose waypoint** so the heading at the end is defined.
+3. Add **constraints** where you need them: a maximum velocity near a pickup, stop points, keep-in or keep-out
+   regions.
+4. **Event markers** mark a time along the path ("Intake Out"). The auto reacts to them with `WaitForChoreoEvent` or
+   the `IntakeOnEvent` sub-tree, so the intake drops exactly where the path reaches the game piece.
+5. **Generate.** Look at the velocity graph: a path that saturates the whole way is as fast as it can be; one with
+   sharp spikes usually wants a smoother waypoint.
+
+Draw every path for the **blue alliance**. The robot flips trajectories for red automatically when the auto is
+selected, so there is one set of paths to maintain.
+
+---
+
+## Using It From an Auto
+In [Arbor](./arbor.mdx), add a `FollowTrajectory` node to the auto and set its `trajectory` port to the path's name
+(`SynergyP1`). That is all the robot code needs. `./gradlew test` in the robot project fails if an auto names a trajectory that has
+no `.traj` file, so a renamed path shows up before it reaches the robot. See
+[Autonomous: Driving Paths](../robot_dev/autonomous.mdx#driving-paths) for events and heading lock.
+
+---
+
+## Related Documentation
+- [Autonomous](../robot_dev/autonomous.mdx): the autos that follow these paths.
+- [Arbor](./arbor.mdx): the editor for those autos.
+- [Swerve](../robot_dev/swerve.mdx): the `CHOREO_*` states and following gains.

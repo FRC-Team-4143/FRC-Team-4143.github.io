@@ -42,7 +42,7 @@ The best practice to follow when creating a new robot subsystem is:
         - This includes defining the actions to be taken in each state and how to transition between states.
         - **Remember if you don't care about any transitions just leave the default implementation alone.**
 4. Use the Subsystem from the Robot's State Machine
-    - Add or update robot states in `RobotStates` and ask your subsystem for its state from `RobotContainer`.
+    - Add or update robot states in the `RobotStates` enum in `RobotConstants` and ask your subsystem for its state from `RobotContainer`.
     - Refer to [The Super State Machine](../controls/state-machines.mdx#the-super-state-machine) for guidance.
     - Do **not** create a command file for the subsystem.
 5. Integrate with the Operator Interface (OI)
@@ -57,7 +57,7 @@ Below is an example project structure and code templates to help you get started
 src/main/java/frc/robot/
 ├── Robot.java
 ├── RobotContainer.java   (the super state machine)
-├── RobotStates.java
+├── RobotConstants.java  (CONSTANTS for RobotContainer: the RobotStates enum, plus the robot identity)
 ├── OI.java
 └── subsystems/
     ├── template/
@@ -181,7 +181,7 @@ public class TemplateConstants extends MwConstants {
     // MOTOR CONFIGURATION OBJECTS
     // =============================================================================
 
-    // public final FxMotorConfig ROLLER_MOTOR_CONFIG = new FxMotorConfig();
+    // public final MotorConfig ROLLER_MOTOR_CONFIG = new MotorConfig();
 
     // =============================================================================
     // CONSTRUCTOR - MOTOR CONFIGURATION INITIALIZATION
@@ -199,9 +199,28 @@ public class TemplateConstants extends MwConstants {
 }
 ```
 
+### RobotConstants Template
+The robot's states live in `RobotConstants`, the way a subsystem's states live in its `*Constants` class. A new robot
+starts with a basic enum and grows it as subsystems are added.
+```java title="RobotConstants.java"
+public class RobotConstants extends MwConstants {
+    /** The robot's states. RobotContainer is in exactly one of them at a time. */
+    public enum RobotStates {
+        /** Disabled: nothing moves */
+        IDLE,
+        /** Teleop driving */
+        DRIVE,
+        /** The template subsystem's custom state */
+        CUSTOM
+    }
+}
+```
+
 ### RobotContainer Template
 ```java title="RobotContainer.java"
-public class RobotContainer extends MwSuperStateMachine<RobotStates> {
+import frc.robot.RobotConstants.RobotStates;
+
+public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants> {
     private static RobotContainer instance_ = null;
 
     public static RobotContainer getInstance() {
@@ -214,7 +233,7 @@ public class RobotContainer extends MwSuperStateMachine<RobotStates> {
     private final TemplateSubsystem template_ = TemplateSubsystem.getInstance();
 
     private RobotContainer() {
-        super(RobotStates.IDLE, BuildConstants.class);
+        super(RobotStates.IDLE, new RobotConstants(), BuildConstants.class);
         // !!!!!! ALL SUBSYSTEMS MUST BE REGISTERED HERE TO RUN !!!!!!!
         registerSubsystem(template_);
         // !!!!! LEAVE reset() AS THE LAST LINE IN THE CONSTRUCTOR !!!!!!
@@ -224,11 +243,12 @@ public class RobotContainer extends MwSuperStateMachine<RobotStates> {
     // Ask each subsystem for the state the robot's state needs. Runs every loop, before the subsystems.
     @Override
     protected void updateLogic(double timestamp) {
-        switch (getSystemState()) {
+        switch (system_state_) {
             case CUSTOM:
                 template_.setWantedState(TemplateStates.CUSTOM_STATE);
                 break;
             case IDLE:
+            case DRIVE:
             default:
                 template_.setWantedState(TemplateStates.IDLE);
                 break;
@@ -242,7 +262,7 @@ RobotContainer robot = RobotContainer.getInstance();
 driver_controller_.a().whileTrue(
         Commands.startEnd(
                 () -> robot.setWantedState(RobotStates.CUSTOM),
-                () -> robot.setWantedState(RobotStates.IDLE)));
+                () -> robot.setWantedState(RobotStates.DRIVE)));
 ```
 
 ## Troubleshooting
@@ -261,8 +281,13 @@ Not all problems are listed here, but these are some of the most common ones we 
     - Make sure you have implemented the state transition logic in `handleStateTransition()` if you are using custom transitions.
     - Make sure `RobotContainer` asks for it: the robot's state machine requests subsystem states, so a robot state has to ask your subsystem for the new state.
 - **The auto I just created is not available from the dashboard chooser.**
-    - Once you created the auto file you need to register is with the AutoManager.
-        - See [Auto Lifecycle in Mainbot](./autonomous#auto-lifecycle-in-mainbot) for steps to register a new Auto.
-- **My code crashes with an error that says** `"choreo.trajectory.Trajectory.name()" because "trajectory" is null`
-    - This is because one of the trajectories you are trying to use in an auto has not been registered with that auto.
-        - See step 3 in [Building an Auto Routine](./autonomous#building-an-auto-routine) for steps to register a new trajectory.
+    - Every `src/main/deploy/autos/trees/*.xml` is a chooser option, so the file is somewhere else (`unlisted/` hides drafts on purpose), or it has no `main_tree_to_execute` and is being treated as a library file like `common.xml`. Deploy once so the new file is on the robot.
+        - See [Adding an Auto](./autonomous.mdx#adding-an-auto).
+- **The auto is in the chooser but the robot does nothing.**
+    - The file failed to load. Look at `BehaviorTree/<auto>/Error` in AdvantageScope and the Elastic alert, or run `./gradlew test` for the parse error with a line number. The usual causes: a misspelled node name (they are case-sensitive), a node not registered in `AutoNodes`, or a `trajectory="..."` with no matching `.traj` in `deploy/choreo`.
+        - See [Testing and Debugging](./autonomous.mdx#testing-and-debugging).
+- **The robot ignores the robot state my auto asked for.**
+    - The tree only drives the robot while it is in `AUTO`. If an earlier step left the robot in another state, add `<SetWantedState state="AUTO"/>` after it, the way `ShootFor` does.
+- **The code runs the wrong robot's constants.**
+    - `Config/RobotName` on the dashboard shows the name the code resolved at boot. Burn the right one from Test mode with `Config/Burn RobotName` and restart the code; in simulation set `ROBOT_NAME`.
+        - See [Robot Identity](./robot-identity.mdx).

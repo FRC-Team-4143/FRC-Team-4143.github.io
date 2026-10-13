@@ -23,7 +23,7 @@ The roller mechanism is designed for rotating drums or wheels that intake or out
 The `RollerMech` constructor requires the following parameters:
 - `logging_prefix` - String prefix for logging (typically from `getSubsystemKey()`)
 - `mech_name` - Optional name for multiple instances (pass `null` if only one roller)
-- `motor_configs` - List of motor configuration objects (`FxMotorConfig` or `NovaMotorConfig`)
+- `motor_configs` - List of `MotorConfig` objects, leader first
 - `gear_ratio` - Gear ratio as motor rotations / mechanism rotations
 - `roller_inertia` - Optional moment of inertia in kg·m² (default: 0.00001, used for simulation)
 

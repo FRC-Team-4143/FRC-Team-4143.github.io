@@ -1,0 +1,111 @@
+---
+title: Robot Identity
+description: Which robot is this code running on - RobotIdentity, the RobotName preference and per-robot constants variants
+hide_table_of_contents: true
+sidebar_position: 5
+---
+
+# Robot Identity
+The same code runs on the practice robot, the competition robot and in simulation. They share almost everything,
+but not quite: wheel radius, gear ratios, motor gains and a few CAN buses differ. Instead of separate branches or
+JSON files, the code asks MWLib's `RobotIdentity` **which robot it is**, and each subsystem's constants pick the
+matching variant.
+
+---
+
+## Where the Name Comes From
+| Where the code runs | Robot name |
+|---|---|
+| A real robot | The persistent `RobotName` preference burned into the roboRIO. If it is missing the code reports an error and falls back to `AlphaBot` |
+| Simulation | `SimBot`, unless the `ROBOT_NAME` environment variable says otherwise |
+| Log replay | The name recorded in the log being replayed (an explicit `ROBOT_NAME` still wins, with a warning) |
+
+### Burning a name onto a robot
+1. Connect to the robot and put it in **Test** mode.
+2. On the dashboard, type the name into `Config/RobotName` (`AlphaBot`, `BetaBot`).
+3. Press `Config/Burn RobotName`. The button only works in Test mode, so a stray click during a match cannot change
+   it.
+4. Restart the robot code. The name is now stored in the roboRIO's preferences and survives deploys.
+
+`Config/RobotName` always shows the name the code resolved at boot, so it is also how you check a robot.
+
+---
+
+## Mapping the Name onto Code
+The robot's own constants class, `RobotConstants` (what `RobotContainer` reads as `CONSTANTS`, the way a subsystem
+reads its `*Constants`), owns an enum of the robots the code supports and resolves it once, at class load. It also
+holds the robot's states, `RobotStates` (a new robot starts with just `DRIVE`):
+
+```java
+public class RobotConstants extends MwConstants {
+    /** The robot's states, owned by RobotContainer. */
+    public enum RobotStates {
+        DRIVE
+    }
+
+    /** The robots this code can run on; per-robot constants variants switch on ROBOT. */
+    public enum Robot {
+        ALPHA_BOT,
+        BETA_BOT,
+        SIM_BOT
+    }
+
+    /** The robot the code is running on, from the burned "RobotName" (SimBot in simulation). */
+    public static final Robot ROBOT = RobotIdentity.getInstance().getRobot(Robot.class);
+}
+```
+
+`ROBOT` is `static` on purpose. Subsystems read it while `RobotContainer` is still being constructed (the swerve
+picks its constants variant while `RobotContainer` builds it), so it can't be an ordinary `CONSTANTS` value that only
+exists once `RobotContainer` does.
+
+`getRobot(...)` matches the name to an enum constant ignoring case and underscores, so `BetaBot` matches
+`BETA_BOT`. An unknown name falls back to the **first** constant and reports an error, so put the safest robot
+first.
+
+---
+
+## Per-robot Constants
+Hardware values are Java, and the pattern is the same in every subsystem:
+
+1. The subsystem's `*Constants` class holds the **AlphaBot** values in non-final fields.
+2. A variant class per other robot (`BetaSwerveConstants`, `SimSwerveConstants`) extends it and reassigns only the
+   fields that differ, in its constructor.
+3. A static `create()` switches on `RobotConstants.ROBOT` and returns the variant. The subsystem's constructor
+   calls it.
+
+```java
+public static SwerveConstants create() {
+    return switch (RobotConstants.ROBOT) {
+        case BETA_BOT -> new BetaSwerveConstants();
+        case SIM_BOT -> new SimSwerveConstants();
+        default -> new SwerveConstants();
+    };
+}
+```
+
+The [Swerve](./swerve.mdx#constants-and-per-robot-variants) page has the full example. Two rules that keep it
+working:
+
+- **Anything built from the fields goes in a method.** The variant's constructor runs after the base fields are
+  initialised, so a config object assembled in a field initialiser would see AlphaBot's values. `getDriveConfig()`
+  is a method for exactly this reason.
+- **Variants are small.** If a variant reassigns most of the fields, the robots are different enough to deserve a
+  different default, or the values should become tunables.
+
+:::tip A subsystem that is the same on every robot needs none of this
+Only add a `create()` and variants when a value actually differs. Most mechanisms share one constants class.
+:::
+
+:::note What replaced the JSON
+Earlier seasons loaded `src/main/deploy/robots/<Name>.json` through a `ConstantsLoader`. That folder and loader are
+gone: values live in Java where the compiler checks them, variants are explicit classes, and `RobotName` is the only
+thing stored on the robot.
+:::
+
+---
+
+## Related Documentation
+- [Swerve](./swerve.mdx): the full constants-variant example.
+- [Testing](./testing.mdx): running in simulation (`SimBot`).
+- [Telemetry](./telemetry.mdx): logging and replay, which carries the robot name.

@@ -27,7 +27,7 @@ The elevator mechanism controls a linear translation system, such as a carriage 
 The `ElevatorMech` constructor requires the following parameters:
 - `logging_prefix` - String prefix for logging (typically from `getSubsystemKey()`)
 - `mech_name` - Optional name for multiple instances (pass `null` if only one elevator)
-- `motor_configs` - List of motor configuration objects (`FxMotorConfig` or `NovaMotorConfig`)
+- `motor_configs` - List of `MotorConfig` objects, leader first
 - `gear_ratio` - Gear ratio as motor rotations / mechanism rotations
 - `drum_radius` - Radius of the drum/pulley in meters
 - `carriage_mass` - Mass of the carriage in kg (used for simulation)
