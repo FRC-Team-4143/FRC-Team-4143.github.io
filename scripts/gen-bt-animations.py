@@ -85,7 +85,7 @@ SCENARIOS = {
         ]),
     "fallback": dict(
         title="A Fallback is plan B",
-        desc="A Fallback tries children in order until one succeeds. Aim: vision fails, Aim: manual succeeds. In a second run every child fails and so does the Fallback.",
+        desc="A Fallback tries children in order until one succeeds. Aim: vision fails, Aim: manual succeeds. In a second run the children fail one after another, and once the last one fails so does the Fallback.",
         height=300, static=2, nodes=FB_NODES,
         frames=[
             frame(1.6, "Tick 1", {"fb": "running", "a": "running"}, ["fb", "a"],
@@ -95,8 +95,14 @@ SCENARIOS = {
             frame(2.6, "Tick 3", {"fb": "success", "a": "failure", "b": "success"}, ["fb", "b"],
                   ["Aim: manual SUCCEEDS. The Fallback stops and reports SUCCESS;", "Skip the shot is never tried."]),
             frame(1.0, "Run again", {}, [], ["Now suppose nothing works..."]),
-            frame(3.0, "Tick 1", {"fb": "failure", "a": "failure", "b": "failure", "c": "failure"}, ["fb", "a", "b", "c"],
-                  ["Every child failed, so the Fallback reports FAILURE.", "Only now does its parent hear bad news."]),
+            frame(1.6, "Tick 1", {"fb": "running", "a": "running"}, ["fb", "a"],
+                  ["Again the Fallback starts with Aim: vision.", "It is RUNNING, so the Fallback waits."]),
+            frame(2.0, "Tick 2", {"fb": "running", "a": "failure", "b": "running"}, ["fb", "a", "b"],
+                  ["Aim: vision FAILS, so the Fallback tries Aim: manual.", "It is RUNNING."]),
+            frame(2.0, "Tick 3", {"fb": "running", "a": "failure", "b": "failure", "c": "running"}, ["fb", "b", "c"],
+                  ["Aim: manual FAILS too, so the Fallback tries its last child:", "Skip the shot is RUNNING."]),
+            frame(3.0, "Tick 4", {"fb": "failure", "a": "failure", "b": "failure", "c": "failure"}, ["fb", "c"],
+                  ["Skip the shot FAILS. Every child has failed, so the Fallback", "reports FAILURE. Only now does its parent hear bad news."]),
             frame(1.0, "Next run", {}, [], ["Everything is reset for the next run."]),
         ]),
     "timeout": dict(

@@ -6,6 +6,7 @@ sidebar_position: 6
 ---
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import pickupAndScore from '@site/static/img/software/controls/behavior-trees/pickup-and-score-arbor.png';
 
 export const BtAnimation = ({name, alt}) => (
   <img
@@ -41,19 +42,19 @@ nodes decide *how* their children run. Here is a real-looking auto:
 ```mermaid
 flowchart TD
     seq["→ Sequence"]
-    fb["? Fallback"]
     drive["FollowPath ToPickup"]
-    to["Timeout 3000 ms"]
-    aim["SetWantedState AIM"]
+    fb["? Fallback"]
     shoot["SetWantedState SHOOT"]
+    to["Timeout 3000 ms"]
     back["FollowPath ToBackup"]
+    aim["SetWantedState AIM"]
 
-    seq --> drive
-    seq --> fb
-    seq --> shoot
-    fb --> to
+    seq -->|1| drive
+    seq -->|2| fb
+    seq -->|3| shoot
+    fb -->|try first| to
+    fb -->|if not, try| back
     to --> aim
-    fb --> back
 
     classDef control fill:#3b4357,stroke:#9ca3af,color:#fff
     classDef leaf fill:#2563eb,stroke:#93c5fd,color:#fff
@@ -65,8 +66,8 @@ Read it from the top, left to right:
 
 1. The **Sequence** runs its children in order.
 2. First it drives to the pickup.
-3. Then the **Fallback** tries to aim, but only for 3 seconds (the **Timeout**). If aiming never finishes, the Fallback
-   gives up on it and drives to the backup spot instead.
+3. Then the **Fallback** tries to aim, but only for 3 seconds (the **Timeout**). If aiming fails or runs out of time,
+   the Fallback gives up on it and drives to the backup spot instead.
 4. Finally it shoots.
 
 The boxes that hold other boxes (Sequence, Fallback, Timeout) are the **control flow**. The blue boxes are the **actions**
@@ -112,15 +113,17 @@ A node is not always in the middle of something. Between runs it is **idle**, an
 once its parent has finished with it:
 
 ```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-    IDLE --> RUNNING: first tick
-    RUNNING --> RUNNING: ticked again, not done
-    RUNNING --> SUCCESS: finished and worked
-    RUNNING --> FAILURE: finished and failed
-    RUNNING --> IDLE: halted by its parent
-    SUCCESS --> IDLE: parent resets it
-    FAILURE --> IDLE: parent resets it
+flowchart LR
+    start((" ")) --> IDLE
+    IDLE -->|first tick| RUNNING["RUNNING<br/>stays here, tick after tick,<br/>until it finishes"]
+    RUNNING -->|finished and worked| SUCCESS
+    RUNNING -->|finished and failed| FAILURE
+    RUNNING -.->|halted by its parent| IDLE
+    subgraph done ["finished"]
+        SUCCESS
+        FAILURE
+    end
+    done -.->|parent resets it| IDLE
 ```
 
 **Halted** is worth remembering: if a node is RUNNING and its parent decides it should stop (a timeout, a failed
@@ -135,16 +138,20 @@ cleans up when it is halted, which is why a path-following node can stop the rob
 flowchart LR
     BT["Behavior tree nodes"]
     BT --> C["Control<br/>how to run children"]
-    BT --> D["Decorator<br/>changes one child"]
+    BT --> D["Decorator<br/>modifies the child behavior"]
     BT --> L["Leaf"]
     L --> A["Action<br/>does something"]
     L --> Co["Condition<br/>asks a yes/no question"]
-    C --> C1["Sequence<br/>ReactiveSequence"]
-    C --> C2["Fallback"]
-    C --> C3["Parallel<br/>ParallelDeadline"]
-    D --> D1["Timeout, Delay"]
-    D --> D2["Retry, Repeat"]
-    D --> D3["Inverter<br/>ForceSuccess"]
+    C --> C1["Sequence"]
+    C --> C3["Fallback"]
+    C --> C4["Parallel"]
+    C --> C5["ParallelDeadline"]
+    D --> D1["Timeout"]
+    D --> D2["Delay"]
+    D --> D3["RetryUntilSuccessful"]
+    D --> D4["Repeat"]
+    D --> D5["Inverter"]
+    D --> D6["ForceSuccess"]
 ```
 
 | Kind | Children | What it does |
@@ -189,7 +196,7 @@ is only reached after Aim succeeded, **Shoot never has to check whether Aim work
 A **Fallback** is "plan B" (some people call it a *selector*). It tries its children in order and stops at the first
 one that **succeeds**. It only fails if *every* child failed.
 
-<BtAnimation name="fallback" alt="Animation: a Fallback tries Aim: vision, which fails, then Aim: manual, which succeeds, so the Fallback succeeds. In a second run every child fails and the Fallback fails" />
+<BtAnimation name="fallback" alt="Animation: a Fallback tries Aim: vision, which fails, then Aim: manual, which succeeds, so the Fallback succeeds. In a second run Aim: vision, Aim: manual and Skip the shot fail one after another, and only then does the Fallback fail" />
 
 It is the mirror image of a Sequence:
 
@@ -331,21 +338,10 @@ aiming can fail, and a `Fallback` for what to do then. See [The Super State Mach
 
 ## Reading a Real Auto
 
-Putting it all together, here is an example in the style of our autos, and what each part does. Each line is a node
-as it appears in Arbor, with its ports, and indented lines are its children:
+Putting it all together, here is an example in the style of our autos, and what each part does. Decorators (`Timeout`, `RetryUntilSuccessful`) are drawn as frames around the child
+they wrap, and the edge labels give each child's place in its parent:
 
-```text
-PickupAndScore
-└─ Sequence                            do these in order
-   ├─ FollowTrajectory                 trajectory = ToPickup        RUNNING until the path ends
-   ├─ SetWantedState                   state = AIM                  ask: succeeds at once
-   ├─ Fallback                                                      plan B for aiming
-   │  ├─ Timeout                       msec = 3000                  fails if aiming takes over 3 s
-   │  │  └─ RetryUntilSuccessful       num_attempts = -1            RUNNING until...
-   │  │     └─ IsSystemState           state = AIM                  ...the robot is aimed
-   │  └─ FollowTrajectory              trajectory = ToBackup
-   └─ SetWantedState                   state = SHOOT
-```
+<img src={pickupAndScore} width="900" alt="PickupAndScore in Arbor: a Sequence with four steps (FollowTrajectory ToPickup, SetWantedState AIM, a Fallback, SetWantedState SHOOT). The Fallback first tries a Timeout of 3000 ms around RetryUntilSuccessful around IsSystemState AIM, and if not, FollowTrajectory ToBackup"/>
 
 When you are not sure what a tree will do, trace one tick by hand: start at the root, ask "what does this node do with
 each child's answer?", and follow the RUNNING answers down to the node that is actually busy.
