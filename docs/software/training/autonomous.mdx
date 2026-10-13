@@ -25,7 +25,7 @@ what the robot does and when. The tree asks the robot for the same states the dr
 The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum.marswars.org). It starts from your finished **Computer Vision** robot and needs the **Choreo** and **Arbor** lessons done first. Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
 
 **New Java in this lesson:** a step state, picked by an `if`/`else` inside a `switch` case.
-**New file type:** XML. You build the tree in Arbor and read the XML it writes.
+**New tool:** you build the routine in Arbor, which saves it as a file the robot reads at start, so a tree change needs no rebuild.
 :::
 
 ## Draw the paths
@@ -44,7 +44,7 @@ The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum
     - A `Timeout` of 3 seconds around `RetryUntilSuccessful` (`num_attempts` -1) around `IsSystemState` `AIM`, so the
       tree waits until the robot is in `AIM` and a bad aim cannot stall the auto
     - `SetWantedState` `SHOOT`, then a `Sleep` of 2 seconds, then `SetWantedState` `AUTO`
-- Save, then open `deploy/autos/trees/PickupAndScore.xml` in the editor and read what Arbor wrote
+- Save (Ctrl+S). Arbor writes `deploy/autos/trees/PickupAndScore.xml`, the file the robot runs
 ## Finish the aim step
 - Run the tree first: it shoots without turning, because the robot reaches `AIM` the moment it is asked
 - In `RobotContainer.handleStateTransition`, finish the `AIM` case: the robot is in the step state `AIMING` while
