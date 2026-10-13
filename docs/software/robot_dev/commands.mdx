@@ -244,8 +244,8 @@ new SequentialCommandGroup(
 ```
 
 **We do not write command groups for autos.** Our autonomous routines are [behavior trees](./autonomous.mdx): the
-same sequencing (`Sequence`, `ParallelDeadline`, `Timeout`) as XML, with the robot's states as the steps, editable
-without a code deploy. A multi-step action the driver needs is a robot state with step states in `RobotContainer`,
+same sequencing (`Sequence`, `ParallelDeadline`, `Timeout`), built in Arbor with the robot's states as the steps,
+editable without a code deploy. A multi-step action the driver needs is a robot state with step states in `RobotContainer`,
 not a group. If a tree ever needs an existing WPILib command, `registerCommand(...)` wraps it as a node.
 
 ---

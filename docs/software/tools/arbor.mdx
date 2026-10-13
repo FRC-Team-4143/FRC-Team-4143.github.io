@@ -7,7 +7,7 @@ sidebar_position: 8
 
 # Arbor
 [Arbor](https://github.com/coalman321/Arbor) is the editor for our [autonomous routines](../robot_dev/autonomous.mdx).
-Our autos are [behavior trees](../controls/behavior-trees.mdx) stored as BehaviorTree.CPP XML, and Arbor is where you draw them, watch them run on
+Our autos are [behavior trees](../controls/behavior-trees.mdx), and Arbor is where you build them, watch them run on
 the robot node by node, and replay a recorded run afterwards. It is a web app served by a small local server, also
 packaged as a desktop app, and it is the tool the autonomous lesson in [Scriptum](./scriptum.mdx) uses.
 
@@ -41,10 +41,11 @@ An Arbor **project** is a folder with a `bt_project.json`, a `nodes.xml` and a `
 3. Each file in `trees/` is a tab. `common.xml` holds the shared sub-trees (`IntakeOnEvent`, `ShootFor`).
 
 Drag nodes from the palette onto the canvas, connect them under a `Sequence` or `Fallback`, and fill in the ports
-(`trajectory`, `state`, `msec`) in the side panel. **Save** writes the XML back to `trees/<Name>.xml`; the file is
-what the robot runs, so it is worth opening it in the editor once to see what you drew. The XML rules (names match
-the file, `<include path="common.xml"/>`, `{name}` ports) are on the [Autonomous](../robot_dev/autonomous.mdx#anatomy-of-an-auto)
-page.
+(`trajectory`, `state`, `msec`) in the inspector on the right. Right-click a node for *Wrap in…* (to put a
+`Timeout` or `RetryUntilSuccessful` around it), and drag a tree from the *Trees* list onto a node to use it as a
+`SubTree`. Keep the **Problems** panel empty. **Ctrl+S** saves to `trees/<Name>.xml`, the file the robot runs; you
+never need to edit it by hand. Naming, shared sub-trees and tunable values are on the
+[Autonomous](../robot_dev/autonomous.mdx#anatomy-of-an-auto) page.
 
 :::tip The palette is generated
 If a node you just added to `AutoNodes.java` is missing from the palette, regenerate `nodes.xml` with

@@ -257,8 +257,9 @@ the Fallback turns into a plan B. This is the single most useful pattern in an a
 
 ## Ports and the Blackboard
 
-Nodes take settings called **ports**, written as XML attributes: `<Sleep msec="500"/>`. A port can hold a fixed value,
-or point at a named slot in a shared notebook called the **blackboard**, written with braces: `<Sleep msec="{wait_msec}"/>`.
+Nodes take settings called **ports**, filled in on Arbor's inspector: `Sleep` has `msec` = 500. A port can hold a
+fixed value, or point at a named slot in a shared notebook called the **blackboard**, written with braces:
+`msec` = `{wait_msec}`.
 
 ```mermaid
 flowchart LR
@@ -276,10 +277,10 @@ flowchart LR
 
 A port declared for the tree, with a default, shows up on the dashboard, so the team can change a wait time at the
 field without rebuilding the code. The **SubTree** node uses the same idea to pass values into a reusable block:
-`<SubTree ID="ShootFor" duration_msec="2000"/>`.
+a `SubTree` of `ShootFor` with `duration_msec` = 2000.
 
 :::warning A typo in a port name is an error, on purpose
-If a node reads `{wait_msc}` and nothing ever sets it, the auto refuses to load and says which node and line, instead
+If a node reads `{wait_msc}` and nothing ever sets it, the auto refuses to load and says which node, instead
 of waiting until mid-match to read a missing value.
 :::
 
@@ -292,11 +293,11 @@ Most leaves in an auto do not drive motors themselves. **`SetWantedState`** asks
 tick. To wait until the robot gets there, the tree retries the condition **`IsSystemState`**, which succeeds once the
 robot is in the state, inside a `Timeout` so it can't wait forever:
 
-```xml
-<SetWantedState state="AIM"/>
-<Timeout msec="3000">
-  <RetryUntilSuccessful num_attempts="-1"><IsSystemState state="AIM"/></RetryUntilSuccessful>
-</Timeout>
+```text
+├─ SetWantedState                      state = AIM
+└─ Timeout                             msec = 3000
+   └─ RetryUntilSuccessful             num_attempts = -1
+      └─ IsSystemState                 state = AIM
 ```
 
 ```mermaid
@@ -330,24 +331,20 @@ aiming can fail, and a `Fallback` for what to do then. See [The Super State Mach
 
 ## Reading a Real Auto
 
-Putting it all together, here is an example in the style of our autos, and what each part does:
+Putting it all together, here is an example in the style of our autos, and what each part does. Each line is a node
+as it appears in Arbor, with its ports, and indented lines are its children:
 
-```xml
-<BehaviorTree ID="PickupAndScore">
-  <Sequence>                                       <!-- do these in order -->
-    <FollowTrajectory trajectory="ToPickup"/>      <!-- RUNNING until the path ends -->
-    <SetWantedState state="AIM"/>                  <!-- ask: succeeds at once -->
-    <Fallback>                                     <!-- plan B for aiming -->
-      <Timeout msec="3000">                        <!-- fails if aiming takes over 3 s -->
-        <RetryUntilSuccessful num_attempts="-1">   <!-- RUNNING until... -->
-          <IsSystemState state="AIM"/>             <!-- ...the robot is aimed -->
-        </RetryUntilSuccessful>
-      </Timeout>
-      <FollowTrajectory trajectory="ToBackup"/>
-    </Fallback>
-    <SetWantedState state="SHOOT"/>
-  </Sequence>
-</BehaviorTree>
+```text
+PickupAndScore
+└─ Sequence                            do these in order
+   ├─ FollowTrajectory                 trajectory = ToPickup        RUNNING until the path ends
+   ├─ SetWantedState                   state = AIM                  ask: succeeds at once
+   ├─ Fallback                                                      plan B for aiming
+   │  ├─ Timeout                       msec = 3000                  fails if aiming takes over 3 s
+   │  │  └─ RetryUntilSuccessful       num_attempts = -1            RUNNING until...
+   │  │     └─ IsSystemState           state = AIM                  ...the robot is aimed
+   │  └─ FollowTrajectory              trajectory = ToBackup
+   └─ SetWantedState                   state = SHOOT
 ```
 
 When you are not sure what a tree will do, trace one tick by hand: start at the root, ask "what does this node do with
@@ -382,4 +379,4 @@ a Timeout with a Fallback, and a tunable wait time. The **Autonomous** lesson th
 - [Autonomous](../robot_dev/autonomous.mdx): our behavior-tree autos: layout, nodes, wiring and debugging.
 - [State Machines](./state-machines.mdx): the robot states a tree asks for.
 - [Arbor](../tools/arbor.mdx): the editor and live viewer.
-- [BehaviorTree.CPP](https://www.behaviortree.dev/): the open-source library whose XML format and node semantics ours follows.
+- [BehaviorTree.CPP](https://www.behaviortree.dev/): the open-source library whose file format and node semantics ours follows.

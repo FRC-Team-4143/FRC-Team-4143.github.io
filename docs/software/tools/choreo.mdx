@@ -29,7 +29,7 @@ place.
 
 ## Drawing a Path
 1. **New trajectory**, give it the name the auto will use (`SynergyP1`, `ToPickup`). The name is the file name and
-   what `trajectory="..."` in the XML refers to, so pick it once and keep it.
+   what an auto's `FollowTrajectory` node names in its `trajectory` port, so pick it once and keep it.
 2. Place the **start pose** where the robot sits at the start of the auto (or where the previous path ended), add
    translation waypoints to shape the path, and finish on a **pose waypoint** so the heading at the end is defined.
 3. Add **constraints** where you need them: a maximum velocity near a pickup, stop points, keep-in or keep-out
@@ -45,11 +45,8 @@ selected, so there is one set of paths to maintain.
 ---
 
 ## Using It From an Auto
-```xml
-<FollowTrajectory trajectory="SynergyP1" end_state="IDLE"/>
-```
-
-That is all the robot code needs. `./gradlew test` in the robot project fails if an auto names a trajectory that has
+In [Arbor](./arbor.mdx), add a `FollowTrajectory` node to the auto and set its `trajectory` port to the path's name
+(`SynergyP1`). That is all the robot code needs. `./gradlew test` in the robot project fails if an auto names a trajectory that has
 no `.traj` file, so a renamed path shows up before it reaches the robot. See
 [Autonomous: Driving Paths](../robot_dev/autonomous.mdx#driving-paths) for events and heading lock.
 

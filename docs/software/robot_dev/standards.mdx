@@ -52,8 +52,8 @@ Our standards for writing java can be found in the [Java Coding Standards](../ja
 - `RobotContainer` follows the same transition-table rules as a subsystem: decisions in `handleStateTransition()`, a condition-free `switch` in `updateLogic()` that asks every subsystem for a state, `AUTO` and `MAINTENANCE` hands-off.
 
 ### Autonomous
-- Autos are behavior-tree XML in `src/main/deploy/autos/trees/`, never Java routines or command groups. Refer to [Autonomous](./autonomous.mdx).
-- An auto asks for robot states (`<SetWantedState>`) for anything the driver also does; it sets a single subsystem only for small one-off moves such as the intake on a path event.
+- Autos are behavior trees built in [Arbor](../tools/arbor.mdx) and saved in `src/main/deploy/autos/trees/`, never Java routines or command groups. Refer to [Autonomous](./autonomous.mdx).
+- An auto asks for robot states (`SetWantedState`) for anything the driver also does; it sets a single subsystem only for small one-off moves such as the intake on a path event.
 - Nodes any robot could use go in MWLib; robot-only nodes go in `AutoNodes.java`. Regenerate `nodes.xml` (`./gradlew test -PupdateNodeSpec`) and commit it with the node.
 
 ### Operator Interface (OI)
