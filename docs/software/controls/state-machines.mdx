@@ -78,3 +78,111 @@ SHOOTING --> IDLE : shoot button released
 ```
 
 There are some software tools that help you create state diagrams. One we have used in the past is [Mural](https://www.mural.co/). While you can always draw them by hand, it is ideal to have a digital copy that can be updated as our robot becomes more complex.
+
+---
+
+## The Super State Machine
+Every subsystem on our robot is its own state machine, but most robot actions need **more than one** subsystem. Shooting means aiming the drivetrain, spinning up the flywheel and feeding a game piece, in that order. We put that coordination in one more state machine on top of the subsystems: the **super state machine**, which lives in `RobotContainer`.
+
+```mermaid
+flowchart TD
+    OI[Buttons in OI] -->|robot.setWantedState&#40;SHOOT&#41;| RC
+    AUTO[Autonomous routines] -->|robot.setWantedState&#40;SHOOT&#41;| RC
+    RC["RobotContainer<br/>(super state machine)<br/>IDLE · DRIVE · AIM · SHOOT"]
+    RC -->|setWantedState&#40;ARCADE&#41;| D[Drivetrain state machine]
+    RC -->|setWantedState&#40;SHOOT&#41;| S[Shooter state machine]
+    RC -->|setWantedState&#40;SQUEEZE&#41;| I[Intake state machine]
+```
+
+- **Buttons and autos only ask the robot.** They call `setWantedState(...)` on `RobotContainer`, the same method you use on a subsystem. They never talk to a subsystem directly, and there are no per-subsystem command files.
+- **The robot asks the subsystems.** Every loop, before the subsystems run, the super state machine looks at the robot's state and asks each subsystem for the state it needs. Each subsystem still decides for itself when it is allowed to get there (the shooter still spins up before it shoots).
+- **Write it once.** A robot state like `SHOOT` is the same whether the driver's trigger or an autonomous routine asks for it. A scoring sequence is written once, in `RobotContainer`, and used in teleop and in autos.
+- **Its states live in `RobotConstants`.** The `RobotStates` enum is nested in `RobotConstants`, the way `ShooterStates` lives in `ShooterConstants`. A new robot can start with just `DRIVE` and add states as it grows.
+
+```java
+public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants> {
+    @Override
+    protected void updateLogic(double timestamp) {
+        switch (system_state_) {
+            case SHOOT:
+                drive_.setWantedState(DriveStates.ARCADE);
+                shooter_.setWantedState(ShooterStates.SHOOT);
+                break;
+            case DRIVE:
+                drive_.setWantedState(DriveStates.ARCADE);
+                shooter_.setWantedState(ShooterStates.IDLE);
+                break;
+            case IDLE:
+            default:
+                drive_.setWantedState(DriveStates.IDLE);
+                shooter_.setWantedState(ShooterStates.IDLE);
+                break;
+        }
+    }
+}
+```
+
+### Sequences and Failures
+A multi-step action, such as *aim, then spin up, then feed*, is one robot state with a few **step states**. While that state is wanted, `handleStateTransition` walks the robot through the steps and lands in the state itself when it is done. Nobody asks for a step state; the robot is only *in* the requested state once the sequence has finished.
+
+Autonomous [behavior trees](./behavior-trees.mdx) ask for robot states with the `SetWantedState` node, an instant request like a button press. To wait for the sequence to finish, the tree retries `IsSystemState` until the robot is in the state, and puts a `Timeout` around that wait. The fail handling an auto needs (`Timeout`, `Fallback`) lives in the tree, around the same sequence the driver uses in teleop.
+
+### Writing the Transitions
+`RobotContainer` is written like a subsystem, with the same two methods and the same split of work:
+
+- **`handleStateTransition(wanted)` holds every decision.** It is the **transition table**: `switch` on where the
+  robot is, then on what was asked, and each arm says where the robot goes next. Guards, step states and values
+  decided from sensors or operator toggles all live here. A value `updateLogic` needs (the drive mode, the shooter
+  target) is computed here into a field.
+- **`updateLogic` holds no decisions.** It is a `switch` on the robot state, and every arm asks **every**
+  subsystem for the state it needs, every loop. No `if` inside it. If a state would behave differently depending on
+  a condition, it becomes two step states and the table picks between them.
+- **No enter or exit actions.** A state asks for what it needs on every loop, so nothing has to be undone when it
+  leaves.
+- **`AUTO` and `MAINTENANCE` are hands-off.** Their arms in `updateLogic` ask for nothing, so the autonomous tree,
+  or the maintenance buttons on the dashboard in Test mode, drive the subsystems directly. Homing and tuning live
+  outside the super state machine.
+
+The 2026 robot's `SHOOT` is the worked example. Buttons and autos ask for `SHOOT`, but the robot is never *in*
+`SHOOT`: the table picks one of four step states every loop, from whether the shooter is ready and whether the robot
+is moving, and `updateLogic` has a plain arm for each step.
+
+```java
+@Override
+protected void handleStateTransition(RobotStates wanted) {
+    // Decided values become fields that updateLogic reads
+    updateScoringMode(localization_.getFieldPose());
+    drive_mode_ = field_centric_ ? SwerveStates.FIELD_CENTRIC : SwerveStates.ROBOT_CENTRIC;
+
+    // The robot state: SHOOT is split into step states, everything else goes straight through
+    if (wanted == RobotStates.SHOOT) {
+        system_state_ = shootStep();   // SHOOT_WAIT, SHOOT_FEED, SHOOT_FEED_BRAKED or SHOOT_PASS_INTAKE
+    } else {
+        system_state_ = wanted;
+    }
+}
+
+@Override
+protected void updateLogic(double timestamp) {
+    switch (system_state_) {
+        case SHOOT_WAIT -> {                                   // spinning up, not feeding yet
+            swerve_.setWantedState(SwerveStates.FIELD_CENTRIC_ROTATION_LOCK);
+            shooter_.setWantedState(ShooterStates.SHOOT);
+            localization_.setWantedState(LocalizationStates.SHOOTING_FOCUS);
+        }
+        case SHOOT_FEED -> {                                   // ready: feed while driving
+            swerve_.setWantedState(SwerveStates.FIELD_CENTRIC_ROTATION_LOCK);
+            shooter_.setWantedState(ShooterStates.SHOOT);
+            intake_.setWantedState(IntakeStates.SQUEEZE);
+            localization_.setWantedState(LocalizationStates.SHOOTING_FOCUS);
+        }
+        // ... one arm per state ...
+        case AUTO, MAINTENANCE -> {
+            // Hands off: the auto or the maintenance dashboard buttons set subsystem states themselves.
+        }
+    }
+}
+```
+
+The subsystem version of the same table, with the `switch (system_state_)` then `switch (wanted)` shape, is on the
+[Subsystems](../robot_dev/subsystems.mdx#implement-state-transitions) page.

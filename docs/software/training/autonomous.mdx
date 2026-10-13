@@ -1,14 +1,17 @@
 ---
-title: Choreo Autonomous
-description: An overview of autonomous programming in FRC robots. This includes strategies for designing autonomous routines, using sensors, and implementing autonomous behavior.
+title: Autonomous
+description: An overview of autonomous programming in FRC robots - drawing paths in Choreo and building the routine as a behavior tree in Arbor.
 hide_table_of_contents: true
 sidebar_position: 11
 ---
 
-# Choreo Autonomous
+# Autonomous
 Autonomous programming is a critical aspect of FRC robots, as it covers the first 15 seconds of the match where the robot operates without human intervention. During this period,
 the robot must perform a series of pre-programmed actions to score points, navigate the field, and interact with game pieces. Effective autonomous routines can provide a significant
 advantage in matches, as they allow the robot to maximize the points scored during this crucial phase where activity scores are higher.
+
+Our autos are made of two things: **paths**, drawn in Choreo, and a **behavior tree**, built in Arbor, that says
+what the robot does and when. The tree asks the robot for the same states the driver's buttons do.
 
 ---
 
@@ -19,9 +22,10 @@ advantage in matches, as they allow the robot to maximize the points scored duri
 
 # Exercises
 :::tip Do this lesson in Scriptum
-The exercises below are the **Choreo Autonomous** lesson in [Scriptum](https://scriptum.marswars.org). It starts from your finished **Computer Vision** robot and needs the **Choreo** lesson done first. Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
+The exercises below are the **Autonomous** lesson in [Scriptum](https://scriptum.marswars.org). It starts from your finished **Computer Vision** robot and needs the **Choreo** and **Arbor** lessons done first. Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
 
-**New Java in this lesson:** a routine that `extends Auto`, command decorators (`.until(...)`, `.withTimeout(...)`), and method references like `DrivetrainSubsystem.getInstance()::isAimed`.
+**New Java in this lesson:** a step state, picked by an `if`/`else` inside a `switch` case.
+**New tool:** you build the routine in Arbor, which saves it as a file the robot reads at start, so a tree change needs no rebuild.
 :::
 
 ## Draw the paths
@@ -30,24 +34,36 @@ The exercises below are the **Choreo Autonomous** lesson in [Scriptum](https://s
 - Draw a path named `ToScore` that starts where `ToPickup` ended and finishes on **ScoreSpot**
     - Optional: add a Max Velocity constraint of about 1.8 m/s
 - Generate both paths
-## Write the sequence
-- Load both paths by name in `Autos.java`
-- Add the commands in order:
-    - Follow `ToPickup`
-    - Wait half a second, standing in for picking up a game piece
-    - Follow `ToScore`
-    - Aim at the goal with your `aim()` command, until `isAimed`, with a timeout
-    - Shoot
+## Build the tree
+- Open the **Arbor** tab. The project is the robot's `deploy/autos` folder; the palette already knows `FollowPath`,
+  `SetWantedState` and `IsSystemState` (with the robot's states), `Timeout`, `RetryUntilSuccessful` and `Sleep`
+- Open the tree `PickupAndScore`. It is a `Sequence` that already drives `ToPickup`; add after it, in order:
+    - `Sleep` for half a second, standing in for picking up a game piece
+    - `FollowPath` with `trajectory` = `ToScore`
+    - `SetWantedState` `AIM`. Asking is instant, so the tree then waits for it:
+    - A `Timeout` of 3 seconds around `RetryUntilSuccessful` (`num_attempts` -1) around `IsSystemState` `AIM`, so the
+      tree waits until the robot is in `AIM` and a bad aim cannot stall the auto
+    - `SetWantedState` `SHOOT`, then a `Sleep` of 2 seconds, then `SetWantedState` `AUTO`
+- Save (Ctrl+S). Arbor writes `deploy/autos/trees/PickupAndScore.xml`, the file the robot runs
+## Finish the aim step
+- Run the tree first: it shoots without turning, because the robot reaches `AIM` the moment it is asked
+- In `RobotContainer.handleStateTransition`, finish the `AIM` case: the robot is in the step state `AIMING` while
+  it turns, and in `AIM` only once the drivetrain `isAimed()`
+- This is what makes the tree's wait mean "aimed": `IsSystemState AIM` stays false while the robot is in `AIMING`.
+  The left bumper asks for the same `AIM`, so the sequence is written once
 ## Run it
-- Pick **Pickup And Score** in Elastic's auto chooser, then run Auto
-- Watch the true pose and your estimate on the AdvantageScope 2D field
+- Pick **PickupAndScore** in Elastic's **Auto Chooser**, then run Auto
+- Watch the tree light up in Arbor's live view, and the true pose and your estimate on the AdvantageScope 2D field
+- Optional: replay the run's `.btlog` (in `logs/bt`) in Arbor
+- Optional: declare a `pickup_wait_msec` tunable in the tree's `TreeNodesModel` and change it from Elastic without a rebuild
 
 ---
 
 # Related Documentation
 ## Software Tools
 - [Choreo](../tools/choreo.mdx): Tool for creating and testing autonomous trajectories.
+- [Arbor](../tools/arbor.mdx): The behavior-tree editor and live viewer.
 - [Elastic](../tools/elastic.mdx): Tool for logging and visualizing robot data.
 ## Software
-- [Autonomous](../robot_dev/autonomous.mdx): Overview of autonomous programming in FRC robots.
-
+- [Autonomous](../robot_dev/autonomous.mdx): How the competition robot's behavior-tree autos work.
+- [State Machines](../controls/state-machines.mdx): The super state machine the tree asks for states.

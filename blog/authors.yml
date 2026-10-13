@@ -1,0 +1,13 @@
+marswars:
+  name: MARS/WARS Software
+  title: FRC Teams 4143 & 4423 Software Subteam
+  url: https://github.com/FRC-Team-4143
+  image_url: /img/mw_logo.png
+  page: true
+
+colehunt:
+  name: Cole Hunt
+  title: Software Mentor, FRC Team 4143
+  url: https://github.com/ColeHunt
+  image_url: https://github.com/ColeHunt.png
+  page: true

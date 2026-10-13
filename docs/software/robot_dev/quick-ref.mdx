@@ -11,17 +11,18 @@ This is a quick reference guide for programming our FRC robots using our standar
 Our robot architecture is based on a modular design that separates different components of the robot into distinct classes and packages. This allows for better organization, easier debugging, and more efficient collaboration among team members. The main components of our robot architecture include:
 - **Subsystems**: These classes represent different subsystems of the robot, such as the drivetrain, elevator, and arm. Each subsystem is responsible for its own functionality and can be controlled independently.
 - **Mechanisms**: These classes represent specific mechanisms or components of the robot, such as a flywheel or shooter. Mechanisms are typically used within subsystems to provide specific functionality.
-- **Commands**: These classes represent specific actions or behaviors that the robot can perform. Commands are used to encapsulate the logic for executing a specific task, such as moving the robot or shooting a ball.
-- **Operator Interface (OI)**: This class handles the interaction between the robot and the operator interface, such as game controllers or buttons. It reads input from the operator and sends commands to the appropriate subsystems or mechanisms.
+- **RobotContainer (the super state machine)**: The robot's own state machine. It registers every subsystem, and it coordinates them: buttons and autos ask it for a robot state (such as `SHOOT`), and it asks each subsystem for the state it needs. Anything that uses more than one subsystem lives here, so there are no per-subsystem command files. See [The Super State Machine](../controls/state-machines.mdx#the-super-state-machine).
+- **Operator Interface (OI)**: This class handles the interaction between the robot and the operator interface, such as game controllers or buttons. It reads input from the operator and asks `RobotContainer` for robot states with small inline commands.
 
 The following diagram illustrates the relationships between these components:
 ```mermaid
 flowchart LR
-    OI --> Commands
-    Commands --> Subsystems
+    OI --> RobotContainer
+    Autos --> RobotContainer
+    RobotContainer --> Subsystems
     Subsystems --> Mechanisms
 ```
-OI is the highest level component that interacts with the operator. It receive the operator inputs and using commands sends state requests or call other methods on the subsystems. The subsystems then use mechanisms to perform the actual or simulated hardware control.
+OI is the highest level component that interacts with the operator. It receives the operator inputs and asks `RobotContainer` for a robot state with `setWantedState(...)`. Autonomous routines ask for the same robot states. `RobotContainer` (the super state machine) runs first every loop and asks each subsystem for a state. The subsystems then use mechanisms to perform the actual or simulated hardware control.
 
 ## Workflow
 The best practice to follow when creating a new robot subsystem is:
@@ -40,12 +41,13 @@ The best practice to follow when creating a new robot subsystem is:
     - Refer to [Adding the State Machine](./subsystems.mdx#adding-the-state-machine) for guidance.
         - This includes defining the actions to be taken in each state and how to transition between states.
         - **Remember if you don't care about any transitions just leave the default implementation alone.**
-4. Create Commands to interact with the Subsystem
-    - Refer to [Commands](./commands.mdx) for guidance on creating commands.
-    - Steps to create commands for your subsystem can be found under [Subsystem Commands](./commands.mdx#subsystem-commands).
+4. Use the Subsystem from the Robot's State Machine
+    - Add or update robot states in the `RobotStates` enum in `RobotConstants` and ask your subsystem for its state from `RobotContainer`.
+    - Refer to [The Super State Machine](../controls/state-machines.mdx#the-super-state-machine) for guidance.
+    - Do **not** create a command file for the subsystem.
 5. Integrate with the Operator Interface (OI)
-    - Map the commands to operator inputs in the OI class.
-    - Refer to [Operator Interface (OI)](./oi.mdx) for guidance on binding the commands to a controller.
+    - Bind operator inputs to robot states with `Commands.startEnd(...)` / `Commands.runOnce(...)` around `robot.setWantedState(...)`.
+    - Refer to [Requesting Robot States](./commands.mdx#requesting-robot-states) and [Operator Interface (OI)](./oi.mdx) for guidance.
 
 ## Example Project Template
 Below is an example project structure and code templates to help you get started with creating new subsystems. Please try to follow this structure and coding style to maintain consistency across the codebase. These templates provide a starting point, but you will need to customize them to fit the specific requirements of your subsystem.
@@ -54,17 +56,16 @@ Below is an example project structure and code templates to help you get started
 ```
 src/main/java/frc/robot/
 ├── Robot.java
-├── RobotContainer.java
+├── RobotContainer.java   (the super state machine)
+├── RobotConstants.java  (CONSTANTS for RobotContainer: the RobotStates enum, plus the robot identity)
 ├── OI.java
 └── subsystems/
     ├── template/
     |       ├── TemplateSubsystem.java
-    |       ├── TemplateConstants.java
-    |       └── TemplateCommands.java
+    |       └── TemplateConstants.java
     └── example/
             ├── ExampleSubsystem.java
-            ├── ExampleConstants.java
-            └── ExampleCommands.java
+            └── ExampleConstants.java
 ```
 ### Subsystem Class Template
 ```java title="TemplateSubsystem.java"
@@ -123,8 +124,8 @@ public class TemplateSubsystem extends MwSubsystem<TemplateStates, TemplateConst
         }
 
         // Log Data
-        DogLog.log(getSubsystemKey() + "/State", system_state_.toString());
-        // DogLog.log(getSubsystemKey() + "/CustomValue", custom_value);
+        MwLog.log(getSubsystemKey() + "/State", system_state_.toString());
+        // MwLog.log(getSubsystemKey() + "/CustomValue", custom_value);
     }
 
     // Only override if you need custom state transitions!
@@ -180,7 +181,7 @@ public class TemplateConstants extends MwConstants {
     // MOTOR CONFIGURATION OBJECTS
     // =============================================================================
 
-    // public final FxMotorConfig ROLLER_MOTOR_CONFIG = new FxMotorConfig();
+    // public final MotorConfig ROLLER_MOTOR_CONFIG = new MotorConfig();
 
     // =============================================================================
     // CONSTRUCTOR - MOTOR CONFIGURATION INITIALIZATION
@@ -198,27 +199,95 @@ public class TemplateConstants extends MwConstants {
 }
 ```
 
-### Commands Class Template
-```java title="TemplateCommands.java"
-public class TemplateCommands {
-    // Example Command to set the subsystem to a specific state
-    public static Command setCustomStateCommand() {
-        return Commands.runOnce(() -> {
-            TemplateSubsystem.getInstance().setWantedState(TemplateStates.CUSTOM_STATE);
-        });
-    }
-
-    // Example Command that waits for a condition
-    public static Command waitForReadyCommand() {
-        return Commands.waitUntil(() -> TemplateSubsystem.getInstance().isReady());
-    }
-
-    // Example Command that runs while a condition is true
-    public static Command runWhileActiveCommand() {
-        return Commands.run(
-            () -> TemplateSubsystem.getInstance().setWantedState(TemplateStates.CUSTOM_STATE),
-            TemplateSubsystem.getInstance()
-        ).until(() -> !TemplateSubsystem.getInstance().isActive());
+### RobotConstants Template
+The robot's states live in `RobotConstants`, the way a subsystem's states live in its `*Constants` class. A new robot
+starts with a basic enum and grows it as subsystems are added.
+```java title="RobotConstants.java"
+public class RobotConstants extends MwConstants {
+    /** The robot's states. RobotContainer is in exactly one of them at a time. */
+    public enum RobotStates {
+        /** Disabled: nothing moves */
+        IDLE,
+        /** Teleop driving */
+        DRIVE,
+        /** The template subsystem's custom state */
+        CUSTOM
     }
 }
 ```
+
+### RobotContainer Template
+```java title="RobotContainer.java"
+import frc.robot.RobotConstants.RobotStates;
+
+public class RobotContainer extends MwSuperStateMachine<RobotStates, RobotConstants> {
+    private static RobotContainer instance_ = null;
+
+    public static RobotContainer getInstance() {
+        if (instance_ == null) {
+            instance_ = new RobotContainer();
+        }
+        return instance_;
+    }
+
+    private final TemplateSubsystem template_ = TemplateSubsystem.getInstance();
+
+    private RobotContainer() {
+        super(RobotStates.IDLE, new RobotConstants(), BuildConstants.class);
+        // !!!!!! ALL SUBSYSTEMS MUST BE REGISTERED HERE TO RUN !!!!!!!
+        registerSubsystem(template_);
+        // !!!!! LEAVE reset() AS THE LAST LINE IN THE CONSTRUCTOR !!!!!!
+        reset();
+    }
+
+    // Ask each subsystem for the state the robot's state needs. Runs every loop, before the subsystems.
+    @Override
+    protected void updateLogic(double timestamp) {
+        switch (system_state_) {
+            case CUSTOM:
+                template_.setWantedState(TemplateStates.CUSTOM_STATE);
+                break;
+            case IDLE:
+            case DRIVE:
+            default:
+                template_.setWantedState(TemplateStates.IDLE);
+                break;
+        }
+    }
+}
+```
+
+```java title="OI.java"
+RobotContainer robot = RobotContainer.getInstance();
+driver_controller_.a().whileTrue(
+        Commands.startEnd(
+                () -> robot.setWantedState(RobotStates.CUSTOM),
+                () -> robot.setWantedState(RobotStates.DRIVE)));
+```
+
+## Troubleshooting
+*This is a list of common issues you may encounter when developing subsystems and how to troubleshoot them:
+Not all problems are listed here, but these are some of the most common ones we have seen come up during development.*
+
+- **My subsystem doesn't appear to be updating.**
+    - Make sure you have registered the subsystem in `RobotContainer.java`.
+        - See [Register the Subsystem](./subsystems.mdx#register-the-subsystem) for steps to register a subsystem.
+- **My subsystem is updating, but I don't have my mechanisms working.**
+    - Make sure you have added the mechanism IO objects to the `getIos()` method in your subsystem class.
+        - See [Update the Subsystem IOs](./subsystems.mdx#update-the-subsystem-ios) for guidance on how to add mechanisms to your subsystem.
+    - Ensure if you have multiple mechanisms of the same type (e.g. two arm mechs) ensure you provide a unique name for each mechanism
+        - This will not cause the code to fail, but it will result in logging and tunable issues due to the shared NT keys.
+- **My subsystem wont enter a new state I just added.**
+    - Make sure you have implemented the state transition logic in `handleStateTransition()` if you are using custom transitions.
+    - Make sure `RobotContainer` asks for it: the robot's state machine requests subsystem states, so a robot state has to ask your subsystem for the new state.
+- **The auto I just created is not available from the dashboard chooser.**
+    - Every `src/main/deploy/autos/trees/*.xml` is a chooser option, so the file is somewhere else (`unlisted/` hides drafts on purpose), or it has no `main_tree_to_execute` and is being treated as a library file like `common.xml`. Deploy once so the new file is on the robot.
+        - See [Adding an Auto](./autonomous.mdx#adding-an-auto).
+- **The auto is in the chooser but the robot does nothing.**
+    - The file failed to load. Look at `BehaviorTree/<auto>/Error` in AdvantageScope and the Elastic alert, or run `./gradlew test` for the parse error with a line number. The usual causes: a misspelled node name (they are case-sensitive), a node not registered in `AutoNodes`, or a `trajectory="..."` with no matching `.traj` in `deploy/choreo`.
+        - See [Testing and Debugging](./autonomous.mdx#testing-and-debugging).
+- **The robot ignores the robot state my auto asked for.**
+    - The tree only drives the robot while it is in `AUTO`. If an earlier step left the robot in another state, add `<SetWantedState state="AUTO"/>` after it, the way `ShootFor` does.
+- **The code runs the wrong robot's constants.**
+    - `Config/RobotName` on the dashboard shows the name the code resolved at boot. Burn the right one from Test mode with `Config/Burn RobotName` and restart the code; in simulation set `ROBOT_NAME`.
+        - See [Robot Identity](./robot-identity.mdx).

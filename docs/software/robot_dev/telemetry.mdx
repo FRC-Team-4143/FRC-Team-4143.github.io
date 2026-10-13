@@ -2,7 +2,7 @@
 title: Telemetry and Logging
 description: Displaying and updating live robot telemetry
 hide_table_of_contents: true
-sidebar_position: 8
+sidebar_position: 9
 ---
 
 # Robot Telemetry and Logging
@@ -31,30 +31,40 @@ The data can also be advanced types beyond just numbers, such as:
 Remember some of our code infrastructure automatically logs data for you. Our subsystem classes automatically log their state and some of their data. Our mechanism classes automatically log their state and related IO data. This is useful for debugging and understanding how the robot behaves during operation and reduces the need to manually log data for common use cases.
 :::
 
-### DogLog
-DogLog is a logging library that allows you to log messages and data from your robot code. It is developed by FRC 581 and their listed documentation can be found [here](https://doglog.dev/). DogLog provides a simple API for both logging messages to the robot and sending publishing them over NetworkTables. When the enabled we can see the logged data as live telemetry on the driver station or a dashboard application.
+### MwLog
+`MwLog` is MW-Lib's logging facade. It wraps [AdvantageKit](https://docs.advantagekit.org/) so that all
+of our telemetry is captured in a log that can be **deterministically replayed** for post-match debugging.
+Its API is intentionally a drop-in for the [DogLog](https://doglog.dev/) library (developed by FRC 581) —
+if you see older `DogLog.log(...)` code anywhere, it is a mechanical one-for-one replacement with
+`MwLog.log(...)`. `MwLog` publishes logged data over NetworkTables too, so we can see it as live telemetry
+on the driver station or a dashboard application.
 
-For typically usage, you can use the `DogLog` class to log messages and data. Here is an example of how to use DogLog in your robot code:
+:::warning Use MwLog, not DogLog
+Always log through `com.marswars.logging.MwLog`. Do not add the `DogLog` library or use raw
+`SmartDashboard`/`Logger` calls for telemetry.
+:::
+
+For typical usage, you can use the `MwLog` class to log messages and data. Here is an example of how to use MwLog in your robot code:
 
 ```java
-DogLog.log("Custom String", data_value);
+MwLog.log("Custom String", data_value);
 ```
 The first argument is a string that describes the data. Depending on where you are logging the data, you may want to use a compound string to better sort the data. For example, you can use a compound string like `"/subsystem/variable"` to group related data together. For our subsystem logging expect something like this:
 ```java
-DogLog.log(getSubsystemKey() + "/Left Flywheel Velocity", left_velocity);
-DogLog.log(getSubsystemKey() + "/Right Flywheel Velocity", right_velocity);
+MwLog.log(getSubsystemKey() + "/Left Flywheel Velocity", left_velocity);
+MwLog.log(getSubsystemKey() + "/Right Flywheel Velocity", right_velocity);
 ```
 
-We can also collect data from our dashboards and use that in our robot program using the `DogLog` class. For example, if we want to log the target speed of a flywheel, we can do it like this:
+We can also collect data from our dashboards and use that in our robot program using the `MwLog` class. For example, if we want to log the target speed of a flywheel, we can do it like this:
 ```java
-DogLog.tunable("Custom String", default_value, data_value -> {
+MwLog.tunable("Custom String", default_value, data_value -> {
     // This is the code that will be executed when the value is updated
-    // The daa_value is the new value that was set in the dashboard
+    // The data_value is the new value that was set in the dashboard
 });
 ```
 It is important to note that the final argument is a lambda function that will be executed when the value is updated. This allows us to update our robot code with the new value without having to restart the robot program. It acts as a callback function that is called whenever the value is changed in the dashboard. An example of this is:
 ```java
-DogLog.tunable("Flywheel Target Speed", 0.0, target_speed -> {
+MwLog.tunable("Flywheel Target Speed", 0.0, target_speed -> {
     flywheel.setTargetVelocity(target_speed);
 });
 ```

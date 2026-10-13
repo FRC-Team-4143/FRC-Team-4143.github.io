@@ -27,7 +27,7 @@ The arm mechanism is designed to control a pivot joint that rotates to a desired
 The `ArmMech` constructor requires the following parameters:
 - `logging_prefix` - String prefix for logging (typically from `getSubsystemKey()`)
 - `mech_name` - Optional name for multiple instances (pass `null` if only one arm)
-- `motor_configs` - List of motor configuration objects (`FxMotorConfig` or `NovaMotorConfig`)
+- `motor_configs` - List of `MotorConfig` objects, leader first
 - `gear_ratio` - Gear ratio as motor rotations / mechanism rotations
 - `arm_length` - Length of the arm in meters (used for simulation)
 - `arm_mass` - Mass of the arm in kg (used for simulation)

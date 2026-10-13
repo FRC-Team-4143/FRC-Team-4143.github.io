@@ -26,14 +26,15 @@ The exercises below are the **Control Theory** lesson in [Scriptum](https://scri
 - Write a Bang Bang controller for the flywheel
     - Full power when too slow, no power when fast enough
 - Write a Feed Forward controller for the flywheel
-    - Work out the power from the target speed and `kV`, with no measuring
+    - Work out the power from the target speed and `kV`, with no measuring: `volts = FLYWHEEL_KV * SHOOT_VELOCITY`
+    - `kV` is in volts per rad/s: 12 V / 628 rad/s (a Kraken's free speed) is about 0.0191
     - Find a good `kV` by experiment
 - Use PID (feed forward plus feedback) to hold the speed
     - Tune `kP` and compare how each style recovers from a simulated ball launch
 ### Tuning
 - Tune the flywheel for velocity control in simulation
     - Make sure your system measurements like MOI and radius are close to the real robot
-        - Wheel Radius: 3 in
+        - Wheel Radius: 0.0762 m
         - Wheel Mass: 2.3 kg
     - Spin up in under about 1.5 seconds without overshooting the target
     - Once you have tuned in simulation try final values on the robot

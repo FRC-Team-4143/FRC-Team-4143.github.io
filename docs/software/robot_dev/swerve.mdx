@@ -1,0 +1,183 @@
+---
+title: Swerve
+description: MwSwerveSubsystem - the library swerve drive, its constants variants and the states teleop and autos request
+hide_table_of_contents: false
+sidebar_position: 4
+---
+
+# Swerve
+The swerve drive is a **library subsystem**. All of the driving, path following, heading lock, crawl and brake logic
+lives in MWLib's `MwSwerveSubsystem`; the robot project only says which hardware it has, where the robot pose
+comes from and which controller axes drive it. That keeps the drivetrain identical across our robots and lets a
+fix land in one place.
+
+:::note MARS/WARS Custom Implementation
+`MwSwerveSubsystem`, `MwSwerveConstants` and `SwerveDriveConfig` are part of MWLib (`com.marswars.swerve_lib`).
+Under the hood they drive CTRE TalonFX modules through Phoenix 6.
+:::
+
+---
+
+## The Robot's SwerveSubsystem
+The whole class on the 2026 robot:
+
+```java
+public class SwerveSubsystem extends MwSwerveSubsystem<SwerveConstants> {
+
+    private static SwerveSubsystem instance_ = null;
+
+    public static SwerveSubsystem getInstance() {
+        if (instance_ == null) {
+            instance_ = new SwerveSubsystem();
+        }
+        return instance_;
+    }
+
+    private SwerveSubsystem() {
+        super(
+                SwerveConstants.create(),
+                () -> LocalizationSubsystem.getInstance().getFieldPose(),
+                new SwerveDriverInputs(
+                        OI::getDriverJoystickLeftX,
+                        OI::getDriverJoystickLeftY,
+                        OI::getDriverJoystickRightX,
+                        OI::getDriverJoystickPOV));
+    }
+}
+```
+
+- **Keep the name `SwerveSubsystem`.** The logging keys are built from the class name, so dashboards and log
+  tooling expect `Subsystem/Swerve/...`.
+- **The constants** come from `SwerveConstants.create()`, which picks the variant for the robot the code is running
+  on (next section).
+- **The pose supplier** is how the swerve knows where it is for field-centric driving and path following. It comes
+  from the localization subsystem, not from the swerve's own odometry.
+- **`SwerveDriverInputs`** is a record of the driver's axes: left X, left Y, right X and the POV. Pass
+  `SwerveDriverInputs.none()` for a robot with no driver (a test chassis).
+- Holding the POV forces the matching **crawl** state (slow, precise movement). Override `remapWantedState(...)` to
+  change that policy; it is the only hook the robot project usually touches.
+
+---
+
+## Constants and Per-robot Variants
+`SwerveConstants extends MwSwerveConstants`. The base class already holds the tunables every swerve has
+(`MAX_TRANSLATION_RATE`, the heading-controller gains, the `CHOREO_*` path-following gains and tolerances, the
+`TRACTOR_BEAM_*` pose-driving gains) with sensible defaults, and one abstract method, `getDriveConfig()`, that
+describes the hardware.
+
+The robot's class adds the per-robot hardware values as **non-final fields**, so a variant can change them:
+
+```java
+public class SwerveConstants extends MwSwerveConstants {
+
+    /** Builds the constants variant for the robot the code is running on. */
+    public static SwerveConstants create() {
+        return switch (RobotConstants.ROBOT) {
+            case BETA_BOT -> new BetaSwerveConstants();
+            case SIM_BOT -> new SimSwerveConstants();
+            default -> new SwerveConstants();
+        };
+    }
+
+    // Defaults = AlphaBot. Non-final so variants can reassign them in their constructors.
+    public String CANBUS_NAME = "CANivore";
+    public double WHEEL_RADIUS_METERS = Units.inchesToMeters(1.8);
+    public ModuleType MODULE_TYPE = ModuleType.getModuleType("TSN-P13-S18");
+    public TalonMotorType STEER_MOTOR_TYPE = TalonMotorType.X44;
+    public Slot1Configs DRIVE_GAINS_SLOT1 = new Slot1Configs().withKS(0.2).withKV(0.1).withKA(0.02).withKP(8.0);
+    public Slot0Configs STEER_GAINS_SLOT0 = new Slot0Configs().withKP(80.0);
+    public double DRIVE_SUPPLY_CURRENT_LIMIT = 40.0;
+    // ...
+
+    /** Called once by the subsystem, after any variant constructor has run. */
+    @Override
+    public SwerveDriveConfig getDriveConfig() {
+        return SwerveDriveConfig.builder()
+                .canbus(CANBUS_NAME)
+                .pigeon2Id(PIGEON2_ID)
+                .moduleType(MODULE_TYPE)
+                .wheelRadius(WHEEL_RADIUS_METERS)
+                .speedAt12V(SPEED_AT_12V_MPS)
+                .driveGains(DRIVE_GAINS_SLOT0, DRIVE_GAINS_SLOT1)
+                .driveCurrentLimits(DRIVE_SUPPLY_CURRENT_LIMIT, DRIVE_STATOR_CURRENT_LIMIT)
+                .steerMotor(STEER_MOTOR_TYPE)
+                .steerGains(STEER_GAINS_SLOT0, STEER_GAINS_SLOT1)
+                .steerCurrentLimits(STEER_SUPPLY_CURRENT_LIMIT, STEER_STATOR_CURRENT_LIMIT)
+                .frontLeft(1, 2, 0, inches(7.5, 7.5))     // drive id, steer id, encoder id, position
+                .frontRight(3, 4, 1, inches(7.5, -7.5))
+                .backLeft(5, 6, 2, inches(-7.5, 7.5))
+                .backRight(7, 8, 3, inches(-7.5, -7.5))
+                .build();
+    }
+}
+```
+
+A variant is a tiny subclass that reassigns only what differs:
+
+```java
+/** BetaBot's swerve constants: only the values that differ from AlphaBot. */
+public class BetaSwerveConstants extends SwerveConstants {
+    public BetaSwerveConstants() {
+        WHEEL_RADIUS_METERS = Units.inchesToMeters(1.978);
+        MODULE_TYPE = ModuleType.getModuleType("TSN-P13-S16");
+        DRIVE_GAINS_SLOT1 = new Slot1Configs().withKS(0.224).withKV(0.62).withKP(0.25);
+        DRIVE_SUPPLY_CURRENT_LIMIT = 35.0;
+        DRIVE_STATOR_CURRENT_LIMIT = 105.0;
+    }
+}
+```
+
+:::warning Build derived configs in a method, not a field
+A variant's constructor runs *after* the base class's fields are initialised. Anything built from those fields,
+such as the `SwerveDriveConfig`, must be built in a method (`getDriveConfig()`, called once by the subsystem) or it
+would capture the AlphaBot values before the variant changed them.
+:::
+
+How `RobotConstants.ROBOT` is decided is on the [Robot Identity](./robot-identity.mdx) page.
+
+---
+
+## Swerve States
+`SwerveStates` is MWLib's enum. The ones you request from `RobotContainer` and from autos:
+
+| State | What it does |
+|---|---|
+| `FIELD_CENTRIC` / `ROBOT_CENTRIC` | Normal joystick driving, relative to the field or to the robot |
+| `FIELD_CENTRIC_ROTATION_LOCK` / `ROBOT_CENTRIC_ROTATION_LOCK` | Joystick translation with the heading held at `setDesiredRotationLock(...)`; aiming uses this |
+| `CHOREO_PATH` / `CHOREO_PATH_ROTATION_LOCK` | Follow the selected Choreo trajectory, with Choreo's rotation or a locked heading. `FollowTrajectory` requests these |
+| `TRACTOR_BEAM` | Drive to a pose set with `setDesiredTractorBeamPose(...)` |
+| `CHASSIS_SPEEDS` (+ `_ROTATION_LOCK`) | Raw `ChassisSpeeds` from code |
+| `CRAWL_*` | Slow precision variants of the four joystick states; the POV selects them automatically |
+| `BRAKE` | Wheels in an X so the robot cannot be pushed |
+| `TUNING`, `IDLE` | Chassis-speed tuning from the dashboard; no output |
+
+`RobotContainer` picks the drive state from a field it decided in `handleStateTransition` (field-centric or
+robot-centric is an operator toggle) and asks for it every loop:
+
+```java
+case AIM -> {
+    swerve_.setWantedState(SwerveStates.FIELD_CENTRIC_ROTATION_LOCK);
+    swerve_.setTeleOpVelocityScalar(1.0);
+    // ...
+}
+```
+
+Useful helpers on the subsystem: `setTeleOpVelocityScalar(...)` (slow the driver down while shooting),
+`isChassisStationary()`, `isAtChoreoSetpoint()`, `isAtDesiredRotation()`, `setOperatorForwardDirection(...)`
+(alliance perspective, called from `disabledPeriodic` when the alliance changes), `zeroGyroYaw()` and
+`setModuleOffsets()` (dashboard calibration commands).
+
+---
+
+## Changing Drive Behaviour
+A new drive mode, a different path-following controller or a tuning fix belongs in **MWLib**, in
+`MwSwerveSubsystem`, so every robot gets it. Build the robot against your local MWLib checkout while you work on it
+(see [MWLib: Building Against a Local Checkout](./mwlib.mdx#building-against-a-local-checkout)), then release MWLib
+and bump the version. The robot project should only ever change its constants and its `remapWantedState` policy.
+
+---
+
+## Related Documentation
+- [Robot Identity](./robot-identity.mdx): how `RobotConstants.ROBOT` is decided.
+- [Autonomous](./autonomous.mdx): `FollowTrajectory` and the other swerve nodes.
+- [Subsystems](./subsystems.mdx): the state machine every subsystem, swerve included, is built on.

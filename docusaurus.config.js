@@ -62,8 +62,10 @@ const config = {
         hashed: true,
         language: ["en"],
         indexDocs: true,
+        indexBlog: true,
         indexPages: true,
         docsRouteBasePath: '/docs',
+        blogRouteBasePath: '/blog',
         searchResultLimits: 8,
         searchResultContextMaxLength: 50,
         explicitSearchResultPath: true,
@@ -80,6 +82,16 @@ const config = {
           sidebarPath: './sidebars.js',
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
+        },
+        blog: {
+          showReadingTime: true,
+          feedOptions: {
+            type: ['rss', 'atom'],
+            xslt: true,
+          },
+          onInlineTags: 'warn',
+          onInlineAuthors: 'warn',
+          onUntruncatedBlogPosts: 'warn',
         },
       }),
     ],
@@ -129,10 +141,14 @@ const config = {
             position: 'left',
             label: 'Business Services',
           },
-
           // adds sight seach to the navbar
           {
             type: 'search',
+            position: 'right',
+          },
+          {
+            to: '/blog',
+            label: 'Blog',
             position: 'right',
           },
           // GitHub link

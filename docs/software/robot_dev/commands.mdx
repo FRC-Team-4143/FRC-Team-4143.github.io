@@ -2,14 +2,15 @@
 title: Commands
 description: Command basics and programming tips
 hide_table_of_contents: false
-sidebar_position: 4
+sidebar_position: 6
 ---
 
 # Commands
 :::warning Avoid Complex Commands!
 Commands have special behavior that attempts to handle scheduling that can
-make more complex robots unnecessarily complicated. The only use case for commands should be interfacing with buttons to
-trigger a specific subsystem state. There should be little to no logic within the command. Most robot behavior should be handled within the subsystem state machines.
+make more complex robots unnecessarily complicated. The only use case for commands should be interfacing with buttons (and autos) to
+ask the robot for a state. There should be little to no logic within the command. Robot behavior belongs in the subsystem state machines
+and, when it uses more than one subsystem, in the robot's super state machine in `RobotContainer`. See [Requesting Robot States](#requesting-robot-states).
 :::
 
 ## Command Structure
@@ -198,7 +199,7 @@ new FunctionalCommand(
 ## Full Custom Commands
 For more complex behaviors, you can create a full command by extending the `Command` class and implementing the necessary methods.
 These require their own class file and can encapsulate more complex logic. They function similarly to the Functional Command and allow for complete control over the command's behavior.
-Below is a template for creating a custom command that inherits from the `Command` class. We typically create a new file for each command in the `commands` package of our robot code.
+Below is a template for creating a custom command that inherits from the `Command` class. We almost never write one: buttons use the inline commands above, and autonomous routines are [behavior trees](./autonomous.mdx), not commands. It is here so you can read WPILib code and the occasional dashboard utility.
 ```java
 public class ExampleCommand extends Command {
   /** Creates a new ExampleCommand. */
@@ -234,7 +235,6 @@ Commands can be combined into groups to create more complex behaviors. There are
 - [**ParallelDeadlineGroup**](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj2/command/ParallelDeadlineGroup.html): Runs commands in parallel, but ends when a specified "deadline" command finishes.
 
 These command groups allow you to create complex command sequences and behaviors by combining simpler commands.
-We typically use these for more complex autonomous routines or multi-step actions. They are all define the same way by passing a list of commands to the constructor.
 ```java
 new SequentialCommandGroup(
     new FirstCommand(),
@@ -242,6 +242,11 @@ new SequentialCommandGroup(
     new ThirdCommand()
 );
 ```
+
+**We do not write command groups for autos.** Our autonomous routines are [behavior trees](./autonomous.mdx): the
+same sequencing (`Sequence`, `ParallelDeadline`, `Timeout`), built in Arbor with the robot's states as the steps,
+editable without a code deploy. A multi-step action the driver needs is a robot state with step states in `RobotContainer`,
+not a group. If a tree ever needs an existing WPILib command, `registerCommand(...)` wraps it as a node.
 
 ---
 
@@ -281,36 +286,33 @@ Command myCommandSequence = new ExampleCommand()
 You can use these decorators on instant commands as well to create quick command sequences without needing to create full command classes.
 :::
 
-## Subsystem Commands
-In order to interact with subsystems, we typically create commands that interface directly with the subsystem's state machine.
-These commands are used to request specific states or actions from the subsystem. We try to keep these commands simple, often using instant commands to trigger state changes. To keep the code clean we typically create these commands within the subsystem's package.
+## Requesting Robot States
+We do not write command files for subsystems. Anything that uses more than one subsystem is a robot state in the
+[super state machine](../controls/state-machines.mdx#the-super-state-machine) in `RobotContainer`, and buttons and autos only
+ask the robot for a state with `setWantedState(...)`, the same method you use on a subsystem. The commands that do this are
+small inline lambdas in `OI`:
 
 ```java
-package frc.robot.subsystems.shooter;
+RobotContainer robot = RobotContainer.getInstance();
 
-public class ShooterCommands {
+// Hold: the robot wants SHOOT. Let go: back to DRIVE.
+driver_controller_.rightTrigger().whileTrue(
+        Commands.startEnd(
+                () -> robot.setWantedState(RobotStates.SHOOT),
+                () -> robot.setWantedState(RobotStates.DRIVE)));
 
-    /**
-     * Command to set the shooter to the shooting state with the intent to shoot a ball.
-     * @return Command to shoot a ball
-    */
-    public static Command shootBall(){
-        return Commands.runOnce(() -> Shooter.getInstance().setState(ShooterState.SHOOTING));
-    }
-
-    // Additional subsystem commands can be added here
-}
+// Press: ask once.
+driver_controller_.x().onTrue(Commands.runOnce(() -> robot.setWantedState(RobotStates.BRAKE)));
 ```
 
-:::note static Keyword
-In the example above, the `shootBall` method is declared as `static`, which means it can be called without creating an instance of the `ShooterCommands` class. This is useful for utility classes that provide a collection of related commands.
-
+:::tip Releasing one button while holding another
+If two held buttons ask for different states, letting go of the first one should not cancel the second. Only go back to
+`DRIVE` on release if your state is still the wanted one:
 ```java
-// Usage for static method
-ShooterCommands.shootBall();
-
-// Usage for non-static method
-ShooterCommands shooterCommands = new ShooterCommands();
-shooterCommands.shootBall();
+() -> {
+    if (robot.getWantedState() == RobotStates.AIM) {
+        robot.setWantedState(RobotStates.DRIVE);
+    }
+}
 ```
 :::
