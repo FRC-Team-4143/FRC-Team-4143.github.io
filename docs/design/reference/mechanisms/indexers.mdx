@@ -5,6 +5,7 @@ sidebar_position: 2
 ---
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import MechanismTypes from '@site/src/components/MechanismTypes';
 
 An indexer (also called a serializer, feeder, or hopper) stores game pieces and hands them to the next mechanism one
 at a time. Most jams happen here, so a simple, reliable indexer is worth more than a fast one that jams.
@@ -24,12 +25,12 @@ at a time. Most jams happen here, so a simple, reliable indexer is worth more th
 
 ## Types
 
-| Type | How it works |
-|---|---|
-| Belt or roller tunnel | Belts or rollers on both sides carry pieces in a line. The most common design. |
-| Spindexer | A rotating plate or drum spins pieces around and feeds them out one exit. |
-| Hopper with agitator | A bin stores many pieces, and a moving floor or wall keeps them from bridging. |
-| Funnel and diverter | Guides pieces from a wide intake into one path, or sends them to different scoring mechanisms. |
+<MechanismTypes items={[
+  {img: "indexer-belt", name: "Belt or roller tunnel", text: "Belts or rollers on both sides carry pieces in a line. The most common design."},
+  {img: "indexer-spindexer", name: "Spindexer", text: "A rotating plate spins pieces around and feeds them out one exit."},
+  {img: "indexer-hopper", name: "Hopper with agitator", text: "A bin stores many pieces, and a moving floor or wall keeps them from jamming."},
+  {img: "indexer-diverter", name: "Funnel and diverter", text: "Guides pieces into one path, or sends them to different mechanisms."},
+]}/>
 
 ## Robots to Study
 

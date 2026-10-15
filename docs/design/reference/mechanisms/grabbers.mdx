@@ -5,6 +5,7 @@ sidebar_position: 6
 ---
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import MechanismTypes from '@site/src/components/MechanismTypes';
 
 An end effector holds a game piece on the end of an arm or elevator and places it. It has to grab quickly, hold
 through hits, and let go cleanly in the same spot every time.
@@ -27,12 +28,12 @@ through hits, and let go cleanly in the same spot every time.
 
 ## Types
 
-| Type | How it works | Good for |
-|---|---|---|
-| Roller claw | Powered rollers pull the piece in and spit it out. | Balls, cubes, tubes |
-| Pincher or clamp | Two jaws close on the piece (motor or pneumatic). | Cones, tubes, hatch panels |
-| Suction | A vacuum pump and cups hold flat or smooth surfaces. | Hatch panels, tubes, balls |
-| Hook or fork | A passive shape the piece hangs on. | Tetras, inflatable tubes, rings |
+<MechanismTypes items={[
+  {img: "grabber-roller-claw", name: "Roller claw", text: "Powered rollers pull the piece in and spit it out. Balls, cubes, tubes."},
+  {img: "grabber-pincher", name: "Pincher or clamp", text: "Two jaws close on the piece. Cones, tubes, hatch panels."},
+  {img: "grabber-suction", name: "Suction", text: "A vacuum pump and cups hold flat or smooth surfaces."},
+  {img: "grabber-hook", name: "Hook or fork", text: "A passive shape slides under the piece and lifts it. Rings, tetras, tubes."},
+]}/>
 
 ## Robots to Study
 

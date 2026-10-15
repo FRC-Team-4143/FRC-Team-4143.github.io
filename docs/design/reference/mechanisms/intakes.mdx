@@ -5,6 +5,7 @@ sidebar_position: 1
 ---
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import MechanismTypes from '@site/src/components/MechanismTypes';
 
 An intake gets a game piece off the floor (or out of a human player station) and into the robot. Fast cycles start
 here: a robot that has to line up carefully on every piece will lose to one that can drive over a piece and own it.
@@ -28,12 +29,25 @@ here: a robot that has to line up carefully on every piece will lose to one that
 
 ## Types
 
-| Type | How it works | Good for |
-|---|---|---|
-| Over the bumper | Rollers on a pivoting arm reach over the bumper and pull the piece up and in. | Balls, cubes, most pieces |
-| Under the bumper | Rollers pull the piece under a raised bumper section. Nothing sticks out. | Flat pieces (notes, frisbees) |
-| Funnel or dustpan | A wide, low scoop with a powered roller drives pieces into a narrow path. | Discs, small balls |
-| Claw intake | The end effector itself picks up from the floor. Simple, but slower to cycle. | Cones, tubes, cubes |
+### Over the bumper
+
+Rollers on a moving arm reach over the bumper and pull the piece up and in. Good for balls, cubes, and most pieces.
+There are several ways to get the rollers out past the bumper:
+
+<MechanismTypes items={[
+  {img: "intake-slapdown", name: "Slapdown", text: "One pivot swings the rollers down. The simplest and most common."},
+  {img: "intake-fourbar", name: "Four-bar", text: "Parallel links keep the rollers at the same angle as they deploy."},
+  {img: "intake-vfb", name: "Virtual four-bar", text: "Two stages linked by a chain or belt unfold together, reaching far from a small stowed size."},
+  {img: "intake-sliding", name: "Sliding (linear)", text: "The rollers slide straight out on rails. Very fast to deploy and stiff."},
+]}/>
+
+### Other intakes
+
+<MechanismTypes items={[
+  {img: "intake-under-bumper", name: "Under the bumper", text: "Rollers pull flat pieces under a raised bumper section. Nothing sticks out."},
+  {img: "intake-funnel", name: "Funnel or dustpan", text: "A wide, low scoop with a powered roller drives pieces into one path."},
+  {img: "intake-claw", name: "Claw intake", text: "The end effector picks up from the floor. Simple, but slower to cycle."},
+]}/>
 
 ## Robots to Study
 

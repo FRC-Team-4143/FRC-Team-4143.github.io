@@ -5,6 +5,7 @@ sidebar_position: 3
 ---
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import MechanismTypes from '@site/src/components/MechanismTypes';
 
 A shooter launches game pieces into a goal. The goal is not the highest speed, but the same shot every time.
 
@@ -28,12 +29,13 @@ A shooter launches game pieces into a goal. The goal is not the highest speed, b
 
 ## Types
 
-| Type | How it works | Good for |
-|---|---|---|
-| Single flywheel with hood | One wheel pushes the piece against a curved hood. | Balls |
-| Double flywheel | Wheels on both sides of the piece. | Discs, notes, balls |
-| Turret | Shooter rotates on a bearing to aim. | Shooting while moving |
-| Catapult or kicker | Stored energy (springs, pneumatics, or a motor) throws the piece in one stroke. | Large balls, soccer balls |
+<MechanismTypes items={[
+  {img: "shooter-hood", name: "Single flywheel with hood", text: "One wheel pushes the piece against a curved hood. Good for balls."},
+  {img: "shooter-adjustable-hood", name: "Adjustable hood", text: "Moving the hood changes the exit angle, so the robot can shoot from more places."},
+  {img: "shooter-double", name: "Double flywheel", text: "Wheels on both sides of the piece. Good for discs, notes, and balls."},
+  {img: "shooter-turret", name: "Turret", text: "The shooter rotates to aim, so the robot can shoot while driving."},
+  {img: "shooter-catapult", name: "Catapult or kicker", text: "Stored energy throws the piece in one stroke. Good for large balls."},
+]}/>
 
 ## Robots to Study
 
