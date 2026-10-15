@@ -4,6 +4,8 @@ description: Moving many game pieces from the intake to the shooter one at a tim
 sidebar_position: 2
 ---
 
+import RobotClips from '@site/src/components/RobotClips';
+
 An indexer (also called a serializer, feeder, or hopper) stores game pieces and hands them to the next mechanism one
 at a time. Most jams happen here, so a simple, reliable indexer is worth more than a fast one that jams.
 
@@ -24,6 +26,15 @@ at a time. Most jams happen here, so a simple, reliable indexer is worth more th
 - **Spindexer:** A rotating plate spins pieces around and feeds them out one exit.
 - **Hopper with agitator:** A bin stores many pieces, and a moving floor or wall keeps them from jamming.
 - **Funnel and diverter:** Guides pieces into one path, or sends them to different mechanisms.
+
+## On Real Robots
+
+Short clips from the teams' own robot videos. Each one links to the full video.
+
+<RobotClips items={[
+  {gif: "indexer-6328-2026-hopper", team: "6328 Mechanical Advantage, 2026", text: "A full hopper of balls moving toward the shooter.", video: "https://www.youtube.com/watch?v=uy4nd5wp0PU&t=13s"},
+  {gif: "indexer-6328-2026-feed", team: "6328 Mechanical Advantage, 2026", text: "Overhead view of balls moving through the robot.", video: "https://www.youtube.com/watch?v=uy4nd5wp0PU&t=25s"},
+]}/>
 
 ## Robots to Study
 
