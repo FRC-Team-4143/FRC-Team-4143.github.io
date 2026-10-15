@@ -4,14 +4,9 @@ description: Elevators and linear slides for lifting game pieces straight up, th
 sidebar_position: 4
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import MechanismTypes from '@site/src/components/MechanismTypes';
-
 An elevator lifts a game piece straight up (or out, as a horizontal slide) on rails. It keeps the game piece at the same
 angle the whole way, which makes it easy to control and fast to score at several heights. In FTC, elevators are usually
 called **linear slides**.
-
-<img src={useBaseUrl('/img/design/mechanisms/elevator.svg')} alt="Two-stage elevator with a carriage, constant-force spring, and hard stop" width="680"/>
 
 ## Principles
 
@@ -30,13 +25,11 @@ called **linear slides**.
 
 ## Types
 
-<MechanismTypes items={[
-  {img: "elevator-continuous", name: "Continuous rigging", text: "One rope or belt drives everything; the carriage rises first, then the stages."},
-  {img: "elevator-cascade", name: "Cascade rigging", text: "Each stage is pulled by the one below it, so every stage moves at once."},
-  {img: "elevator-single", name: "Single stage", text: "One carriage on fixed rails. Simplest and stiffest, with limited height."},
-  {img: "elevator-horizontal", name: "Horizontal slide", text: "An elevator on its side, to reach out without changing height."},
-  {img: "elevator-ftc-slides", name: "Linear slides (FTC)", text: "Off-the-shelf drawer slides pulled by string. Light and cheap, less stiff."},
-]}/>
+- **Continuous rigging:** One rope or belt drives everything; the carriage rises first, then the stages.
+- **Cascade rigging:** Each stage is pulled by the one below it, so every stage moves at once.
+- **Single stage:** One carriage on fixed rails. Simplest and stiffest, with limited height.
+- **Horizontal slide:** An elevator on its side, to reach out without changing height.
+- **Linear slides (FTC):** Off-the-shelf drawer slides pulled by string. Light and cheap, less stiff.
 
 ## Robots to Study
 

@@ -4,13 +4,8 @@ description: Pivoting arms, telescoping arms, linkages, and wrists, the principl
 sidebar_position: 5
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import MechanismTypes from '@site/src/components/MechanismTypes';
-
 An arm pivots a game piece up and around. It can reach over bumpers, other robots, and field elements, and score at
 angles an elevator can't. A wrist on the end of an arm or elevator turns the game piece to the right angle.
-
-<img src={useBaseUrl('/img/design/mechanisms/arm.svg')} alt="Arm with a shoulder pivot, gas spring, and wrist, showing torque as weight times distance" width="680"/>
 
 ## Principles
 
@@ -28,13 +23,11 @@ angles an elevator can't. A wrist on the end of an arm or elevator turns the gam
 
 ## Types
 
-<MechanismTypes items={[
-  {img: "arm-single", name: "Single-jointed arm", text: "One pivot at the shoulder. Reach and height change together."},
-  {img: "arm-double", name: "Double-jointed arm", text: "Shoulder and elbow can reach anywhere, but are harder to control."},
-  {img: "arm-telescoping", name: "Telescoping arm", text: "An arm that also extends, for reach and height in one."},
-  {img: "arm-fourbar", name: "Four-bar or six-bar linkage", text: "Linked bars keep the end level as it moves, without a wrist."},
-  {img: "arm-wrist", name: "Wrist", text: "Rotates the end effector to score at different angles."},
-]}/>
+- **Single-jointed arm:** One pivot at the shoulder. Reach and height change together.
+- **Double-jointed arm:** Shoulder and elbow can reach anywhere, but are harder to control.
+- **Telescoping arm:** An arm that also extends, for reach and height in one.
+- **Four-bar or six-bar linkage:** Linked bars keep the end level as it moves, without a wrist.
+- **Wrist:** Rotates the end effector to score at different angles.
 
 ## Robots to Study
 

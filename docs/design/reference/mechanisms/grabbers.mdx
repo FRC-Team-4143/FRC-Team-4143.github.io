@@ -4,13 +4,8 @@ description: Claws, roller grippers, and suction for holding and placing game pi
 sidebar_position: 6
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import MechanismTypes from '@site/src/components/MechanismTypes';
-
 An end effector holds a game piece on the end of an arm or elevator and places it. It has to grab quickly, hold
 through hits, and let go cleanly in the same spot every time.
-
-<img src={useBaseUrl('/img/design/mechanisms/grabber.svg')} alt="Top view of a roller claw centering a game piece, with a sensor" width="680"/>
 
 ## Principles
 
@@ -28,12 +23,10 @@ through hits, and let go cleanly in the same spot every time.
 
 ## Types
 
-<MechanismTypes items={[
-  {img: "grabber-roller-claw", name: "Roller claw", text: "Powered rollers pull the piece in and spit it out. Balls, cubes, tubes."},
-  {img: "grabber-pincher", name: "Pincher or clamp", text: "Two jaws close on the piece. Cones, tubes, hatch panels."},
-  {img: "grabber-suction", name: "Suction", text: "A vacuum pump and cups hold flat or smooth surfaces."},
-  {img: "grabber-hook", name: "Hook or fork", text: "A passive shape slides under the piece and lifts it. Rings, tetras, tubes."},
-]}/>
+- **Roller claw:** Powered rollers pull the piece in and spit it out. Balls, cubes, tubes.
+- **Pincher or clamp:** Two jaws close on the piece. Cones, tubes, hatch panels.
+- **Suction:** A vacuum pump and cups hold flat or smooth surfaces.
+- **Hook or fork:** A passive shape slides under the piece and lifts it. Rings, tetras, tubes.
 
 ## Robots to Study
 
