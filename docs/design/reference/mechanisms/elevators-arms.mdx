@@ -1,0 +1,59 @@
+---
+title: Elevators & Arms
+description: Elevators, arms, telescopes, and wrists for reaching scoring heights, and the robots to study.
+sidebar_position: 4
+---
+
+Elevators and arms move a game piece to a scoring height. They are often the heaviest and slowest part of the robot,
+so the design choices here decide cycle time.
+
+## Principles
+
+- **Keep the moving end light.** Every pound at the end of an arm or on top of an elevator slows it down and adds
+  load on the motors. Move weight down into the robot when you can (2910 cut their 2025 end effector from 15 to 12 lb).
+- **Gear for speed and holding.** The gear ratio sets both how fast it moves and whether it can hold still under
+  load. Check with [ReCalc's arm](https://www.reca.lc/arm) and [linear mechanism](https://www.reca.lc/linear)
+  calculators.
+- **Counterbalance.** Gas springs, constant-force springs, or surgical tubing take load off the motor so it can
+  accelerate faster and hold position with less current.
+- **Stiffness.** A long arm or tall elevator flexes. Use bearing blocks with little play, box tubing, and wide
+  spacing between rails.
+- **Hard stops and sensors.** A hard stop gives a known zero. Limit switches or absolute encoders keep the code from
+  driving the mechanism past its range.
+- **Center of gravity.** A tall elevator with a load on top can tip the robot. Limit acceleration when extended.
+
+## Types
+
+| Type | How it works | Trade-offs |
+|---|---|---|
+| Continuous elevator | One rope or belt drives all stages together. | Smooth and fast; more rigging. |
+| Cascade elevator | Each stage is pulled by the one below it. | Simple rigging; the top stage moves fastest. |
+| Single-jointed arm | One pivot at the shoulder. | Simple; reach changes with height. |
+| Double-jointed arm | Shoulder and elbow. | Reaches anywhere; harder to control. |
+| Telescoping arm | An arm that also extends. | Reach and height in one; heavier joint. |
+| Four-bar or six-bar linkage | Linked bars keep the end level as it moves. | Keeps a game piece level without a wrist. |
+| Wrist | Rotates the end effector at the end of an arm or elevator. | Scores at different angles. |
+
+## Robots to Study
+
+| Robot | Game piece | What to look at | Links |
+|---|---|---|---|
+| FRC 254, 2018 | [Boxes](../boxes.mdx) | Fast elevator carrying the intake and wrist. | [Tech binder](https://www.chiefdelphi.com/t/team-254-presents-lockdown-technical-binder-2018/166515) |
+| FRC 254, 2023 | [Cones](../cones.mdx), [Boxes](../boxes.mdx) | Elevator plus a horizontal slide carrying the gripper. | [Tech binder & code](https://www.chiefdelphi.com/t/team-254-presents-2023-breakdown-technical-binder-code-q-a/443167) |
+| FRC 2910, 2023 | [Cones](../cones.mdx) | Two-stage telescoping arm. | [Behind the Bumpers](https://www.youtube.com/watch?v=7ETEf__nD1I) · [CAD & tech binder](https://www.chiefdelphi.com/t/2910-cad-and-tech-binder-release-2023/436653) |
+| FRC 971, 2023 | [Cones](../cones.mdx) | Double-jointed arm with a wrist; elbow driven by a steel-cable capstan. | [Behind the Bumpers](https://www.youtube.com/watch?v=C6u5Q_go_4o) · [CAD & docs](https://www.chiefdelphi.com/t/971-cad-release-2022-and-2023/444741) |
+| FRC 2056, 2023 | [Cones](../cones.mdx) | Shoulder arm counterbalanced with gas springs. | [Behind the Bumpers](https://www.youtube.com/watch?v=IfX5bYZahtg) · [Tech binder](https://www.chiefdelphi.com/t/team-2056-op-robotics-technical-binder-release/437553) |
+| FRC 2910, 2025 | [Tubes](../tubes.mdx) | Long arm, lightened by switching to chain. | [Behind the Bumpers](https://www.youtube.com/watch?v=tRGdwm2JD9c) · [CAD & tech binder](https://www.chiefdelphi.com/t/2910-cad-and-tech-binder-release-2025/500310) |
+| FRC 6328, 2025 | [Tubes](../tubes.mdx) | Three-stage elevator. | [Open Alliance build thread](https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-2025-build-thread/477314) |
+| FRC 3847, 2025 | [Large balls](../large-balls.mdx) | Rotary wrist that takes either game piece. | [Season page](https://spectrum3847.org/seasons/2025/) |
+| FRC 254, 2019 | [Rings & discs](../rings-discs.mdx) | Turreted elevator and wrist. | [Tech binder](https://media.team254.com/resources/Team_254_Tech_Binder_2019.pdf) |
+| FRC 1690, 2019 | [Rings & discs](../rings-discs.mdx) | Hatch mechanism evolved from a linear design to a two-stage four-bar. | [Reveal](https://www.youtube.com/watch?v=KDVPGGb0hj0) |
+| FRC 233, 2011 | [Rings & discs](../rings-discs.mdx) | Telescoping arm. | [How it works](https://www.chiefdelphi.com/t/233-telescoping-arms-how-do-they-work/129680) |
+| FRC 1114, 2008 | [Large balls](../large-balls.mdx) | Arm that lifted a 40 in ball over the overpass. | [Robot thread](https://www.chiefdelphi.com/t/pic-team-1114-simbot-ss/87821) |
+| FTC 7244, 2019-20 | [Boxes](../boxes.mdx) | Five-stage lift with a virtual four-bar. | [Robot write-up](https://www.coroflot.com/LanderHolsinger/FIRST-FTC-Robotics-Team-7244-Out-of-the-Box-Robotics-Skystone-Challenge-2019-2020) |
+| FTC 16379, 2023-24 | [Rings & discs](../rings-discs.mdx) | Telescoping extension. | [Behind the Bot](https://www.youtube.com/watch?v=wKMcQ8iUJUU) |
+
+## More Reading
+
+- [FIRST guide to extenders, lifts, and reach](https://www.firstinspires.org/hubfs/lms/frc-guided-experience/m2/l4-extenders-lift-reach-climb-pdf.pdf?hsLang=en)
+- [FRCDesign mechanism examples](https://www.frcdesign.org/mechanism-examples/) include elevator and arm examples in Onshape.

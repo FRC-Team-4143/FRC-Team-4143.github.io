@@ -1,0 +1,55 @@
+---
+title: Shooters
+description: Flywheels, hoods, turrets, and catapults, the principles behind them, and the robots to study.
+sidebar_position: 3
+---
+
+A shooter launches game pieces into a goal. The goal is not the highest speed, but the same shot every time.
+
+## Principles
+
+- **Consistency beats power.** Every piece should leave at the same speed and angle. Feed each piece the same way, and
+  keep the flywheel at speed between shots.
+- **Inertia.** A heavier flywheel (more moment of inertia) loses less speed when a piece goes through, so rapid shots
+  stay consistent. It also takes longer to spin up. Pick the trade-off for your game.
+- **Compression.** Like an intake, the wheel has to squeeze the piece to transfer energy. Prototype with real pieces
+  to find the right gap.
+- **Two-wheel shooters.** With wheels on both sides of the piece, gear or belt them together so they always run at the
+  same speed ratio. Different speeds add spin on purpose.
+- **Adjustable hood or angle.** Changing the exit angle lets the robot shoot from more places on the field.
+- **Turrets.** A turret aims the shooter without turning the drivetrain, so the robot can shoot while moving or being
+  defended. It adds weight and complexity.
+- **Use a calculator.** [ReCalc's flywheel calculator](https://www.reca.lc/flywheel) estimates exit speed, recovery
+  time, and spin-up time.
+
+## Types
+
+| Type | How it works | Good for |
+|---|---|---|
+| Single flywheel with hood | One wheel pushes the piece against a curved hood. | Balls |
+| Double flywheel | Wheels on both sides of the piece. | Discs, notes, balls |
+| Turret | Shooter rotates on a bearing to aim. | Shooting while moving |
+| Catapult or kicker | Stored energy (springs, pneumatics, or a motor) throws the piece in one stroke. | Large balls, soccer balls |
+
+## Robots to Study
+
+| Robot | Game piece | What to look at | Links |
+|---|---|---|---|
+| FRC 254, 2022 | [Small balls](../small-balls.mdx) | Turret with an adjustable hood. | [Behind the Bumpers](https://www.youtube.com/watch?v=cKDmHCTDQW8) · [Tech binder](https://media.team254.com/2022/10/8f2407a5-Team_254_Tech_Binder_2022.pdf) |
+| FRC 6328, 2022 | [Small balls](../small-balls.mdx) | Hooded flywheel, plus a record of what broke and why. | [Open Alliance build thread](https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-2022-build-thread/398645) |
+| FRC 7285, 2022 | [Small balls](../small-balls.mdx) | Very accurate turret. | [Behind the Bumpers](https://www.youtube.com/watch?v=cQY9cBCExg4) |
+| FRC 4322, 2026 | [Small balls](../small-balls.mdx) | Trade-offs of a turret versus a double-barrel shooter. | [Open Alliance build thread](https://www.chiefdelphi.com/t/511196) |
+| FRC 4028, 2026 | [Small balls](../small-balls.mdx) | Double shooter. | [Behind the Bumpers](https://www.youtube.com/watch?v=cKtQ4_GqEaY) |
+| FRC 971, 2020 | [Small balls](../small-balls.mdx) | Turret with its own camera. | [Behind the Bumpers](https://www.youtube.com/watch?v=y45P0BkcLlk) |
+| FRC 6328, 2024 | [Rings & discs](../rings-discs.mdx) | Shooter prototypes compared; top and bottom rollers geared together. | [Open Alliance build thread](https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-2024-build-thread/442736) |
+| FRC 254, 2024 | [Rings & discs](../rings-discs.mdx) | Turreted note shooter. | [Tech binder](https://media.team254.com/2024/10/8f2607a0-2024-Tech-Binder.pdf) |
+| FRC 254, 2016 | [Large balls](../large-balls.mdx) | Turret shooter that stows to fit under the low bar. | [Robot page](https://www.team254.com/?p=10964) |
+| FRC 254, 2014 | [Large balls](../large-balls.mdx) | Catapult for a 25 in ball. | [Reveal thread](https://www.chiefdelphi.com/t/team-254-presents-barrage/135419) |
+| FRC 16, 2012 | [Small balls](../small-balls.mdx) | Catapult instead of a flywheel. | [Thread](https://www.chiefdelphi.com/forums/showthread.php?t=103876) |
+| FRC 469, 2010 | [Small balls](../small-balls.mdx) | Ball-holding roller and kicker. | [Robot photos](https://www.chiefdelphi.com/t/pic-las-guerillas-469-2010-robot/105326) |
+| FTC 18438, 2020-21 | [Rings & discs](../rings-discs.mdx) | Flywheel that squeezes rings against a curved wall; world record. | [Robot page](https://www.wolfpackmachina.com/ftc2020) |
+| FTC EMU Robotics, 2025-26 | [Small balls](../small-balls.mdx) | Hooded shooter. | [Build thread](https://www.chiefdelphi.com/t/emu-robotics-ftc/506276) |
+
+## More Reading
+
+- [Shooter designs from the 2008 season](https://www.chiefdelphi.com/t/shooter-designs-from-the-2008-overdrive-season/132409)
