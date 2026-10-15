@@ -1,7 +1,7 @@
 import React from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-// A game piece drawing with its key dimensions. Drawings in static/img/design/game-pieces share one scale.
+// A game piece drawing with its key dimensions. Each drawing is scaled to fit; lineup.svg compares them at one scale.
 export default function GamePiece({img, name, specs, source, sourceLabel = 'Official specs'}) {
   return (
     <div style={{display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', marginBottom: '1.5rem'}}>
