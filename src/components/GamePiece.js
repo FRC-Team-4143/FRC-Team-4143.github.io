@@ -2,7 +2,7 @@ import React from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
 // A game piece drawing with its key dimensions. Each drawing is scaled to fit; lineup.svg compares them at one scale.
-const PROGRAM_COLORS = {FRC: '#d8312b', FTC: '#f57e25'};
+const PROGRAM_COLORS = {FRC: '#0066b3', FTC: '#f57e25'};
 
 export default function GamePiece({img, name, specs, source, sourceLabel = 'Official specs', program = 'FRC'}) {
   return (
