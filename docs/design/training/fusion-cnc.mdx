@@ -1,0 +1,153 @@
+---
+title: Fusion 360 / CNC Mill
+sidebar_position: 5
+description: An introduction to machining, our CNC machines, and creating a CNC program in Fusion from an Onshape part.
+---
+
+This course walks through taking a part from Onshape to a program our CNC machines can run. For the detailed
+step-by-step references, see [CAM](../mechanical/cam) and [Machining](../mechanical/machining).
+
+:::danger Safety first
+Read [Shop Safety](../mechanical/machining/safety) before working on any machine.
+:::
+
+## What Is Machining?
+
+Machining is the art of precisely removing material from a larger piece. Machinists use lathes, milling machines,
+grinders, and saws to cut and shape metal, plastic, composites, and wood.
+
+- **CNC (Computer Numerical Control):** a computer program moves the machine.
+- **Manual machining:** a person moves the machine's controls.
+
+## Our Machines
+
+| Machine | Notes |
+|---|---|
+| Tormach PCNC 1100 mill | Cuts aluminum, wood, and smaller pieces of polycarbonate. |
+| FANUC CNC 40 taper mill (McBride & Shoff) | Has an automatic tool changer and can tap threads. |
+| Shapeoko 5 router (woodshop) | Cuts larger pieces of wood and polycarbonate. **Not aluminum.** |
+
+## Tools
+
+We mostly use **drills** and **endmills**. Look at the ends: a drill comes to a point, and an endmill is flat (or
+rounded, for a ball endmill) so it can cut sideways.
+
+| Tool | Use |
+|---|---|
+| 0.159" drill | 10-32 tap hole |
+| 0.201" drill | 1/4-20 tap hole, and 10-32 bolt clearance hole |
+| 1/8" endmill | Can be weak. Works well on polycarbonate. |
+| 1/4" endmill | Perfect for the Tormach. Cut less than 3/8" per pass. Use it to bore larger holes, like 1.125" bearing bores. |
+
+- Holes are easy to make bigger with a hand drill.
+- Peck drill if the material is thicker than 0.25".
+- Bigger machines can use bigger tools.
+
+See [Tools & Offsets](../mechanical/cam/tools) for the tool numbers on each machine.
+
+## Safety
+
+- **Eyes:** safety glasses.
+- **Ears:** hearing protection.
+- **Hands:** parts and tools are sharp, and tools spin fast.
+- Keep the doors closed and the guards on the machine.
+- Make sure everyone in the room is wearing eye and ear protection.
+- Keep the coolant in the machine.
+
+## Practice Part Workflow
+
+1. **Model the part in Onshape**, make a drawing of it, and print the drawing.
+2. **Export the part as a STEP file** (STEP for CNC, STL for 3D printing).
+3. **Open the STEP file in Fusion** with **Open from my computer**.
+4. **Switch the workspace to Manufacture.**
+5. **Create a setup** (see below), then add operations.
+6. **Post process** the setup to create the `.nc` program.
+
+:::tip Fix the mouse controls
+Fusion's mouse controls are different from Onshape's. Click your name in the upper right corner, open
+**Preferences**, and change **Pan, Zoom, Orbit** to **Tinkercad**.
+:::
+
+### Coordinates
+
+Fusion uses a right-hand coordinate system: **Z** is the tool direction, and **X** is usually the part's long axis.
+
+### Setup
+
+Go to **Setup > New Setup**.
+
+- **Stock:** set **Stock Offset** to **No Additional Stock**. The brown shaded box will disappear.
+- **Post Process:**
+    - **Program number:** the name of the Onshape part.
+    - **Program comment:** warnings or setup notes for whoever runs the program, who may not be familiar with it.
+    - **WCS offset:** which corner of the vise the part origin is at. **This is very important.**
+
+| G-code | WCS offset |
+|---|---|
+| G54 | 1 |
+| G55 | 2 |
+| G56 | 3 |
+| G57 | 4 |
+
+:::caution
+When turning on the machine, click **Ref Z**, then **Ref X** and **Ref Y**. Don't click the buttons under the
+electrical tape: they will mess up the G54 offsets.
+:::
+
+### Common Operations
+
+- **Drilling**
+- **2D Adaptive Clearing**
+- **2D Contour**
+- **Boring**
+
+#### Drill
+
+1. **Tool tab:** select the tool and check the speeds and feeds.
+2. **Geometry tab:** select the holes.
+3. **Heights tab:** select **Drill tip through bottom** and set **Break-through depth** to 0.1".
+
+#### Bore (2D > Bore)
+
+1. **Tool tab:** select the tool and check the speeds and feeds.
+2. **Geometry tab:** select the inner surface of the bore.
+3. **Heights tab:** set **Bottom Height** to -0.1".
+
+### Post Process
+
+Right click the **setup** and click **Post Process**, then select **Post** to save the `.nc` file to a USB drive.
+
+:::warning Common problem
+Right click the **setup**, not an operation. Otherwise you get a program with only one tool.
+:::
+
+| Machine | Post type |
+|---|---|
+| Woodshop router | Carbide 3D |
+| Tormach mill | Tormach PathPilot |
+| McBride & Shoff mill | Fanuc |
+
+### Running the Part
+
+Use the probe to find the part's location in the machine.
+
+:::danger
+Never let the spindle turn on while the probe is installed. It will wreck the probe's wires.
+:::
+
+The routers work similarly, except the part sits on the **positive side of the X and Y axes** and **Z zero is on top
+of the part**.
+
+## Pre-Run Checklist
+
+- Are the stock settings right?
+- Are the coordinates rotated correctly? (Z is the tool direction, X is the long axis.)
+- Does the zero point make sense?
+- Is the right WCS selected, and does it agree with the zero point and the machine?
+- Are the tool numbers correct, and do they agree with the machine's tool table?
+- Are the speeds and feeds reasonable? (About 5,000 RPM, under 20 in/min.)
+
+## Autodesk Student Account
+
+Create a free account at [autodesk.com/academic](https://autodesk.com/academic) (you may already have one). We'll link
+you to the team after the season starts. See [Fusion Sign-Up](../mechanical/cam/fusion-sign-up) for details.

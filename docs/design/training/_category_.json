@@ -1,0 +1,9 @@
+{
+  "label": "🎓 Training",
+  "position": 1.5,
+  "link": {
+    "type": "doc",
+    "id": "design/training/index"
+  },
+  "collapsed": true
+}
