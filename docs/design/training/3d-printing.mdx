@@ -2,15 +2,17 @@
 title: 3D Printing
 sidebar_position: 3
 description: How to take a part from Onshape to a finished print on the team's Bambu P1S printers.
+hide_table_of_contents: true
 ---
 
-In this training module, we will cover how to take a part from Onshape to a finished print on the team's 3D printers.
+In this training module, we will cover how to take a part from Onshape to a finished print on the team's Bambu P1S
+printers: exporting an STL, choosing a printer, orienting the part and deciding on supports, then slicing and printing.
 
 ---
 
 ## Presentation
 
-{/* TODO: embed the seminar slides here (Google Slides "Publish to web" embed or Canva embed), like the software training pages */}
+{/* TODO: embed the seminar slides here (Google Slides "Publish to web" embed), like the software training pages */}
 *Slides coming soon.*
 
 ---
@@ -20,73 +22,12 @@ In this training module, we will cover how to take a part from Onshape to a fini
 - Export a part you modeled in Onshape as an STL file.
 - Load it into Bambu Studio, choose a printer, orient it, and decide whether it needs supports.
 - Slice it, check the print plate for warnings or errors, and print it.
-
----
-
-## Types of 3D Printing
-
-There are three main types of 3D printing:
-
-| Type | Name | Used by our team? |
-|---|---|---|
-| FDM | Fused Deposition Modeling | ✅ Yes |
-| SLA | Stereolithography | No |
-| SLS | Selective Laser Sintering | No |
-
-We use **FDM** printers, specifically **Bambu P1S** printers. Our slicing software is **Bambu Studio**.
-
-## Step 1: Export from Onshape
-
-1. Right click the part in Onshape and click **Export**.
-2. Set the format to **STL**.
-
-Bambu Studio (the slicing software) can read STL files. It converts the part into code the printer can run.
-
-:::tip Which file type?
-Export **STL** files for 3D printing and **STEP** files for the CNC machines.
-:::
-
-## Step 2: Prepare the Print
-
-1. **Log in to Bambu Studio.** The login is on the whiteboard. If you aren't already logged in, get the code from
-   Mr. Stoecker.
-2. **Choose a printer.** Check:
-    - Is the printer already in use?
-    - Is the build plate clear?
-    - What color of filament is loaded?
-    - Is there enough filament for the print?
-    - Do you need multicolor? (See [AMS](#ams-automatic-material-system) below.)
-3. **Orient the part.** Use **Auto Orient** to find a good orientation, then check that it makes sense.
-4. **Check for supports.** Decide whether the part needs supports for overhangs.
-
-## Step 3: Slice and Print
-
-1. **Slice** the plate.
-2. **Check the actual print plate.** Make sure the parts look right and there are no warnings or errors.
-3. **Print the plate.**
-    - Leave **Bed Leveling** on.
-    - There is no need for a timelapse.
-
-## Helpful Tips
-
-- **Fillet all edges when possible.** It gives a more finished print and keeps parts from having sharp edges.
-- **Check the filament waste catcher** on the printer from time to time.
-- **Changing filament:** see [this video](https://youtu.be/DO314kLoVzc).
-
-{/* TODO: the seminar covers these topics in person; add written guidance for each:
-  - Does the part need more strength? (part failure, upgrading filament or printer)
-  - Do you need the part faster?
-  - There is a finished print on the printer I want to use / removing a print
-  - Printing multiple parts */}
-
-## AMS (Automatic Material System)
-
-The AMS holds multiple spools of filament and feeds them to the printer automatically. Use it for multicolor prints,
-or to switch filament without unloading spools by hand.
+    - For an extra challenge, fillet every edge, then print two parts on one plate.
 
 ---
 
 ## Related Documentation
 
-- [Materials](../design_guide/materials.mdx): Stock materials and hardware, including when to 3D print a part.
+- [3D Printing](../mechanical/3d_printing.mdx): Step-by-step guide from Onshape export to a finished print.
+- [Materials](../design_guide/materials.mdx): Stock materials and hardware, and our preferred manufacturing processes.
 - [Lightweighting](../design_guide/lightweighting.mdx): Techniques for removing weight without losing strength.

@@ -40,6 +40,12 @@ general [shop safety rules](./safety) first.
 
 :::
 
+While the mill is running:
+
+- Make sure everyone in the room is wearing **eye and ear protection**.
+- Keep the doors closed and the guards on the machine.
+- Keep the coolant in the machine.
+
 :::warning Gloves
 **Gloves must never be worn while the CNC mill is running** due to the risk of entanglement. Only put on gloves to
 handle parts once the spindle has come to a complete stop.
@@ -62,6 +68,11 @@ handle parts once the spindle has come to a complete stop.
 3. Press **Reference X & Y** and wait until motion stops.
 
 <img src={Reset} width="600" alt="Reset and reference buttons"/>
+
+:::caution
+Reference **Z** first, then **X & Y**. Don't press the buttons under the electrical tape: they will mess up the G54
+offsets.
+:::
 
 ## Program Setup
 
@@ -87,7 +98,12 @@ To begin, load the G-code file from a flash drive prepared by the Fusion program
 ## Securing Material
 
 {/* TODO: how to clamp stock in the vise, parallels, etc. */}
-*Coming soon.*
+
+Use the probe to find the part's location in the machine.
+
+:::danger
+Never let the spindle turn on while the probe is installed. It will wreck the probe's wires.
+:::
 
 ## Confirm Setup
 
