@@ -4,8 +4,12 @@ description: Moving many game pieces from the intake to the shooter one at a tim
 sidebar_position: 2
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 An indexer (also called a serializer, feeder, or hopper) stores game pieces and hands them to the next mechanism one
 at a time. Most jams happen here, so a simple, reliable indexer is worth more than a fast one that jams.
+
+<img src={useBaseUrl('/img/design/mechanisms/indexer.svg')} alt="Belt indexer carrying balls single file past a beam break sensor to the shooter" width="680"/>
 
 ## Principles
 
