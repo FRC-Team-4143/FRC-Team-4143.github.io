@@ -1,44 +1,36 @@
 ---
-title: Mechanism Reference
-description: Find proven mechanisms, Behind the Bumpers videos, and tech binders for each type of game piece.
+title: Design Reference
+description: Find proven mechanisms, Behind the Bumpers videos, and tech binders for each type of game piece and endgame.
 hide_table_of_contents: true
 sidebar_position: 1
 ---
 
 import DocCardList from '@theme/DocCardList';
-import useBaseUrl from '@docusaurus/useBaseUrl';
 
-# 🔎 Mechanism Reference
+# 🔎 Design Reference
 
-When a new game is released, the fastest way to start is to find past games with a similar game piece and study the
-robots that handled it best. Each page below covers one type of game piece, with the past games that used it, the
-teams worth studying, and links to their **Behind the Bumpers** videos, **tech binders**, and **CAD**.
+When a new game is released, the fastest way to start is to find past games with a similar task and study the robots
+that did it best. The reference has two groups:
 
-## Find a Game Piece
+- **Game Challenges** covers what past games asked robots to do: the game pieces they handled and the endgames they
+  climbed or balanced on.
+- **Common Mechanisms** covers how the mechanisms that do those jobs work, and which robots to study for each.
 
-| Game piece | FRC games | FTC games | Page |
-|---|---|---|---|
-| Small balls (fuel, power cells, cargo, artifacts) | 2006, 2009, 2010, 2012, 2017, 2020-21, 2022, 2026 | 2016-17, 2018-19, 2021-22, 2025-26 | [Small Balls](./small-balls.mdx) |
-| Large balls (boulders, cargo, algae, cap balls) | 2004, 2008, 2014, 2016, 2019, 2025 | 2016-17 | [Large Balls](./large-balls.mdx) |
-| Rings and discs (notes, hatch panels, gears, frisbees, pixels) | 2007, 2011, 2013, 2017, 2019, 2024 | 2020-21, 2023-24 | [Rings & Discs](./rings-discs.mdx) |
-| Boxes (cubes, totes, bins, glyphs, stones, samples) | 2003, 2015, 2018, 2023 | 2017-18, 2018-19, 2019-20, 2021-22, 2024-25 | [Boxes](./boxes.mdx) |
-| Cones and tetras | 2005, 2023 | 2022-23 | [Cones & Tetras](./cones.mdx) |
-| Tubes (coral, recycling containers) | 2015, 2025 | | [Tubes](./tubes.mdx) |
+Every page links to the teams' **Behind the Bumpers** videos, **tech binders**, and **CAD**.
 
-Every game piece is tagged **FRC** or **FTC**. FTC pieces are smaller, but the mechanisms that handle them work the
-same way, so they are a good source of ideas.
+## Game Challenges
 
-## Game Pieces at a Glance
+What the game asks the robot to do. Start here when a new game is released.
 
-Every FRC and FTC game piece on these pages, drawn to the same scale. Each page has a larger drawing of each piece with its
-dimensions.
+| Challenge | Page |
+|---|---|
+| Handling game pieces: balls, discs, boxes, cones, tubes | [Game Pieces](./game/pieces/index.mdx) |
+| Endgame: hanging, climbing, and balancing | [Endgame & Climbing](./game/endgame/index.mdx) |
 
-<img src={useBaseUrl('/img/design/game-pieces/lineup.svg')} alt="Game pieces from 2003 to 2026 drawn to the same scale"/>
-
-## Find a Mechanism
+## Common Mechanisms
 
 Each mechanism page explains the principles behind it and lists the robots to study, with links back to the game
-pieces they handled.
+pieces and endgames they were used for.
 
 | Mechanism | Page |
 |---|---|
@@ -48,6 +40,7 @@ pieces they handled.
 | Elevators and linear slides | [Elevators](./mechanisms/elevators.mdx) |
 | Arms, linkages, telescopes, wrists | [Arms & Wrists](./mechanisms/arms.mdx) |
 | Claws, roller grippers, suction | [Grabbers & End Effectors](./mechanisms/grabbers.mdx) |
+| Winches, hooks, telescoping and pivoting climbers | [Climbers](./mechanisms/climbers.mdx) |
 
 ## How to Use These References
 

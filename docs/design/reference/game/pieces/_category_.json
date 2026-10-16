@@ -1,0 +1,9 @@
+{
+  "label": "Game Pieces",
+  "position": 2,
+  "link": {
+    "type": "doc",
+    "id": "design/reference/game/pieces/index"
+  },
+  "collapsed": true
+}

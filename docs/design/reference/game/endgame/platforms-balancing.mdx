@@ -1,0 +1,84 @@
+---
+title: Platforms & Balancing
+description: Endgames where robots drive onto a platform, climb a step, lift partners, or balance a tilting station.
+sidebar_position: 4
+---
+
+import GamePiece from '@site/src/components/GamePiece';
+
+Some endgames ask robots to get on top of something instead of hanging from it: a raised platform, a ramp, or a
+platform that tips. Robots that do this well tend to have:
+
+- **A low, strong drivetrain** and bumpers that clear the edge of the platform.
+- **A way to lift the whole robot up a step**, such as legs or wheels that push down while the drivetrain drives
+  forward.
+- **Good driving or automatic balancing code** for tilting platforms, often using the gyro.
+
+## FRC 2023 Charged Up (charge station)
+
+<GamePiece
+  name="Charge station (2023)"
+  specs={[
+  ["Structure", "Hinged platform that tilts; about 8 ft wide"],
+  ["Auto", "Docked 8, Engaged (level) 12, one robot"],
+  ["Teleop", "Docked 6, Engaged 10 per robot"],
+  ]}
+  source="https://www.firstinspires.org/robotics/frc/game-and-season"
+  sourceLabel="FIRST game archive"
+/>
+
+Engaged means the station is level with every robot on it docked. Balancing three robots at once was common in
+playoffs. Most top teams balanced automatically with the gyro in auto.
+
+## FRC 2019 Destination: Deep Space (HAB platform)
+
+<GamePiece
+  name="HAB platform (2019)"
+  specs={[
+  ["Levels", "Three steps; Level 3 is 1 ft 1 in above Level 2 (about 19 in off the carpet)"],
+  ["Points", "Level 1 3, Level 2 6, Level 3 12"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2019/Manual/HTML/2019FRCGameSeasonManual.htm"
+  sourceLabel="Game manual"
+/>
+
+Getting a whole robot up a 19 in step took a lot of power. Common designs were legs that pushed the back of the robot
+up while a small wheel drove it forward, or a lifter that pulled the front up onto the platform. Some robots lifted
+partners onto Level 2 or 3.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Backlash" | A suction climber for Level 3; see the binder. | [Tech binder](https://media.team254.com/resources/Team_254_Tech_Binder_2019.pdf) |
+| 1540 Flaming Chickens, "Phineas" | Level 3 climb in under 10 seconds. | [Robot page](https://www.team1540.org/2019) |
+
+## FRC 2012 Rebound Rumble (bridges)
+
+Robots drove onto tipping bridges and balanced them. One robot scored 10 points and two or three scored 20 (more in
+playoffs). A white bridge in the middle paired robots from opposite alliances for ranking credit.
+
+## FRC 2007 Rack 'N' Roll (lifting partners)
+
+The whole endgame was a buddy lift. A robot raised at least 4 in off the carpet by a partner scored 15 points, and at
+least 12 in scored 30. Robots carried fold-out ramps or lifting wings.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Raptor" | Two fold-out ramps that lifted partners over 12 in. | [Season page](https://www.team254.com/first/2007/) |
+| 190 Gompei | Wings that lowered for partners, then lifted them 1 ft. | [Robot page](https://wp.wpi.edu/frc190/?p=53) |
+
+## FRC 2006 Aim High (ramp)
+
+Robots drove up a ramp onto their alliance platform. One robot scored 5 points, two scored 10, and three scored 25.
+
+:::info FTC
+FTC (FIRST Tech Challenge) robots are smaller, but they climb and balance the same ways. FTC teams share engineering portfolios and CAD instead of Behind the Bumpers videos. The [gm0 robot gallery](https://gm0.org/en/latest/docs/appendix/gallery.html) lists them by season.
+:::
+
+## FTC 2025-26 DECODE (base)
+
+Both robots end the match in an 18 in square base. Two robots can only fit if one lifts the other or climbs onto it,
+so the endgame is a lift: one robot pulls its partner up, or raises itself onto its partner.
+
+## FTC 2017-18 Relic Recovery (balancing stone)
+
+Robots ended the match balanced on their low balancing stone, the same platform they started on.

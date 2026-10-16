@@ -1,6 +1,10 @@
 {
-  "label": "Mechanisms",
-  "position": 10,
-  "link": {"type": "generated-index", "description": "How common mechanisms work, what makes them good, and which robots to study for each."},
+  "label": "Common Mechanisms",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "How common mechanisms work, what makes them good, and which robots to study for each.",
+    "slug": "/design/reference/mechanisms"
+  },
   "collapsed": false
 }
