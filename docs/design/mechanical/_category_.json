@@ -3,7 +3,7 @@
   "position": 3,
   "link": {
     "type": "generated-index",
-    "description": "Manufacturing guides for turning designs into robot parts: shop safety, machining, and CAM.",
+    "description": "Manufacturing guides for turning designs into robot parts: shop safety, machining, CAM, and 3D printing.",
     "slug": "/design/mechanical"
   },
   "collapsed": true
