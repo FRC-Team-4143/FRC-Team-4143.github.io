@@ -4,6 +4,9 @@ description: Winches, hooks, telescoping and pivoting climbers for endgame hangs
 sidebar_position: 7
 ---
 
+import RobotClips from '@site/src/components/RobotClips';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 A climber lifts the whole robot off the floor at the end of the match: onto a bar, up a rope or chain, or onto a
 platform. It carries the heaviest load on the robot (the full robot weight, plus a bit of swinging), only works for a
 few seconds, and has to hold on after the power is cut. The [Endgame & Climbing](../game/endgame/index.mdx) pages list
@@ -42,6 +45,28 @@ the past endgames it has to handle.
 - **Platform climber:** Legs or a lifter push the robot up a step, as in 2019.
 - **Partner lift:** Ramps, forks, or wings that lift partner robots (2007, 2010, 2018).
 - **Lead screw or rack and pinion (FTC):** Slow but strong, and doesn't back-drive, so it holds with the power off.
+
+## On Real Robots
+
+Short clips from the teams' own robot videos. Fast clips are slowed down. Each one links to the full video. The drawings
+show what each robot is climbing, with heights to scale.
+
+<div style={{display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem'}}>
+  <figure style={{margin: 0}}>
+    <img src={useBaseUrl('/img/design/game-pieces/2025-cage.svg')} alt="2025 cage, shallow and deep" width="220"/>
+    <figcaption style={{fontSize: '0.9rem'}}>[2025 cage](../game/endgame/ropes-chains-cages.mdx#frc-2025-reefscape-cages)</figcaption>
+  </figure>
+  <figure style={{margin: 0}}>
+    <img src={useBaseUrl('/img/design/game-pieces/2022-hangar.svg')} alt="2022 hangar rungs" width="220"/>
+    <figcaption style={{fontSize: '0.9rem'}}>[2022 hangar rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs)</figcaption>
+  </figure>
+</div>
+
+<RobotClips items={[
+  {clip: "climber-2910-2025", team: "2910 Jack in the Bot, 2025", program: "FRC", text: "A pivoting arm grabs the deep cage, then swings the robot up off the carpet. Slowed to 40%.", video: "https://www.youtube.com/watch?v=kfg6I2UIN_Q&t=60s"},
+  {clip: "climber-2910-2025-winch", team: "2910 Jack in the Bot, 2025", program: "FRC", text: "Close-up of the same climber pulling the cage down into the robot. Slowed to 50%.", video: "https://www.youtube.com/watch?v=kfg6I2UIN_Q&t=62s"},
+  {clip: "climber-125-2022", team: "125 NUTRONs, 2022", program: "FRC", text: "A traversal climb, swinging from rung to rung up the hangar.", video: "https://www.youtube.com/watch?v=O5ZSv-1vbJ8&t=319s"},
+]}/>
 
 ## Robots to Study
 
