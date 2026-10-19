@@ -1,9 +1,10 @@
 {
-    "label": "Machining",
-    "position": 1,
-    "link": {
-      "type": "generated-index",
-      "description": "Best practacices for machining."
-    },
-    "collapsed": true
-  }
+  "label": "Machining",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Safety and operating procedures for the machines in our shop.",
+    "slug": "/design/mechanical/machining"
+  },
+  "collapsed": true
+}

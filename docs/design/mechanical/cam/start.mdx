@@ -1,116 +1,105 @@
 ---
 title: Fusion Guide
-hide_table_of_contents: true
 sidebar_position: 1
 unlisted: true
-
 ---
-
-# Fusion Guide
-
-The following text will walk you through how to set up and generate G-Code from Fusion.
-If you do not have access to Fusion or the shared work space refer to [**Fusion Sign-Up**](https://frc-team-4143.github.io/docs/mechanical/fusion/fusion-sign-up)
-
-## Exporting from Onshape to Fusion 360
-
-- Right click the part in Onshape model or the part tree and click **Export**.
-
-<img src={onshape_export} width="1000"/>
-
-- Confirm the part has a descriptive name.
-    - Subassembly
-    - Part Name
-    - Date of Export
-- Format: Step
-- Option: Download
-<img src={onshape_download} width="400"/>
-
-- Navigate to Autodesk Fusion 360.
-- Open the Data Panel in the upper left corner.
-- Select the appropriate project folder (2026FRC4143).
-<img src={Upload_1} width="400"/>
-
-- Navigate to the desired subassembly folder.
-<img src={Upload_2} width="400"/>
-
-
-- Click the Upload button in the Data Panel.
-- Drag and drop the exported Step file into the upload window.
-- Once file is loaded Click Upload.
-- Once the file is uploaded, double click the part to open it in Fusion.
-<img src={Upload_3} width="400"/>
-
-## Fusion CAM Setup
-
-- Alight part in the Fusion workspace.
-    - identify the top, front, and right faces of the part.
-    - Cli
-    - Utilize the alight tool to set the orientation of the part onto the XY-plane.
-
-# pictures
-
-- Switch to the Manufacture workspace.
-    - Click the Setup dropdown and select New Setup.
-
-# pictures
-
-### Stock setup
-
-Set stock,
-Set origin point to,
-Set Work offset,
-Reference [Tools & Offsets](../cam/tools) for work offset locations.
-
-### Operations
-
-Determine Order of operations.
-
-Drilling
-Milling
-Parting
-
-#### Drilling
-
-- 
-
-# Drilling Picture 1 (Shows selection)
-
-# Drilling Picture 2 (Shows parameters)
-Pecking
-Reference [Torque Monitoring](../machining/milling_cnc#torque-monitoring) for work offset locations.
-
-# Drilling Picture 3 (Shows Depth)
-
-#### Boring
-
-#### Milling
-
-#### Parting
-
-# Contour Picture 1 (Shows selection)
-
-# contour Picture 2 (Shows parameters)
-
-# contour Picture 2 (Tabs??)
-
-### Validation
-
-Check toolpaths
-Simulate 
-
-
-
-### Post Process
-Confirm post processor
-Confirm operations
-Confirm work offset
-Confirm name
-Confirm save locations
-
-
 
 import onshape_download from '@site/static/img/mechanical/Fusion/Onshape_Download.png';
 import onshape_export from '@site/static/img/mechanical/Fusion/Onshape_Export.png';
 import Upload_1 from '@site/static/img/mechanical/Fusion/Upload_1.jpg';
 import Upload_2 from '@site/static/img/mechanical/Fusion/Upload_2.jpg';
 import Upload_3 from '@site/static/img/mechanical/Fusion/Upload_3.jpg';
+
+:::info Work in progress
+This page is still being written. Later sections are only outlines.
+:::
+
+This guide walks you through setting up a part and generating G-code in Fusion. If you do not have access to Fusion or
+the shared workspace, see [Fusion Sign-Up](./fusion-sign-up) first.
+
+## Exporting from Onshape to Fusion
+
+1. Right click the part in the Onshape model or part tree and click **Export**.
+
+    <img src={onshape_export} width="800" alt="Export option in Onshape"/>
+
+2. Confirm the part has a descriptive name (see [Naming Conventions](../../design_guide/naming)):
+    - Subassembly
+    - Part name
+    - Date of export
+3. Set **Format** to **STEP** and **Option** to **Download**.
+
+    <img src={onshape_download} width="400" alt="Onshape export dialog"/>
+
+4. Open Autodesk Fusion and open the **Data Panel** in the upper left corner.
+5. Select the season's project folder (for example, **2026FRC4143**).
+
+    <img src={Upload_1} width="400" alt="Fusion Data Panel project list"/>
+
+6. Navigate to the subassembly folder.
+
+    <img src={Upload_2} width="400" alt="Subassembly folder in the Data Panel"/>
+
+7. Click **Upload** in the Data Panel, drag the exported STEP file into the upload window, and click **Upload**.
+8. Once the file is uploaded, double click the part to open it in Fusion.
+
+    <img src={Upload_3} width="400" alt="Uploaded part in the Data Panel"/>
+
+## Fusion CAM Setup
+
+1. Align the part in the Fusion workspace.
+    - Identify the top, front, and right faces of the part.
+    - Use the **Align** tool to set the orientation of the part onto the XY plane.
+2. Switch to the **Manufacture** workspace.
+3. Click the **Setup** dropdown and select **New Setup**.
+
+{/* TODO: add screenshots for alignment and new setup */}
+
+### Stock Setup
+
+- Set the stock.
+- Set the origin point.
+- Set the work offset. See [Tools & Offsets](./tools#cnc-mill-work-offsets) for work offset locations.
+
+### Operations
+
+Determine the order of operations, typically:
+
+1. Drilling
+2. Milling
+3. Parting
+
+#### Drilling
+
+- Use pecking for deep holes.
+- See [Torque Monitoring](../machining/milling_cnc#torque-monitoring) for how to watch spindle load while drilling.
+
+{/* TODO: screenshots of drill selection, parameters, and depth */}
+
+#### Boring
+
+*Coming soon.*
+
+#### Milling
+
+*Coming soon.*
+
+#### Parting
+
+{/* TODO: screenshots of contour selection, parameters, and tabs */}
+*Coming soon.*
+
+### Validation
+
+- Check the toolpaths.
+- Simulate the program.
+
+### Post Process
+
+Before posting, confirm:
+
+- Post processor
+- Operations
+- Work offset
+- File name (see [Naming Conventions](../../design_guide/naming#g-code))
+- Save location
