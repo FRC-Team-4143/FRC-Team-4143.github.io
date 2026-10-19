@@ -1,0 +1,212 @@
+---
+title: Boxes
+description: Intakes, grabbers, elevators, and stackers for box game pieces like 2023 cubes, 2018 power cubes, and 2015 totes, plus FTC pieces.
+sidebar_position: 5
+---
+
+import GamePiece from '@site/src/components/GamePiece';
+
+Boxes have flat sides, so they can be squeezed between rollers or clamped, and some games ask robots to stack them.
+Robots that handle them well tend to have:
+
+- **A wide roller intake** that pulls the box in square to the robot, even from a corner.
+- **A light gripper on a fast elevator**, with the ground intake kept separate when possible.
+- **A way to square up the box** before lifting or stacking, so it doesn't slip or tip.
+
+## FRC 2023 Charged Up (cubes)
+
+<GamePiece
+  img="2023-cube"
+  name="Cube (2023)"
+  specs={[
+  ["Size", "9.5 in face to face, inflated"],
+  ["Material", "Inflatable fabric cube"],
+  ]}
+  source="https://www.andymark.com/products/frc-23-gp"
+  sourceLabel="Photos and specs (AndyMark)"
+/>
+
+The 2023 cube was soft and squishy, so the same teams that handled cones well are the ones to study. See
+[Cones](./cones.mdx#frc-2023-charged-up-cones-and-cubes) for the full robot list.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 2910 Jack in the Bot, "Phantom" | Two-stage telescoping arm; picks up both pieces from ground and shelf. | [Behind the Bumpers](https://www.youtube.com/watch?v=7ETEf__nD1I) · [CAD & tech binder](https://www.chiefdelphi.com/t/2910-cad-and-tech-binder-release-2023/436653) |
+| 971 Spartan Robotics | Double-jointed arm with a wrist; the elbow is driven by a steel-cable capstan. | [Behind the Bumpers](https://www.youtube.com/watch?v=C6u5Q_go_4o) · [CAD & docs](https://www.chiefdelphi.com/t/971-cad-release-2022-and-2023/444741) |
+| 254 Cheesy Poofs, "Breakdown" | Fast elevator plus a horizontal slide carrying the gripper, and a cube ground intake. | [Tech binder & code](https://www.chiefdelphi.com/t/team-254-presents-2023-breakdown-technical-binder-code-q-a/443167) · [Season page](https://www.team254.com/first/2023/) |
+| 118 Robonauts | Sponge intake and hidden suction for both pieces. | [Behind the Bumpers](https://www.youtube.com/watch?v=bPuOgj_urzc) · [Tech binder](https://www.chiefdelphi.com/uploads/short-url/qs6ES4Gf0ooMld0qfMMd9BbNxbA.pdf) |
+| 2056 OP Robotics | Shoulder arm counterbalanced with gas springs. | [Behind the Bumpers](https://www.youtube.com/watch?v=IfX5bYZahtg) · [Tech binder](https://www.chiefdelphi.com/t/team-2056-op-robotics-technical-binder-release/437553) |
+
+## FRC 2018 FIRST Power Up (power cubes)
+
+<GamePiece
+  img="2018-power-cube"
+  name="Power Cube (2018)"
+  specs={[
+  ["Size", "13 in wide x 13 in deep x 11 in tall"],
+  ["Weight", "About 3.25 lb"],
+  ["Material", "Plastic crate in a nylon cover"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2018/Manual/HTML/2018FRCGameSeasonManual.htm"
+  sourceLabel="Game manual"
+/>
+
+Behind the Bumpers didn't cover 2018 robots, so use the teams' own releases.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Lockdown" | Undefeated champions. Fast elevator carrying the intake and wrist. | [Tech binder](https://www.chiefdelphi.com/t/team-254-presents-lockdown-technical-binder-2018/166515) · [Robot page](https://www.team254.com/?p=13496) |
+| 2910 Jack in the Bot | Ground intake separate from a very light elevator gripper for faster cycles. | [CAD](https://www.chiefdelphi.com/t/pic-2910-cad-release-2018/167095) |
+| 1678 Citrus Circuits | | [CAD (GrabCAD)](https://grabcad.com/citrus.circuits-1/models) |
+| 118 Robonauts | Roller claw on the elevator. | [Robot video](https://www.chiefdelphi.com/t/the-robonauts-118-2018-video/163677) |
+
+## FRC 2015 Recycle Rush (totes)
+
+<GamePiece
+  img="2015-tote"
+  name="Tote (2015)"
+  specs={[
+  ["Size", "26.9 in long x 16.9 in wide x 12.1 in tall"],
+  ["Weight", "About 7.8 lb"],
+  ["Material", "Plastic tote (gray, and yellow for the step)"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frcarchive/2015-game-manual.pdf"
+  sourceLabel="Game manual"
+/>
+
+Behind the Bumpers didn't exist yet for this game, so use reveal videos, Chief Delphi threads, and team pages.
+
+Robots stacked up to six totes and topped them with a recycling container ([Tubes](./tubes.mdx#frc-2015-recycle-rush-recycling-containers)).
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Deadlift" | Internal tote stacker fed from the human player station, with a container grabber on top. | [Reveal thread](https://www.chiefdelphi.com/t/team-254-presents-deadlift/142763) · [Season page](https://www.team254.com/first/2015/) |
+| 1114 Simbotics, "SideSwipe" | Tote stacking with a side-loading intake. | [Reveal thread](https://www.chiefdelphi.com/t/team-1114-simbot-sideswipe/142716) |
+| 118 Robonauts | Stack-building elevator with an intake for totes on the floor. | [Robot video](https://www.youtube.com/watch?v=C-fA0YxxvnU) · [Thread](https://www.chiefdelphi.com/t/the-robonauts-118-2015-video/142249) |
+| 148 Robowranglers, "Batman & Robin" | A stacker plus a separate small robot that grabbed containers. | [Reveal thread](https://www.chiefdelphi.com/t/robowranglers-2015-batman-robin/141997) |
+
+## FRC 2003 Stack Attack (storage bins)
+
+<GamePiece
+  img="2003-bin"
+  name="Storage bin (2003)"
+  specs={[
+  ["Size", "24.25 in x 17.25 in x 15.75 in tall"],
+  ["Material", "73 qt plastic storage bin"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frcarchive/2003-game-manual.pdf"
+  sourceLabel="Game manual"
+/>
+
+Robots pushed, knocked down, and stacked plastic bins on a ramped field. There are few online write-ups, but the game manual shows the bins and the scoring rules.
+
+:::info FTC
+FTC (FIRST Tech Challenge) robots are smaller, and so are the game pieces, but the mechanisms work the same way. FTC teams share engineering portfolios and CAD instead of Behind the Bumpers videos. The [gm0 robot gallery](https://gm0.org/en/latest/docs/appendix/gallery.html) lists them by season.
+:::
+
+## FTC 2024-25 Into the Deep (samples)
+
+<GamePiece
+  program="FTC"
+  img="ftc-2024-sample"
+  name="Sample (2024-25)"
+  specs={[
+  ["Size", "3.5 in x 1.5 in x 1.5 in"],
+  ["Material", "Plastic, red, blue, or yellow"],
+  ["Specimen", "A sample with a 2.5 in clip attached"],
+  ]}
+  source="https://firstinspires.blob.core.windows.net/ftc/2024-25/Competition-Manual.pdf"
+  sourceLabel="Game manual"
+/>
+
+| Team | What to look at | Links |
+|---|---|---|
+| 11260 | 10-specimen autonomous at worlds; vision-based sample pickup. | [Robot page](https://www.team11260.org/robots/Into-the-Deep-robot) |
+| 11212 The Clueless |  | [Robot page](https://www.thecluelessftc.org/our-robots/into-the-deep) |
+| 12736 Electric Mayhem |  | [Build thread](https://www.chiefdelphi.com/t/12736-electric-mayhem-green-2024-25-build-thread/470647) |
+
+## FTC 2021-22 Freight Frenzy (freight boxes)
+
+<GamePiece
+  program="FTC"
+  img="ftc-2021-freight"
+  name="Freight box (2021-22)"
+  specs={[
+  ["Size", "2 in cube"],
+  ["Weight", "0.9 oz, 3.3 oz, or 4.78 oz"],
+  ["Material", "Plastic"],
+  ]}
+  source="https://docs.revrobotics.com/ftc-kickoff-concepts/freight-frenzy-2021-2022/game-piece"
+  sourceLabel="Specs (REV)"
+/>
+
+See the robots on [Small Balls](./small-balls.mdx#ftc-2021-22-freight-frenzy-cargo-balls). The same intakes took boxes and balls.
+
+## FTC 2019-20 Skystone (stones)
+
+<GamePiece
+  program="FTC"
+  img="ftc-2019-stone"
+  name="Stone (2019-20)"
+  specs={[
+  ["Size", "8 in x 4 in x 5 in tall"],
+  ["Weight", "About 0.375 lb"],
+  ["Material", "Hollow yellow plastic brick"],
+  ]}
+  source="https://www.ftcpenn.org/wp-content/uploads/2019-2020-game-manual-part-2.pdf"
+  sourceLabel="Game manual"
+/>
+
+Robots stacked bricks into tall towers, so it is a good reference for grippers on a lift, like FRC 2015 totes.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 7244 Out of the Box | Five-stage lift with a virtual four-bar. | [Robot write-up](https://www.coroflot.com/LanderHolsinger/FIRST-FTC-Robotics-Team-7244-Out-of-the-Box-Robotics-Skystone-Challenge-2019-2020) |
+| 8644 Brainstormers |  | [Reveal](https://www.youtube.com/watch?v=yYkN1FEluzc) |
+| 9929 |  | [Design notes](https://ftc9929.com/2019-2020-skystone/) |
+
+## FTC 2018-19 Rover Ruckus (gold minerals)
+
+<GamePiece
+  program="FTC"
+  img="ftc-2018-gold"
+  name="Gold mineral (2018-19)"
+  specs={[
+  ["Size", "About 2 in cube"],
+  ["Material", "Yellow plastic"],
+  ]}
+  source="https://www.chiefdelphi.com/t/mineral-dimesions-for-ftc-rover-ruckus/345043"
+  sourceLabel="Dimensions (forum)"
+/>
+
+See the robots on [Small Balls](./small-balls.mdx#ftc-2018-19-rover-ruckus-silver-minerals).
+
+## FTC 2017-18 Relic Recovery (glyphs)
+
+<GamePiece
+  program="FTC"
+  img="ftc-2017-glyph"
+  name="Glyph (2017-18)"
+  specs={[
+  ["Size", "6 in cube"],
+  ["Weight", "About 0.3 lb"],
+  ["Material", "Foam, gray or brown"],
+  ]}
+  source="https://andymark.com/products/6-inch-x-6-inch-gray-foam-cube"
+  sourceLabel="Photos and specs (AndyMark)"
+/>
+
+Soft cubes stacked in a grid, much like FRC 2018 power cubes at a smaller size.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 11115 Gluten Free |  | [Reveal](https://www.youtube.com/watch?v=joYmD3EpRHw) |
+| 7161 Hydra |  | [Reveal](https://www.youtube.com/watch?v=n2pOXsQN7-s) |
+| 7588 | Wheel-and-finger glyph intake. | [Robot write-up](https://ftc7588.com/robot/relic-recovery-robot/) |
+
+## More Reading
+
+- [Best Power Up intakes](https://www.chiefdelphi.com/t/best-power-up-intakes/164454)
+- [Power Up top robots and design lessons](https://www.chiefdelphi.com/t/frc-throwback-series-decoding-the-strategy-of-power-up-2018-top-3-robots-key-design-lessons/507677)
+- [FIRST guide to extenders, lifts, and reach](https://www.firstinspires.org/hubfs/lms/frc-guided-experience/m2/l4-extenders-lift-reach-climb-pdf.pdf?hsLang=en)
+- [A Recycle Rush reflection](https://www.chiefdelphi.com/t/a-recycle-rush-reflection/143576)

@@ -1,0 +1,60 @@
+---
+title: 3D Printing
+sidebar_position: 3
+description: How to take a part from Onshape to a finished print on the team's Bambu P1S printers.
+---
+
+We print robot parts on **Bambu P1S** printers, which are **FDM** (Fused Deposition Modeling) printers: they melt
+plastic filament and lay it down one layer at a time. Our slicing software is **Bambu Studio**.
+
+| Type | Name | Used by our team? |
+|---|---|---|
+| FDM | Fused Deposition Modeling | ✅ Yes |
+| SLA | Stereolithography | No |
+| SLS | Selective Laser Sintering | No |
+
+## Export from Onshape
+
+1. Right click the part in Onshape and click **Export**.
+2. Set the format to **STL**.
+
+Bambu Studio can read STL files. Slicing converts the part into layers and writes the code the printer runs.
+
+:::tip Which file type?
+Export **STL** files for 3D printing and **STEP** files for the CNC machines.
+:::
+
+## Prepare the Print
+
+1. **Log in to Bambu Studio.** The login is on the whiteboard. If you aren't already logged in, get the code from
+   Mr. Stoecker.
+2. **Choose a printer.** Check:
+    - Is the printer already in use?
+    - Is the build plate clear?
+    - What color of filament is loaded?
+    - Is there enough filament for the print?
+    - Do you need multicolor? (See [AMS](#ams-automatic-material-system) below.)
+3. **Orient the part.** Use **Auto Orient** to find a good orientation, then check that it makes sense.
+4. **Check for supports.** Decide whether the part needs supports for overhangs.
+
+## Slice and Print
+
+1. **Slice** the plate.
+2. **Check the actual print plate.** Make sure the parts look right and there are no warnings or errors.
+3. **Print the plate.**
+    - Leave **Bed Leveling** on.
+    - There is no need for a timelapse.
+
+## Helpful Tips
+
+- **Need more strength?** If a part fails, try a stronger filament or a better printer.
+- **Need it faster?** Ask a design lead before changing print settings.
+- **Finished print on the printer?** Remove it before starting your print.
+- **Fillet all edges when possible.** It gives a more finished print and keeps parts from having sharp edges.
+- **Check the filament waste catcher** on the printer from time to time.
+- **Changing filament:** see [this video](https://youtu.be/DO314kLoVzc).
+
+## AMS (Automatic Material System)
+
+The AMS holds four spools of filament and feeds them to the printer automatically. Use it for multicolor prints, or to
+switch filament without unloading spools by hand.

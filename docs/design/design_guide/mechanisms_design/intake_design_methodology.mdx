@@ -1,0 +1,52 @@
+---
+title: Intake Design Methodology
+hide_table_of_contents: true
+sidebar_position: 1
+unlisted: true
+---
+
+:::info Work in progress
+This page is still being written. Some sections are only outlines.
+:::
+
+An important part of every FRC season is taking possession of game pieces efficiently and reliably. The intake is
+responsible for grabbing game pieces from the field and delivering them to other subsystems, such as shooters or
+manipulators. A well-designed intake must quickly and consistently gain control of the game piece.
+
+## Key Questions
+
+When designing an intake, consider the following:
+
+1. **What are the game piece's size, shape, and possible orientations?**
+2. **What orientation should the game piece end up in?**
+    - Reduce the number of possible output orientations.
+    - Avoid areas where the game piece can get stuck.
+3. **How does the game piece get handed off to the next subsystem?**
+
+## Design Tips
+
+- Maximize the intake area.
+- Roller surface speed should be at least 2x the robot's max speed.
+- Grip
+    - Normal forces
+    - Rigid parts with compliant wheels, or compliant parts with rigid wheels.
+- Build it robust.
+- Sensors
+    - Place one close to the intake point, where the game piece is first in possession.
+    - Place one at any staging location.
+
+## Geometry & Spacing Rules
+
+{/* TODO */}
+*Coming soon.*
+
+## Intake Types
+
+### Roller Intake
+
+{/* TODO: over vs. under bumper */}
+*Coming soon.*
+
+### Claw Intake (Least Preferable)
+
+*Coming soon.*
