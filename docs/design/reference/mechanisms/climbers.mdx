@@ -48,25 +48,81 @@ the past endgames it has to handle.
 
 ## On Real Robots
 
-Short clips from the teams' own robot videos. Fast clips are slowed down. Each one links to the full video. The drawings
-show what each robot is climbing, with heights to scale.
+Short clips from the teams' own robot videos. Fast clips are slowed down. Each one links to the full video. Where a
+drawing is shown, it is the element those robots are climbing, to scale.
 
-<div style={{display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem'}}>
-  <figure style={{margin: 0}}>
-    <img src={useBaseUrl('/img/design/game-pieces/2025-cage.svg')} alt="2025 cage, shallow and deep" width="440" style={{maxWidth: '100%', height: 'auto'}}/>
-    <figcaption style={{fontSize: '0.9rem'}}>[2025 cage](../game/endgame/ropes-chains-cages.mdx#frc-2025-reefscape-cages)</figcaption>
-  </figure>
-  <figure style={{margin: 0}}>
-    <img src={useBaseUrl('/img/design/game-pieces/2022-hangar.svg')} alt="2022 hangar rungs" width="440" style={{maxWidth: '100%', height: 'auto'}}/>
-    <figcaption style={{fontSize: '0.9rem'}}>[2022 hangar rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs)</figcaption>
-  </figure>
-</div>
+### Telescoping hook and winch
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2020-switch.svg')} alt="2020 generator switch rung" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2020 generator switch rung](../game/endgame/bars-rungs.mdx#frc-2020-21-infinite-recharge-generator-switch)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-118-2020", team: "118 Robonauts (Everybot), 2020", program: "FRC", text: "The robot drives under the bar and raises its telescoping hook, then the winch lifts it off the carpet. Slowed to 75%.", video: "https://www.youtube.com/watch?v=wDA8nOZNZl0&t=2s"},
+  {clip: "climber-3940-2021", team: "3940 CyberTooth, 2021", program: "FRC", text: "The telescoping tubes hook the bar and the winch pulls the robot up until it hangs. From AndyMark's Climber in a Box video. Slowed to 50%.", video: "https://www.youtube.com/watch?v=iZadt9wJaOo&t=3s"},
+]}/>
+
+### Pivoting arms (traversal)
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2022-hangar.svg')} alt="2022 hangar rungs" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2022 hangar rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-4678-2022", team: "4678 CyberCavs, 2022", program: "FRC", text: "From below: the arms reach past the robot to the next rung and swing it up the hangar. Slowed to 65%.", video: "https://www.youtube.com/watch?v=5TKfQRUCvfU&t=70s"},
+  {clip: "climber-95-2022", team: "95 The Grasshoppers, 2022", program: "FRC", text: "The robot hangs from one rung, then its arms rotate and swing it up to the next. Slowed to 65%.", video: "https://www.youtube.com/watch?v=AjusytfI2v8&t=9s"},
+  {clip: "climber-3512-2022", team: "3512 Spartatroniks, 2022", program: "FRC", text: "Side view of the climber pulling the robot onto a rung and reaching for the next one. Slowed to 80%.", video: "https://www.youtube.com/watch?v=DcHyjyN49f4&t=6s"},
+]}/>
+
+### Cage grabber
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2025-cage.svg')} alt="2025 cage, shallow and deep" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2025 cage, shallow and deep](../game/endgame/ropes-chains-cages.mdx#frc-2025-reefscape-cages)</figcaption>
+</figure>
 
 <RobotClips items={[
   {clip: "climber-2910-2025", team: "2910 Jack in the Bot, 2025", program: "FRC", text: "A pivoting arm grabs the deep cage, then swings the robot up off the carpet. Slowed to 40%.", video: "https://www.youtube.com/watch?v=kfg6I2UIN_Q&t=60s"},
   {clip: "climber-2910-2025-winch", team: "2910 Jack in the Bot, 2025", program: "FRC", text: "Close-up of the same climber pulling the cage down into the robot. Slowed to 50%.", video: "https://www.youtube.com/watch?v=kfg6I2UIN_Q&t=62s"},
-  {clip: "climber-125-2022", team: "125 NUTRONs, 2022", program: "FRC", text: "A traversal climb, swinging from rung to rung up the hangar.", video: "https://www.youtube.com/watch?v=O5ZSv-1vbJ8&t=319s"},
+  {clip: "climber-118-2025", team: "118 Robonauts, 2025", program: "FRC", text: "Low close-up of the deep cage being pulled into the climber as the robot tilts up off the floor. Slowed to 45%.", video: "https://www.youtube.com/watch?v=ndos8iP0w88&t=73s"},
+  {clip: "climber-6147-2025", team: "6147 Tonkabots, 2025", program: "FRC", text: "The climber grabs the deep cage and lifts until the bumpers are off the carpet. Slowed to 60%.", video: "https://www.youtube.com/watch?v=05bOogPJtao&t=6s"},
 ]}/>
+
+### Rope spool
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2017-rope.svg')} alt="2017 rope and touchpad" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2017 rope and touchpad](../game/endgame/ropes-chains-cages.mdx#frc-2017-steamworks-rope)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-4027-2017", team: "4027 Centre County 4-H Robotics, 2017", program: "FRC", text: "Close-up of the drum catching the rope and winding it up, tipping the robot off the floor. Slowed to 80%.", video: "https://www.youtube.com/watch?v=OZXehhG5c38&t=8s"},
+  {clip: "climber-967-2017", team: "967 Iron Lions, 2017", program: "FRC", text: "From above: the spool grabs the hanging rope and the robot climbs up it. Slowed to 75%.", video: "https://www.youtube.com/watch?v=MaA1y5ipxuI&t=10s"},
+  {clip: "climber-291-2017", team: "291 CIA, 2017", program: "FRC", text: "Close side view of the robot winding itself up the rope. Slowed to 60%.", video: "https://www.youtube.com/watch?v=kycRN3_B-xM&t=21s"},
+]}/>
+
+### Platform climber
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2019-hab.svg')} alt="2019 HAB platform" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2019 HAB platform](../game/endgame/platforms-balancing.mdx#frc-2019-destination-deep-space-hab-platform)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-3663-2019", team: "3663 CPR, 2019", program: "FRC", text: "Legs push down to lift the robot level with the step, then it drives onto the platform.", video: "https://www.youtube.com/watch?v=BpWD-6JHyg0"},
+  {clip: "climber-95-2019", team: "95 The Grasshoppers, 2019", program: "FRC", text: "The rear lifter and front arm raise the whole robot up beside the Level 3 platform. Slowed to 80%.", video: "https://www.youtube.com/watch?v=eidJl6UZxuM&t=20s"},
+  {clip: "climber-2200-2019", team: "2200 MMRambotics, 2019", program: "FRC", text: "An arm swings onto the platform while a rear leg pushes down, lifting the robot onto the HAB. Slowed to 75%.", video: "https://www.youtube.com/watch?v=lXnmLkgmGpM&t=5s"},
+]}/>
+
+### Partner lift
+
+<RobotClips items={[
+  {clip: "climber-857-2018", team: "857 Superior Roboworks, 2018", program: "FRC", text: "A partner drives up the folded-down ramp, then the ramp lifts it off the floor. Slowed to 75%.", video: "https://www.youtube.com/watch?v=C7BcNJRj9n8"},
+  {clip: "climber-2910-2019", team: "2910 Jack in the Bot, 2019", program: "FRC", text: "Shop test of a double climb: 2910 lifts a partner robot (red bumpers) up with it. Slowed to 80%.", video: "https://www.youtube.com/watch?v=ab324lFSLMA"},
+]}/>
+
 
 ## Robots to Study
 
