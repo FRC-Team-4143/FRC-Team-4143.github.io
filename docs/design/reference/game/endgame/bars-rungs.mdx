@@ -9,7 +9,7 @@ import GamePiece from '@site/src/components/GamePiece';
 A fixed bar or a ladder of rungs is the most common endgame. Robots that climb them well tend to have:
 
 - **Hooks that are hard to miss.** A wide opening with a lead-in, sized for the bar (1.66 in outside diameter for the
-  1¼ in pipe used in 2018, 2020, and 2022), and often a spring latch so the hook can't come off.
+  1¼ in pipe used in 2020, 2022, and 2026), and often a spring latch so the hook can't come off.
 - **A strong winch or elevator that holds with the power off**, using a ratchet or brake.
 - **A plan for the center of gravity.** The robot hangs below its hooks, so it swings and tips unless the hook sits
   above the center of gravity or something braces against the structure.
@@ -18,10 +18,12 @@ A fixed bar or a ladder of rungs is the most common endgame. Robots that climb t
 
 <GamePiece
   img="2026-tower"
+  imgWidth={440}
   name="Tower rungs (2026)"
   specs={[
   ["Rung heights", "27 in, 45 in, and 63 in to the rung centers"],
   ["Spacing", "18 in center to center"],
+  ["Uprights", "72.1 in tall, 32¼ in apart; rungs stick out 5⅞ in past each upright"],
   ["Level 1", "Off the carpet and tower base: 15 points in auto (2 robots per alliance), 10 in teleop"],
   ["Level 2", "Bumpers fully above the low rung: 20 points"],
   ["Level 3", "Bumpers fully above the mid rung: 30 points"],
@@ -42,10 +44,12 @@ Robots climb a ladder-like tower, and a robot only scores its highest level. Lev
 
 <GamePiece
   img="2022-hangar"
+  imgWidth={440}
   name="Hangar rungs (2022)"
   specs={[
   ["Rung", "1¼ in Schedule 40 steel pipe, 1.66 in outside diameter"],
   ["Rung tops", "Low 4 ft ¾ in, Mid 5 ft ¼ in, High 6 ft 3⅝ in, Traversal 7 ft 7 in"],
+  ["Spacing", "Low to Mid 3 ft 6 in, Mid to High 2 ft, High to Traversal 2 ft (center to center, horizontal)"],
   ["Points", "Low 4, Mid 6, High 10, Traversal 15"],
   ]}
   source="https://firstfrc.blob.core.windows.net/frc2022/Manual/Sections/2022FRCGameManual-05.pdf"
@@ -67,6 +71,7 @@ part.
 
 <GamePiece
   img="2020-switch"
+  imgWidth={440}
   name="Generator switch rung (2020)"
   specs={[
   ["Rung", "1¼ in Schedule 40 aluminum pipe, 1.66 in outside diameter"],
@@ -85,9 +90,10 @@ also hang off a partner.
 
 <GamePiece
   img="2018-scale-rung"
+  imgWidth={440}
   name="Scale rung (2018)"
   specs={[
-  ["Rung", "1¼ in Schedule 40 aluminum pipe, 1.66 in outside diameter, about 13 in long"],
+  ["Rung", "1 in Schedule 40 aluminum pipe, 1 ft 1 in long, about 8 in out from the scale"],
   ["Height", "Top of the rung 7 ft above the carpet"],
   ["Points", "Climb 30, Park 5"],
   ]}
