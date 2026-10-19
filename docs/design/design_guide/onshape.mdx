@@ -1,0 +1,93 @@
+---
+title: Onshape Practices
+sidebar_position: 0.5
+description: How we structure, version, and model robots in Onshape, and how to check a design with calculations.
+---
+
+We design our robots in [Onshape](https://www.onshape.com/). These are the practices we follow so that everyone can
+find, understand, and modify each other's work. They build on the
+[FRCDesign learning course](https://frcdesign.org/learning-course/).
+
+## Assembly Structure
+
+- The **topbot** (top-level robot assembly) contains **subassemblies only**, such as Drivetrain, Shooter, and Intake.
+- Make a **new document for each subassembly**.
+- Don't add loose parts to the topbot. Add them to the right subassembly instead.
+- Keep mate connectors in the topbot to a minimum: about one per subassembly.
+
+:::tip Example
+Team 1678 (Citrus Circuits) keeps each subassembly in a separate document with one mate connector in the topbot for
+each subassembly.
+:::
+
+## Versions
+
+- Create versions in the subassembly, then update the version in the topbot.
+- Name your versions so others know what changed.
+- When starting a major redesign, start a branch in the version tree.
+
+## Modeling Best Practices
+
+- **Use what FRCDesign taught you:** master sketches, and the featurescripts for belt and chain center distances.
+- **Master sketches:** use the **Derived** feature to insert sketches from a master sketch document into other
+  documents (covered in FRCDesign unit 1D).
+- **Avoid in-context design.** It becomes difficult to modify as the model gets more complicated.
+- **Keep Onshape fast:** part studios under 250 features and under 20 parts, and limit the number of mates in
+  assemblies.
+- **Name your sketches and parts, and assign materials.** This is something we need to improve on. See
+  [Naming Conventions](./naming.mdx).
+
+## Drawings
+
+Make drawings for parts that are made manually (not CNC milled or 3D printed). A drawing shows the dimensions and views
+someone needs to make the part. Use the standard drawing template from Onshape.
+
+## Week 1 Concepts with KrayonCAD
+
+In week 1 of build season we create robot concepts. Use **KrayonCAD**, available in the FRCDesign Inserter (formerly
+MKCAD). It contains simplified mechanisms for claiming space: insert them into an assembly and mate them together.
+
+## Design Calculations
+
+### Onshape Featurescripts
+
+Insert the **Origin Cube** as the first feature in a part studio to add useful featurescripts:
+
+- **Belt center distance** and belt pulley pitch diameter. Check that we have the belt, or that we can order it.
+- **Chain center distance** and sprocket pitch diameter. Use an even number of links only.
+
+### ReCalc
+
+[ReCalc](https://www.reca.lc/) is a website with common FRC calculators. Use it as the first choice for
+calculations.
+
+- Belt and chain center distances.
+- Performance calculations for arms, elevators, and intakes, to pick motors and gear ratios. For example, the 2022
+  robot's arm took about 0.3 seconds to rotate 90 degrees.
+
+:::tip Share your calcs
+After doing a calculation, paste the ReCalc link into a comment in the Onshape model so anyone can review it. Paste a
+new link any time the calculation changes.
+:::
+
+## Before Modeling a New Part
+
+> "I should have thought of that before I started!" - former MARS/WARS student
+
+Answer these questions before you start modeling:
+
+- What does the part need to do?
+- What forces are on it?
+- What other parts does it interface with?
+- How will the part be made? (CNC mill, CNC router, 3D printer, lathe, etc.)
+- What material will be used? Do we have the material? See [Materials](./materials.mdx).
+- What is the best way to model the part? Where should the origin go?
+- Are there features from other parts that should be referenced?
+
+## Iterating
+
+We design many concepts, and many won't get built. Don't get frustrated: we learned something, and the next version
+will be better.
+
+After many iterations, a model can get messy and difficult to modify. Sometimes it is easier to start fresh with a new
+model.

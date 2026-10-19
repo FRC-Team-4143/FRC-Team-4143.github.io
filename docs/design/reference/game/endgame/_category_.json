@@ -1,0 +1,9 @@
+{
+  "label": "Endgame & Climbing",
+  "position": 3,
+  "link": {
+    "type": "doc",
+    "id": "design/reference/game/endgame/index"
+  },
+  "collapsed": true
+}

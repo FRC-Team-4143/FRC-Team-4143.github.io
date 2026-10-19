@@ -1,0 +1,91 @@
+---
+title: Ropes, Chains & Cages
+description: Endgames where robots climb something that moves or sags, like the 2017 rope, 2024 stage chain, and 2025 cages.
+sidebar_position: 3
+---
+
+import GamePiece from '@site/src/components/GamePiece';
+
+A rope, chain, or hanging cage moves when the robot touches it, so it is harder to grab than a fixed bar. Robots that
+climb them well tend to have:
+
+- **A grabber that centers itself** on a moving target: a funnel, a V-shaped hook, or a clamp that closes on contact.
+- **Something that braces against the structure** (rollers or a bumper) so the robot doesn't swing or twist as it
+  lifts.
+- **A fast winch or elevator that holds with the power off.**
+
+## FRC 2025 Reefscape (cages)
+
+<GamePiece
+  img="2025-cage"
+  imgWidth={440}
+  name="Cage (2025)"
+  specs={[
+  ["Structure", "A cage hanging from the barge truss; the team picks the shallow or deep position"],
+  ["Cage", "2 ft tall, 7⅜ in wide, four 1 in Schedule 40 steel pipes"],
+  ["Cage bottom", "2 ft 6⅛ in above the carpet (shallow) or 3⅛ in (deep)"],
+  ["Points", "Park 2, Shallow 6, Deep 12"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2025/Manual/Sections/2025GameManual-05ARENA.pdf"
+  sourceLabel="Game manual, arena section"
+/>
+
+A deep cage hangs almost to the carpet, so there is no room to drive under it. The robot has to grab the cage, then
+lift itself and the cage much higher. Cages swing, so the grabber has to catch a moving target. An early Team Update
+gave different cage heights, so check the final manual.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Undertow" | Deep cage climber; the binder has a climber section. | [Tech binder](https://media.team254.com/2025/09/985607eb-2025-Tech-Binder-254.pdf) · [Chief Delphi thread](https://www.chiefdelphi.com/t/506115) |
+| 2910 Jack in the Bot, "Spectre" | Champions, with a deep cage climb. | [Onshape write-up](https://www.onshape.com/en/blog/spectre-2025-first-world-championship-robot-built-in-cloud-native-cad) |
+| 2137 Oxford RoboCats | A new cage climber, run at IRI, with CAD. | [CAD thread](https://www.chiefdelphi.com/t/503037) |
+| 1787 Flying Circuits | Deep cage clamp climber, with each version in their build thread. | [Open Alliance thread](https://www.chiefdelphi.com/t/478025) |
+| 612 Chantilly | How they built a grappling deep cage climber. | [Write-up](https://www.frc612.org/post/team-612-assembles-the-climb-mechanism) |
+
+## FRC 2024 Crescendo (stage chain)
+
+<GamePiece
+  img="2024-chain"
+  imgWidth={440}
+  name="Stage chain (2024)"
+  specs={[
+  ["Chain", "¼ in Grade 43 zinc-plated chain"],
+  ["Height", "Lowest point 2 ft 4¼ in above the carpet; attached to the stage legs at 4 ft"],
+  ["Trap", "Opening starts 4 ft 8½ in above the carpet"],
+  ["Points", "Park 1, Onstage 3 (4 if spotlit), Harmony (2 robots on one chain) +2, Trap 5"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf"
+  sourceLabel="Game manual"
+/>
+
+The chain sags, so where the robot grabs it decides how much it tilts. Many robots climbed and scored a note in the trap
+at the same time.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Vortex" | Climbs the chain in under 2 seconds; passive rollers brace on the stage while the elevator lifts the trap scorer. | [Tech binder](https://media.team254.com/2024/10/8f2607a0-2024-Tech-Binder.pdf) · [Chief Delphi thread](https://www.chiefdelphi.com/t/team-254-presents-2024-vortex-technical-binder-code-q-a/472576) |
+| 5419 Berkelium | Chain climb and trap, with CAD. | [CAD thread](https://www.chiefdelphi.com/t/465803) |
+| 3596 Rocket Robotics | An AndyMark Climber in a Box with modified hooks: a good low-budget example. | [CAD and code](https://www.chiefdelphi.com/t/3596-rocket-robotics-cad-and-code-release/478100) |
+
+## FRC 2017 Steamworks (rope)
+
+<GamePiece
+  img="2017-rope"
+  imgWidth={440}
+  name="Rope and touchpad (2017)"
+  specs={[
+  ["Rope", "Field rope, or the team's own rope"],
+  ["Touchpad", "10 in plate, 4 ft 10 in above the carpet"],
+  ["Rule", "Press the touchpad and hold it until the match ends"],
+  ["Points", "50 per robot"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2017/Manual/HTML/2017FRCGameSeasonManual.htm"
+  sourceLabel="Game manual"
+/>
+
+Most robots wrapped the rope around a spinning spool covered in Velcro or hooks. Teams could bring their own rope, so
+many used a knotted rope that their spool gripped better.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Misfire" | Rope climber; the tech binder covers it. | [Tech binder](https://www.team254.com/?p=12865) · [Robot page](https://www.team254.com/?p=12123) |

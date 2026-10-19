@@ -1,0 +1,153 @@
+---
+title: Climbers
+description: Winches, hooks, telescoping and pivoting climbers for endgame hangs, the principles behind them, and the robots to study.
+sidebar_position: 7
+---
+
+import RobotClips from '@site/src/components/RobotClips';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+A climber lifts the whole robot off the floor at the end of the match: onto a bar, up a rope or chain, or onto a
+platform. It carries the heaviest load on the robot (the full robot weight, plus a bit of swinging), only works for a
+few seconds, and has to hold on after the power is cut. The [Endgame & Climbing](../game/endgame/index.mdx) pages list
+the past endgames it has to handle.
+
+## Principles
+
+- **Hold with the power off.** Scoring is judged after the match ends, so the robot has to stay up when the motors
+  stop. Use a ratchet and pawl, a friction brake, or a lead screw that can't be back-driven. Brake mode on the motor
+  alone is not reliable.
+- **Spring out, winch back.** Constant-force springs, gas springs, or surgical tubing push the hooks up fast. A winch
+  then pulls the robot up. A ratchet lets the spring extend freely while stopping the winch from unwinding.
+- **Size the winch for the whole robot.** Spool torque is robot weight times spool radius (150 lb on a 0.25 ft radius
+  is about 37.5 lb-ft). Plan for a low battery at the end of the match, and keep each motor well below stall. Rope
+  wrapping on itself makes the spool bigger, which needs more torque. Then check climb time: height divided by rope
+  speed.
+- **Hooks that can't miss and can't fall off.** Make the hook opening wider than the bar, with a sloped lead-in, and
+  add a spring latch. Check that it can actually reach the bar at full extension.
+- **Mind the center of gravity.** A hanging robot swings until its center of gravity is below the hooks. Put the hooks
+  above the center of gravity, or brace against the structure with a reaction arm or rollers. On a traversal, time the
+  release to the swing.
+- **Use the right rope.** Dyneema rope is light, strong, and barely stretches, but it is slippery, so use proper knots
+  and keep it off sharp edges. Flat strap keeps the spool radius more constant.
+- **Automate it.** The fastest climbs in 2022 were one-button sequences. Automation makes a complex climb repeatable
+  under pressure.
+
+## Types
+
+- **Telescoping hook and winch:** Spring-loaded telescoping tubes raise a hook; a winch pulls the robot up. The most
+  common climber, and available as kits (AndyMark Climber in a Box, WCP GreyT Telescope).
+- **Elevator climber:** The scoring elevator doubles as the climber, with a gear shift or ratchet for the heavy lift.
+- **Pivoting arms (traversal):** Arms rotate between rungs to climb from bar to bar, as in 2022.
+- **Cage or chain grabber:** A clamp or funnel catches a moving cage or chain, then a winch or arm lifts the robot, as in
+  2024 and 2025.
+- **Rope spool:** A spinning drum with Velcro or hooks catches and winds up a rope, as in 2017.
+- **Platform climber:** Legs or a lifter push the robot up a step, as in 2019.
+- **Partner lift:** Ramps, forks, or wings that lift partner robots (2007, 2010, 2018).
+- **Lead screw or rack and pinion (FTC):** Slow but strong, and doesn't back-drive, so it holds with the power off.
+
+## On Real Robots
+
+Short clips from the teams' own robot videos. Fast clips are slowed down. Each one links to the full video. Where a
+drawing is shown, it is the element those robots are climbing, to scale.
+
+### Telescoping hook and winch
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2020-switch.svg')} alt="2020 generator switch rung" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2020 generator switch rung](../game/endgame/bars-rungs.mdx#frc-2020-21-infinite-recharge-generator-switch)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-118-2020", team: "118 Robonauts (Everybot), 2020", program: "FRC", text: "The robot drives under the bar and raises its telescoping hook, then the winch lifts it off the carpet. Slowed to 75%.", video: "https://www.youtube.com/watch?v=wDA8nOZNZl0&t=2s"},
+  {clip: "climber-3940-2021", team: "3940 CyberTooth, 2021", program: "FRC", text: "The telescoping tubes hook the bar and the winch pulls the robot up until it hangs. From AndyMark's Climber in a Box video. Slowed to 50%.", video: "https://www.youtube.com/watch?v=iZadt9wJaOo&t=3s"},
+]}/>
+
+### Pivoting arms (traversal)
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2022-hangar.svg')} alt="2022 hangar rungs" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2022 hangar rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-4678-2022", team: "4678 CyberCavs, 2022", program: "FRC", text: "From below: the arms reach past the robot to the next rung and swing it up the hangar. Slowed to 65%.", video: "https://www.youtube.com/watch?v=5TKfQRUCvfU&t=70s"},
+  {clip: "climber-95-2022", team: "95 The Grasshoppers, 2022", program: "FRC", text: "The robot hangs from one rung, then its arms rotate and swing it up to the next. Slowed to 65%.", video: "https://www.youtube.com/watch?v=AjusytfI2v8&t=9s"},
+  {clip: "climber-3512-2022", team: "3512 Spartatroniks, 2022", program: "FRC", text: "Side view of the climber pulling the robot onto a rung and reaching for the next one. Slowed to 80%.", video: "https://www.youtube.com/watch?v=DcHyjyN49f4&t=6s"},
+]}/>
+
+### Cage grabber
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2025-cage.svg')} alt="2025 cage, shallow and deep" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2025 cage, shallow and deep](../game/endgame/ropes-chains-cages.mdx#frc-2025-reefscape-cages)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-2910-2025", team: "2910 Jack in the Bot, 2025", program: "FRC", text: "A pivoting arm grabs the deep cage, then swings the robot up off the carpet. Slowed to 40%.", video: "https://www.youtube.com/watch?v=kfg6I2UIN_Q&t=60s"},
+  {clip: "climber-2910-2025-winch", team: "2910 Jack in the Bot, 2025", program: "FRC", text: "Close-up of the same climber pulling the cage down into the robot. Slowed to 50%.", video: "https://www.youtube.com/watch?v=kfg6I2UIN_Q&t=62s"},
+  {clip: "climber-6147-2025", team: "6147 Tonkabots, 2025", program: "FRC", text: "The climber grabs the deep cage and lifts until the bumpers are off the carpet. Slowed to 60%.", video: "https://www.youtube.com/watch?v=05bOogPJtao&t=6s"},
+]}/>
+
+### Rope spool
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2017-rope.svg')} alt="2017 rope and touchpad" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2017 rope and touchpad](../game/endgame/ropes-chains-cages.mdx#frc-2017-steamworks-rope)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-4027-2017", team: "4027 Centre County 4-H Robotics, 2017", program: "FRC", text: "Close-up of the drum catching the rope and winding it up, tipping the robot off the floor. Slowed to 80%.", video: "https://www.youtube.com/watch?v=OZXehhG5c38&t=8s"},
+  {clip: "climber-967-2017", team: "967 Iron Lions, 2017", program: "FRC", text: "From above: the spool grabs the hanging rope and the robot climbs up it. Slowed to 75%.", video: "https://www.youtube.com/watch?v=MaA1y5ipxuI&t=10s"},
+  {clip: "climber-291-2017", team: "291 CIA, 2017", program: "FRC", text: "Close side view of the robot winding itself up the rope. Slowed to 60%.", video: "https://www.youtube.com/watch?v=kycRN3_B-xM&t=21s"},
+]}/>
+
+### Platform climber
+
+<figure style={{margin: '0 0 1rem'}}>
+  <img src={useBaseUrl('/img/design/game-pieces/2019-hab.svg')} alt="2019 HAB platform" width="400" style={{maxWidth: '100%', height: 'auto'}}/>
+  <figcaption style={{fontSize: '0.9rem'}}>[2019 HAB platform](../game/endgame/platforms-balancing.mdx#frc-2019-destination-deep-space-hab-platform)</figcaption>
+</figure>
+
+<RobotClips items={[
+  {clip: "climber-3663-2019", team: "3663 CPR, 2019", program: "FRC", text: "Legs push down to lift the robot level with the step, then it drives onto the platform.", video: "https://www.youtube.com/watch?v=BpWD-6JHyg0"},
+  {clip: "climber-2200-2019", team: "2200 MMRambotics, 2019", program: "FRC", text: "An arm swings onto the platform while a rear leg pushes down, lifting the robot onto the HAB. Slowed to 75%.", video: "https://www.youtube.com/watch?v=lXnmLkgmGpM&t=5s"},
+]}/>
+
+### Partner lift
+
+<RobotClips items={[
+  {clip: "climber-857-2018", team: "857 Superior Roboworks, 2018", program: "FRC", text: "A partner drives up the folded-down ramp, then the ramp lifts it off the floor. Slowed to 75%.", video: "https://www.youtube.com/watch?v=C7BcNJRj9n8"},
+  {clip: "climber-2910-2019", team: "2910 Jack in the Bot, 2019", program: "FRC", text: "Shop test of a double climb: 2910 lifts a partner robot (red bumpers) up with it. Slowed to 80%.", video: "https://www.youtube.com/watch?v=ab324lFSLMA"},
+]}/>
+
+
+## Robots to Study
+
+| Robot | Endgame | What to look at | Links |
+|---|---|---|---|
+| FRC 254, 2025 | [Cage](../game/endgame/ropes-chains-cages.mdx#frc-2025-reefscape-cages) | Deep cage climber. | [Tech binder](https://media.team254.com/2025/09/985607eb-2025-Tech-Binder-254.pdf) |
+| FRC 1787, 2025 | [Cage](../game/endgame/ropes-chains-cages.mdx#frc-2025-reefscape-cages) | Each version of a deep cage clamp climber. | [Open Alliance thread](https://www.chiefdelphi.com/t/478025) |
+| FRC 254, 2024 | [Chain](../game/endgame/ropes-chains-cages.mdx#frc-2024-crescendo-stage-chain) | Climbs in under 2 seconds, with rollers bracing on the stage. | [Tech binder](https://media.team254.com/2024/10/8f2607a0-2024-Tech-Binder.pdf) |
+| FRC 3596, 2024 | [Chain](../game/endgame/ropes-chains-cages.mdx#frc-2024-crescendo-stage-chain) | Climber in a Box with modified hooks. | [CAD and code](https://www.chiefdelphi.com/t/3596-rocket-robotics-cad-and-code-release/478100) |
+| FRC 254, 2022 | [Rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs) | Elevator climber with a reaction arm. | [Tech binder](https://media.team254.com/2022/10/8f2407a5-Team_254_Tech_Binder_2022.pdf) |
+| FRC 1690, 2022 | [Rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs) | Traversal that shifts the center of gravity to cut the swing. | [Reveal thread](https://www.chiefdelphi.com/t/frc-team-1690-orbit-2022-robot-reveal-parker/403533) |
+| FRC 2910, 2022 | [Rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs) | Automated traversal in about 7 seconds. | [Code release](https://www.chiefdelphi.com/t/team-2910-code-release-2022/417181) |
+| FRC 3175, 2022 | [Rungs](../game/endgame/bars-rungs.mdx#frc-2022-rapid-react-hangar-rungs) | Pneumatic lock to hold after the match. | [Robot thread](https://www.chiefdelphi.com/t/3175-2022-robot-mantis/405120) |
+| FRC 254, 2019 | [Platform](../game/endgame/platforms-balancing.mdx#frc-2019-destination-deep-space-hab-platform) | Suction climber for Level 3. | [Tech binder](https://media.team254.com/resources/Team_254_Tech_Binder_2019.pdf) |
+| FRC 254, 2017 | [Rope](../game/endgame/ropes-chains-cages.mdx#frc-2017-steamworks-rope) | Rope climber. | [Tech binder](https://www.team254.com/?p=12865) |
+| FRC 254, 2013 | [Pyramid](../game/endgame/bars-rungs.mdx#frc-2013-ultimate-ascent-pyramid) | Climb powered from the drive gearbox. | [Robot page](https://www.team254.com/?p=3014) |
+| FRC 254, 2007 | [Partner lift](../game/endgame/platforms-balancing.mdx#frc-2007-rack-n-roll-lifting-partners) | Fold-out ramps that lift partners. | [Season page](https://www.team254.com/first/2007/) |
+| FTC 9410, 2018-19 | [Lander](../game/endgame/bars-rungs.mdx#ftc-2018-19-rover-ruckus-lander-latch) | Rack and pinion with a passive latch. | [Robot page](https://www.fwparkerrobotics.org/2018-19-rover-ruckus-9410.html) |
+| FTC 17969, 2023-24 | [Rigging](../game/endgame/bars-rungs.mdx#ftc-2023-24-centerstage-rigging) | Lead-screw lifter. | [REV spotlight](https://revrobotics.com/blog/teamrev-spotlight-ftc-17969-mech) |
+
+## More Reading
+
+- [FIRST guide to extenders, lifts, reach, and climb](https://www.firstinspires.org/hubfs/lms/frc-guided-experience/m2/l4-extenders-lift-reach-climb-pdf.pdf?hsLang=en)
+- [254's winch calculations](https://media.team254.com/blog2010/f/winch_calcs.pdf)
+- [Motor Application for Climbing (Adambots)](https://www.adambots.com/wp-content/uploads/2022/01/Motor-Application-for-Climbing.pdf)
+- [AndyMark Climber in a Box](https://www.andymark.com/products/climber-in-a-box) and
+  [WCP GreyT Telescope](https://docs.wcproducts.com/greyt-telescope): off-the-shelf telescoping climbers.
+- [ReCalc](https://www.reca.lc/): Arm and linear mechanism calculators that work for winches.
+- Compare with [Elevators](./elevators.mdx): many climbers are an elevator turned upside down, pulling instead of
+  pushing.
