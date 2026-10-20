@@ -5,7 +5,7 @@ hide_table_of_contents: false
 sidebar_position: 6
 ---
 
-import {LabEmbed} from '@site/src/components/LabEmbed';
+import {LabLink} from '@site/src/components/LabLink';
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import pickupAndScore from '@site/static/img/software/controls/behavior-trees/pickup-and-score-arbor.png';
@@ -35,7 +35,7 @@ it took), and the badge on each node (its status). The caption says what just ha
 :::
 
 :::tip Try it in the Behavior Tree Lab
-Run these trees tick by tick on a simulated robot, in the same viewer Arbor uses, and make steps fail on purpose. [Jump to the Behavior Tree Lab](#behavior-tree-lab)
+Run these trees tick by tick on a simulated robot, in the same viewer Arbor uses, and make steps fail on purpose. <LabLink slug="behavior-tree-lab" />
 :::
 
 ---
@@ -371,7 +371,7 @@ afterwards, one tick at a time.
 ### Try It: Behavior Tree Lab {#behavior-tree-lab}
 No robot handy? This lab ticks a tree on a pretend robot and draws it with Arborist, the same viewer Arbor uses, so the colours mean the same thing. Break the camera or jam the intake to make each row of the table above happen, then edit the XML and run your own tree.
 
-<LabEmbed slug="behavior-tree-lab" />
+<LabLink slug="behavior-tree-lab" button />
 
 ---
 

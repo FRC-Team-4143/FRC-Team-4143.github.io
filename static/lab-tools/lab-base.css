@@ -51,9 +51,6 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(32px, 4vw
 .lede { margin: 0; color: var(--ink); max-width: 64ch; }
 .foot { padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); text-align: center; }
 .embedded .foot { display: none; } /* the site page already has a footer */
-.inline .top > div:first-child { display: none; } /* a docs page (LabEmbed) already has the title and intro */
-.inline .top { justify-content: flex-start; }
-.inline .wrap { padding-block-start: 16px; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
 /* Buttons. Selected state (aria-pressed) uses the site's red button look. */
