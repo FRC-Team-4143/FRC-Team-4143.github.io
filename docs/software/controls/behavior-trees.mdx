@@ -5,6 +5,8 @@ hide_table_of_contents: false
 sidebar_position: 6
 ---
 
+import {LabEmbed} from '@site/src/components/LabEmbed';
+
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import pickupAndScore from '@site/static/img/software/controls/behavior-trees/pickup-and-score-arbor.png';
 
@@ -30,6 +32,10 @@ the *order* and handles *failure*, and the steps it runs mostly ask the robot's 
 :::tip Every animation on this page loops
 Watch the **tick** counter in the top left, the bright ring (where the tick is right now), the bright edges (the path
 it took), and the badge on each node (its status). The caption says what just happened.
+:::
+
+:::tip Try it in the Behavior Tree Lab
+Run these trees tick by tick on a simulated robot, in the same viewer Arbor uses, and make steps fail on purpose. [Jump to the Behavior Tree Lab](#behavior-tree-lab)
 :::
 
 ---
@@ -361,6 +367,11 @@ afterwards, one tick at a time.
 | One node stays orange forever | That step never finishes. Wrap it in a `Timeout` and give the Fallback a plan B |
 | The whole tree is green but the robot did not do the thing | The step succeeded without doing the work: check it asked for the right state or path name |
 | An auto does nothing and Arbor shows no colours | The file failed to load: look at `BehaviorTree/<auto>/Error` and the Elastic alert |
+
+### Try It: Behavior Tree Lab {#behavior-tree-lab}
+No robot handy? This lab ticks a tree on a pretend robot and draws it with Arborist, the same viewer Arbor uses, so the colours mean the same thing. Break the camera or jam the intake to make each row of the table above happen, then edit the XML and run your own tree.
+
+<LabEmbed slug="behavior-tree-lab" />
 
 ---
 

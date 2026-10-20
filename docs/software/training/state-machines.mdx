@@ -8,6 +8,10 @@ sidebar_position: 9
 # State Machines
 State machines are a powerful way to manage complex robot behaviors by breaking them down into distinct states and defining transitions between those states. Every subsystem is a state machine, and the robot itself is one more state machine on top of them: the **super state machine** in `RobotContainer`. Buttons and autonomous routines ask the robot for a state, and the robot asks each subsystem for the state it needs. Anything that uses more than one subsystem is written once, in one place.
 
+:::tip Try it in the State Machine Lab
+See the super state machine run loop by loop before you write one. [Open the State Machine Lab](/docs/software/controls/state-machines#state-machine-lab)
+:::
+
 ---
 
 ## Presentation
