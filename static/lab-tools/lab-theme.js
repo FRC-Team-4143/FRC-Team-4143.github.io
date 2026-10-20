@@ -5,6 +5,8 @@
 (function () {
   const embedded = window.parent !== window;
   if (embedded) document.documentElement.classList.add("embedded");
+  // #inline: shown inside a docs page (LabEmbed), which already has the title and intro.
+  if (/(^#|[&#])inline\b/.test(location.hash)) document.documentElement.classList.add("inline");
   function syncTheme() {
     let t = null;
     try { if (embedded) t = window.parent.document.documentElement.getAttribute("data-theme"); } catch (e) {}
