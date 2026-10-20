@@ -5,6 +5,8 @@ hide_table_of_contents: false
 sidebar_position: 4
 ---
 
+import {LabEmbed} from '@site/src/components/LabEmbed';
+
 # Swerve
 The swerve drive is a **library subsystem**. All of the driving, path following, heading lock, crawl and brake logic
 lives in MWLib's `MwSwerveSubsystem`; the robot project only says which hardware it has, where the robot pose
@@ -17,7 +19,7 @@ Under the hood they drive CTRE TalonFX modules through Phoenix 6.
 :::
 
 :::tip Try it in the Swerve Kinematics Lab
-Drive with two joysticks and watch chassis speeds turn into four module angles and speeds, field-centric or robot-centric. [Open the Swerve Kinematics Lab](/docs/software/labs/swerve-lab)
+Drive with two joysticks and watch chassis speeds turn into four module angles and speeds, field-centric or robot-centric. [Jump to the Swerve Kinematics Lab](#swerve-lab)
 :::
 
 ---
@@ -170,6 +172,11 @@ Useful helpers on the subsystem: `setTeleOpVelocityScalar(...)` (slow the driver
 `isChassisStationary()`, `isAtChoreoSetpoint()`, `isAtDesiredRotation()`, `setOperatorForwardDirection(...)`
 (alliance perspective, called from `disabledPeriodic` when the alliance changes), `zeroGyroYaw()` and
 `setModuleOffsets()` (dashboard calibration commands).
+
+### Try It: Swerve Kinematics Lab {#swerve-lab}
+Drive with two joysticks and switch between `FIELD_CENTRIC`, `ROBOT_CENTRIC` and `FIELD_CENTRIC_ROTATION_LOCK` to see what each state does. The module view shows how one `ChassisSpeeds` becomes a speed and angle for each wheel.
+
+<LabEmbed slug="swerve-lab" />
 
 ---
 

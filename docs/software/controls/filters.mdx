@@ -5,6 +5,8 @@ hide_table_of_contents: true
 sidebar_position: 5
 ---
 
+import {LabEmbed} from '@site/src/components/LabEmbed';
+
 import fallingEdge from '@site/static/img/software/controls/filters/falling-edge-debounce.png';
 import risingEdge from '@site/static/img/software/controls/filters/rising-edge-debounce.png';
 
@@ -16,7 +18,7 @@ Filtering helps to smooth out the signal, reduce noise, and extract relevant inf
 This section covers some common filtering techniques used in robotics.
 
 :::tip Try it in the Signal Filter Lab
-Run these filters on noisy, live signals and measure how much lag each one adds. [Open the Signal Filter Lab](/docs/software/labs/filter-lab)
+Run these filters on noisy, live signals and measure how much lag each one adds. [Jump to the Signal Filter Lab](#filter-lab)
 :::
 
 ---
@@ -85,6 +87,11 @@ boolean processedInputSignal = risingDebounce.calculate(fallingDebounce.calculat
 Rate limiting is a technique used to control the frequency of signals or commands sent to a system. 
 In robotics, it can be useful to prevent excessive commands from being sent to actuators or motors, which can cause erratic behavior or damage.
 By implementing rate limiting, you can ensure that commands are sent at a controlled rate, allowing the system to respond more smoothly and predictably.
+
+### Try It: Signal Filter Lab {#filter-lab}
+Run noisy distance, current, beam-break and joystick signals through debouncers, rate limiters, moving averages and median filters. Every filter cleans up the reading but makes your code notice real changes later; this lab measures both.
+
+<LabEmbed slug="filter-lab" />
 
 ---
 
