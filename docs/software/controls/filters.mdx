@@ -15,6 +15,10 @@ In a simulated environment, noise is not present, allowing for cleaner signals. 
 Filtering helps to smooth out the signal, reduce noise, and extract relevant information for better decision-making and control.
 This section covers some common filtering techniques used in robotics.
 
+:::tip Try it in the Signal Filter Lab
+Run these filters on noisy, live signals and measure how much lag each one adds. [Open the Signal Filter Lab](/labs/filter-lab)
+:::
+
 ---
 
 ## Debounce
@@ -50,25 +54,25 @@ By configuring separate debounce durations for rising and falling edges, we can 
 This combined approach helps to further improve signal quality and reliability.
 
 
-### WPILib Debounce Class
-WPILib provides a built-in `Debounce` class that can be used to implement debouncing for digital signals.
-The `Debounce` class allows you to specify separate durations for rising and falling edge debouncing.
-Here is an example of how to use the `Debounce` class in Java:
+### WPILib Debouncer Class
+WPILib provides a built-in `Debouncer` class that can be used to implement debouncing for digital signals.
+The `Debouncer` class allows you to specify separate durations for rising and falling edge debouncing.
+Here is an example of how to use the `Debouncer` class in Java:
 ```java
-Debounce risingDebounce = new Debounce(duration, Debounce.DebounceType.kRising);
-Debounce fallingDebounce = new Debounce(duration, Debounce.DebounceType.kFalling);
+Debouncer risingDebounce = new Debouncer(duration, Debouncer.DebounceType.kRising);
+Debouncer fallingDebounce = new Debouncer(duration, Debouncer.DebounceType.kFalling);
 
 boolean processedInputSignal = risingDebounce.calculate(rawInputSignal);
 boolean processedInputSignal = fallingDebounce.calculate(rawInputSignal);
 ```
 
 :::note
-WPILib's `Debounce` does have a combined rising and falling edge mode, but it uses the same duration for both edges.
+WPILib's `Debouncer` does have a combined rising and falling edge mode, but it uses the same duration for both edges.
 ```java
 Debounce combinedDebounce = new Debounce(duration, Debounce.DebounceType.kBoth);
 boolean processedInputSignal = combinedDebounce.calculate(rawInputSignal);
 ```
-If you want different durations for rising and falling edges, you will need to use two separate `Debounce` instances as shown in the previous example.
+If you want different durations for rising and falling edges, you will need to use two separate `Debouncer` instances as shown in the previous example.
 You can then hack them together to get a combined effect.
 ```java
 boolean processedInputSignal = risingDebounce.calculate(fallingDebounce.calculate(rawInputSignal));
