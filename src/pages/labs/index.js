@@ -34,8 +34,8 @@ export default function Labs() {
         <header className={styles.header}>
           <Heading as="h1">Labs</Heading>
           <p className={styles.lede}>
-            Try the ideas from the docs on a simulated robot, right in your browser. Nothing to install, nothing to break.
-            Each lab has a guided <b>walkthrough</b> if you are new to the topic.
+            Try the ideas from the docs right in your browser. Nothing to install, nothing to break.
+            Each lab starts with short guided steps, then lets you explore in <b>Free play</b>.
           </p>
         </header>
         <div className={styles.grid}>

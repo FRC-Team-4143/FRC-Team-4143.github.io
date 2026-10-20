@@ -21,7 +21,7 @@
   --st-running: var(--l-running); --st-success: var(--l-success); --st-failure: var(--l-failure);
   font-family: var(--f-body);
 }
-#viewer { position: relative; height: clamp(380px, 58vh, 640px); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--bg); }
+#viewer { position: relative; height: clamp(360px, 62vh, 660px); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--bg); }
 .viewer-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
 
 .runbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -41,15 +41,26 @@
 .selinfo { font-size: 13px; color: var(--muted); margin: 0; min-height: 1.5em; }
 .selinfo b { color: var(--ink); font-weight: 600; }
 
-.duo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-@media (min-width: 1200px) { .duo { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
-#field { width: 100%; aspect-ratio: 11.3 / 8.07; border-radius: var(--radius); background: var(--field); }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "guide" "tree" "right"; gap: 16px; align-items: start; }
+.stage > .guide { grid-area: guide; } .stage > .tree-panel { grid-area: tree; } .stage > .right { grid-area: right; display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 640px) { .stage { grid-template-areas: "tree" "guide" "right"; } }
+@media (min-width: 1000px) { .stage { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); grid-template-areas: "guide guide" "tree right"; } }
+.readout.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.readout.two b { font-size: 15px; }
+.log-sum { cursor: pointer; font-weight: 600; font-size: 15px; }
+#log-box[open] { display: grid; gap: 8px; }
+#log-box[open] > summary { margin-bottom: 2px; }
+.try-list { padding-left: 22px; display: grid; gap: 8px; margin: 0 0 4px; }
+.deeper ul { padding-left: 20px; display: grid; gap: 6px; }
+.deeper p { margin: 0 0 8px; }
+.guide-nav .ready { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+#field { width: 100%; aspect-ratio: 11.3 / 8.07; max-height: 46vh; border-radius: var(--radius); background: var(--field); }
 
 /* Live log, like Arbor's Live log tab */
 .logbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .logbar .check { font-size: 13px; color: var(--muted); align-items: center; }
 .logbar .check input { margin-top: 0; }
-#log { height: 300px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: var(--f-mono); font-size: 12px; }
+#log { height: 280px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: var(--f-mono); font-size: 12px; }
 .log-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--grid); border-radius: 0; padding: 3px 8px; font-family: var(--f-mono); font-size: 12px; font-weight: 400; color: var(--ink); }
 .log-row:hover { background: var(--panel); }
 .log-row .t { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -70,21 +81,16 @@
 #diags .error .sev { color: var(--failure); } #diags .warning .sev { color: var(--running); } #diags .info .sev { color: var(--muted); }
 #diags .error button { border-color: var(--failure); }
 .okline { font-size: 13px; color: var(--success); margin: 0; }
-.palette { font-size: 13px; }
-.palette dl { margin: 6px 0 0; display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 4px 12px; color: var(--ink); }
+.palette { font-size: 13px; margin: 0; display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 4px 12px; color: var(--ink); }
 .palette dt { font-family: var(--f-mono); font-size: 12.5px; }
 .palette dd { margin: 0; color: var(--muted); }
 .palette h4 { grid-column: 1 / -1; margin: 8px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 
-.side .rows { display: grid; gap: 10px; }
-.robot-ro { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.robot-ro b { font-size: 15px; }
 .tun { display: grid; gap: 8px; }
 .inj .check { font-size: 14px; }
-.inj .check small { display: block; color: var(--muted); font-size: 12.5px; }
+.inj { display: grid; gap: 4px; }
 pre.code { margin: 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); font-family: var(--f-mono); font-size: 12.5px; line-height: 1.5; overflow-x: auto; color: var(--ink); }
 .links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
-.wt-body ul { margin: 0; padding-left: 20px; }
 .nojs { border-color: var(--warn); }
 @media (max-width: 520px) {
   #viewer { height: 420px; }
@@ -99,15 +105,14 @@ pre.code { margin: 0; padding: 10px 12px; background: var(--bg); border: 1px sol
     <div>
       <p class="eyebrow">Software · Controls</p>
       <h1>Behavior Tree Lab</h1>
-      <p class="lede">Watch a behavior tree drive a pretend robot, one tick at a time. The tree is drawn by <b>Arborist</b>, the same viewer Arbor uses for its live view, so the colours mean exactly what they mean on the real robot. Break things on purpose, then edit the XML and run your own tree.</p>
+      <p class="lede short">Watch a behavior tree drive a pretend robot, one tick at a time.</p>
     </div>
-    <div class="toolbar">
+    <div class="toolbar" data-step-from="5">
       <div class="seg examples" role="group" aria-label="Example tree">
         <button data-ex="DriveAimShoot" aria-pressed="true">Drive, aim, shoot</button>
         <button data-ex="PickupAndScore" aria-pressed="false">Pickup and score</button>
         <button data-ex="CitrusSynergy" aria-pressed="false">Real auto</button>
       </div>
-      <button id="wt-toggle" aria-pressed="false">Walkthrough</button>
     </div>
   </header>
 
@@ -116,141 +121,138 @@ pre.code { margin: 0; padding: 10px 12px; background: var(--bg); border: 1px sol
     <p class="note">This lab loads Arborist as a JavaScript module, which browsers block for files opened straight from disk. Open it through the docs site, or serve the folder with <code>python3 -m http.server</code>.</p>
   </section>
 
-  <section class="panel walk" id="walk" hidden aria-label="Guided walkthrough">
-    <div class="wt-main">
-      <div class="panel-head"><h2>Behavior tree walkthrough</h2><ol class="wt-steps" id="wt-steps"></ol></div>
-      <h3 id="wt-title"></h3>
-      <div class="wt-body" id="wt-body"></div>
-    </div>
-    <div class="wt-side">
-      <button id="wt-action"></button>
-      <span class="status" id="wt-status" style="visibility:hidden" aria-live="polite">&nbsp;</span>
-      <div class="wt-nav"><button id="wt-back">Back</button><button id="wt-next">Next step</button><button id="wt-exit">Exit</button></div>
-    </div>
-  </section>
-
-  <div class="app">
-    <aside class="side" aria-label="Robot and failure controls">
-      <div class="panel inj">
-        <h2>Make things go wrong</h2>
-        <p class="note">Tick one, then press Reset and Play. Each one is a real way an auto goes wrong.</p>
-        <label class="check"><input type="checkbox" id="inj-camera"><span>Camera can't see the target<small>Aiming never finishes, so the robot never reaches AIM.</small></span></label>
-        <label class="check"><input type="checkbox" id="inj-jam"><span>Intake jams<small>The intake runs but picks nothing up. The tree can't tell.</small></span></label>
-        <label class="check"><input type="checkbox" id="inj-block"><span>Another robot blocks the path<small>The path timer pauses. After <code>max_paused_sec</code> (3 s) FollowTrajectory gives up.</small></span></label>
+  <div class="stage">
+    <section class="guide" id="guide" aria-live="polite">
+      <span class="guide-count" id="g-count">Step 1 of 6</span>
+      <h2 id="g-title"></h2>
+      <p id="g-text"></p>
+      <div class="guide-nav">
+        <button id="g-action" hidden></button>
+        <button id="g-back">Back</button>
+        <button id="g-next">Next</button>
+        <button id="g-free" aria-pressed="false">Free play</button>
       </div>
+    </section>
 
-      <div class="panel">
-        <div class="panel-head"><h2>Pretend robot</h2><span class="hint">RobotContainer</span></div>
-        <div class="readout robot-ro">
-          <div><span>Wanted state</span><b id="ro-wanted">AUTO</b></div>
-          <div><span>System state</span><b id="ro-system">AUTO</b></div>
-          <div><span>Intake</span><b id="ro-intake">STORE</b></div>
-          <div><span>Shooter</span><b id="ro-shooter">IDLE</b></div>
-          <div><span>Fuel held</span><b id="ro-fuel">8</b></div>
+    <section class="panel tree-panel">
+      <div class="panel-head">
+        <h2 id="tree-title">The tree</h2>
+        <div class="runbar">
+          <button id="step">Step one tick</button>
+          <button id="play" class="primary" data-step-from="2">Play</button>
+          <button id="reset" data-step-from="2">Reset</button>
+          <label data-step-from="2">Speed <select id="speed" aria-label="Simulation speed">
+            <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
+          </select></label>
+        </div>
+      </div>
+      <div class="tree-bar">
+        <span class="legend"><span class="chip st-RUNNING">RUNNING</span><span class="chip st-SUCCESS">SUCCESS</span><span class="chip st-FAILURE">FAILURE</span><span class="chip st-IDLE">IDLE</span></span>
+        <span class="clock">t = <b id="clk-t">0.00</b> s · tick <b id="clk-n">0</b> · tree <b id="clk-s">IDLE</b></span>
+      </div>
+      <div id="viewer" aria-label="Behavior tree diagram. Drag to pan, scroll or pinch to zoom, press + on a SubTree to draw it inline."><div class="viewer-msg" id="viewer-msg">Loading the Arborist viewer…</div></div>
+      <div class="tree-bar"><span class="msg" id="run-msg" aria-live="polite"></span><button id="back-main" hidden>Back to the main tree</button></div>
+      <p class="selinfo" id="selinfo" data-step-from="2"></p>
+      <details class="more" data-step-from="7">
+        <summary>More controls</summary>
+        <div class="runbar">
+          <button id="fit" title="Zoom to fit the whole tree">Fit the tree</button>
+          <label class="check" style="align-items:center"><input type="checkbox" id="explain" style="margin-top:0"> Explain edges in words</label>
+        </div>
+      </details>
+    </section>
+
+    <div class="right">
+      <section class="panel">
+        <div class="panel-head"><h2>Robot</h2><span class="hint">2026 field, blue half</span></div>
+        <canvas id="field" role="img" aria-label="Top-down view of the blue half of the field with the robot, its path, the hub and the fuel"></canvas>
+        <div class="readout two">
+          <div><span>Robot state</span><b id="ro-system">AUTO</b></div>
           <div><span>Fuel scored</span><b id="ro-scored">0</b></div>
         </div>
-        <p class="note">Trees only <i>ask</i> for a state with <code>SetWantedState</code>. The robot's state machine decides when it is really there, which <code>IsSystemState</code> checks.</p>
-      </div>
-
-      <div class="panel" id="tun-panel" hidden>
-        <div class="panel-head"><h2>Tunable values</h2><span class="hint">Ports of the main tree</span></div>
-        <div class="tun" id="tun"></div>
-        <p class="note">On the robot these appear on the dashboard under <code>/Tuning/Autos/&lt;auto&gt;/</code>. The value when the auto starts is the one used, so a change applies after Reset.</p>
-      </div>
-
-      <div class="panel">
-        <h2>Statuses</h2>
-        <div class="rows" style="font-size:14px">
-          <div><span class="chip st-RUNNING">RUNNING</span> not done yet, ask again next tick</div>
-          <div><span class="chip st-SUCCESS">SUCCESS</span> done, and it worked</div>
-          <div><span class="chip st-FAILURE">FAILURE</span> done, and it didn't work</div>
-          <div><span class="chip st-IDLE">IDLE</span> not started, halted, or reset by its parent</div>
+        <div class="inj">
+          <label class="check" data-step-from="3"><input type="checkbox" id="inj-camera"><span>Camera can't see the target</span></label>
+          <label class="check" data-step-from="5"><input type="checkbox" id="inj-jam"><span>Intake jams</span></label>
+          <label class="check" data-step-from="7"><input type="checkbox" id="inj-block"><span>Another robot blocks the path</span></label>
         </div>
-        <p class="note">After a parent finishes, its children go back to IDLE. The viewer keeps their last result, faded, until the next run.</p>
-      </div>
-    </aside>
-
-    <main class="main">
-      <section class="panel">
-        <div class="panel-head">
-          <h2 id="tree-title">The tree</h2>
-          <div class="runbar">
-            <button id="play" class="primary">Play</button>
-            <button id="step">Step one tick</button>
-            <button id="reset">Reset</button>
-            <label>Speed <select id="speed" aria-label="Simulation speed">
-              <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
-            </select></label>
-            <button id="fit" title="Zoom to fit the whole tree">Fit</button>
+        <details class="more" data-step-from="7">
+          <summary>More readouts</summary>
+          <div class="readout two">
+            <div><span>Wanted state</span><b id="ro-wanted">AUTO</b></div>
+            <div><span>Fuel held</span><b id="ro-fuel">8</b></div>
+            <div><span>Intake</span><b id="ro-intake">STORE</b></div>
+            <div><span>Shooter</span><b id="ro-shooter">IDLE</b></div>
           </div>
-        </div>
-        <div class="tree-bar">
-          <span class="clock">t = <b id="clk-t">0.00</b> s · tick <b id="clk-n">0</b> · tree <b id="clk-s">IDLE</b></span>
-          <label class="check" style="font-size:13px;align-items:center"><input type="checkbox" id="explain" style="margin-top:0"> Explain edges in words</label>
-        </div>
-        <div id="viewer" aria-label="Behavior tree diagram. Drag to pan, scroll or pinch to zoom, press + on a SubTree to draw it inline."><div class="viewer-msg" id="viewer-msg">Loading the Arborist viewer…</div></div>
-        <div class="tree-bar"><span class="msg" id="run-msg" aria-live="polite"></span><button id="back-main" hidden>Back to the main tree</button></div>
-        <p class="selinfo" id="selinfo">Click a node to see what it does. Press <b>+</b> on a SubTree to draw it inline.</p>
-      </section>
-
-      <div class="duo">
-        <section class="panel">
-          <div class="panel-head"><h2>Field</h2><span class="hint">Blue half and neutral zone, 2026 game, simplified</span></div>
-          <canvas id="field" role="img" aria-label="Top-down view of the blue half of the field with the robot, its path, the hub and the fuel"></canvas>
           <div class="legend">
-            <span><i class="sw" style="border-color:var(--blue-alliance)"></i>our robot</span>
-            <span><i class="sw" style="border-color:var(--setp)"></i>path it is following</span>
-            <span><i class="sw dash" style="border-color:var(--muted)"></i>other paths in this tree</span>
+            <span><i class="sw" style="border-color:var(--setp)"></i>path being followed</span>
+            <span><i class="sw dash" style="border-color:var(--muted)"></i>other paths in the tree</span>
             <span><i class="sw" style="border-color:var(--goal)"></i>fuel</span>
           </div>
-        </section>
-        <section class="panel">
-          <div class="panel-head"><h2>Live log</h2><span class="hint">Every status change. Click one to find its node.</span></div>
+          <div id="tun-panel" hidden>
+            <p class="label">Tunable values (ports of the main tree, used from the next Reset)</p>
+            <div class="tun" id="tun"></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" data-step-from="4">
+        <details id="log-box">
+          <summary class="log-sum">Show the log</summary>
           <div class="logbar">
             <input type="text" id="log-filter" placeholder="Filter by node or status…" aria-label="Filter the log">
             <label class="check"><input type="checkbox" id="log-follow" checked> Follow</label>
           </div>
           <div id="log" role="list" aria-label="Status transitions"></div>
-        </section>
-      </div>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Tree XML</h2>
-          <span class="hint">BehaviorTree.CPP v4, the same files Arbor opens</span>
-        </div>
-        <div class="xmlbar">
-          <label class="hint" for="xml-file">File</label>
-          <select id="xml-file"></select>
-          <button id="xml-run" class="primary">Run this XML</button>
-          <button id="xml-revert">Back to the example</button>
-          <button id="xml-copy">Copy XML</button>
-          <button id="xml-zip">Download for Arbor</button>
-        </div>
-        <textarea id="xml-text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="XML of the selected file"></textarea>
-        <div id="diag-box"></div>
-        <details class="palette">
-          <summary>Nodes this robot knows (and their ports)</summary>
-          <dl id="palette"></dl>
         </details>
-        <p class="note">"Download for Arbor" saves a .zip in Arbor's project layout: <code>bt_project.json</code>, <code>nodes.xml</code> (the node list, with port types and enum values) and <code>trees/</code>. Unzip it and open the folder in Arbor. Your edits stay in this page only.</p>
       </section>
+    </div>
+  </div>
 
-      <section class="duo">
-        <div class="panel try">
-          <h2>Things to try</h2>
-          <ol>
-            <li><b>One node stays orange forever.</b> On <b>Drive, aim, shoot</b>, tick "Camera can't see the target" and run it. <code>RetryUntilSuccessful</code> keeps asking forever. That is the docs' "wrap it in a Timeout" case: compare with <b>Pickup and score</b>.</li>
-            <li><b>All green, nothing scored.</b> Run the <b>Real auto</b>, then run it again with "Intake jams". The tree looks the same, but the robot shoots only the 8 fuel it started with. A tree only knows what its nodes check.</li>
-            <li><b>Stuck behind a robot.</b> Tick "Another robot blocks the path". FollowTrajectory fails after 3 s and the whole Sequence fails. In the XML, wrap that FollowTrajectory in <code>&lt;ForceSuccess&gt;</code> and the auto carries on.</li>
-            <li><b>ParallelDeadline.</b> In the <b>Real auto</b>, watch <code>DriveP1</code>. When the path finishes, <code>IntakeOnEvent</code> is halted if it is still waiting. Then try a <code>middle_wait_msec</code> of 0.</li>
-            <li><b>Reactive vs. plain.</b> Change a <code>Sequence</code> to <code>ReactiveSequence</code> and step through it. Every tick starts again from the first child, and a child that already succeeded is reset when a later one runs. Watch Drive path start over and over: that is why ReactiveSequence is for conditions, not for steps.</li>
-            <li><b>Typos are errors.</b> Change <code>msec</code> to <code>msc</code>, or <code>AIM</code> to <code>AIMM</code>. The lab refuses to run it and marks the node, the way the robot refuses to load the auto.</li>
-          </ol>
-        </div>
-        <div class="panel">
-          <h2>The pretend robot</h2>
-          <p class="note">A tiny super state machine, written the way our <code>RobotContainer</code> is. Every condition is in <code>handleStateTransition()</code>; <code>updateLogic()</code> only asks subsystems for states.</p>
+  <section class="panel" id="xml-panel" data-step-from="6">
+    <div class="panel-head"><h2>Tree XML</h2><span class="hint">The same files Arbor opens</span></div>
+    <div class="xmlbar">
+      <select id="xml-file" aria-label="File"></select>
+      <button id="xml-run" class="primary">Run this XML</button>
+      <button id="xml-revert">Undo my edits</button>
+    </div>
+    <textarea id="xml-text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="XML of the selected file"></textarea>
+    <div id="diag-box"></div>
+    <details class="more" data-step-from="7">
+      <summary>More: copy, download, node list</summary>
+      <div class="xmlbar">
+        <button id="xml-copy">Copy XML</button>
+        <button id="xml-zip">Download for Arbor</button>
+      </div>
+      <p class="note">The download is an Arbor project: <code>bt_project.json</code>, <code>nodes.xml</code> and <code>trees/</code>. Unzip it and open the folder in Arbor.</p>
+      <dl class="palette" id="palette"></dl>
+    </details>
+  </section>
+
+  <section class="deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>Things to try</summary>
+      <ol class="try-list">
+        <li><b>One node stays orange forever.</b> On <b>Drive, aim, shoot</b>, blind the camera. <code>RetryUntilSuccessful</code> asks forever. That is why <b>Pickup and score</b> wraps it in a Timeout.</li>
+        <li><b>Stuck behind a robot.</b> Tick "Another robot blocks the path". FollowTrajectory gives up after <code>max_paused_sec</code> (3 s) and the Sequence fails. Wrap it in <code>&lt;ForceSuccess&gt;</code> and the auto carries on.</li>
+        <li><b>ParallelDeadline.</b> In the <b>Real auto</b>, watch <code>DriveP1</code>: when the path ends, <code>IntakeOnEvent</code> is halted if it is still waiting. Then try a <code>middle_wait_msec</code> of 0 (under More readouts).</li>
+        <li><b>Reactive vs. plain.</b> Change a <code>Sequence</code> to <code>ReactiveSequence</code>. Every tick starts from the first child, and finished children are reset, so Drive path starts over and over. Reactive is for conditions, not steps.</li>
+        <li><b>Typos are errors.</b> Change <code>AIM</code> to <code>AIMM</code>, or add a node that doesn't exist. The lab marks the node and won't run it.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>What the four colours mean</summary>
+      <ul>
+        <li><span class="chip st-RUNNING">RUNNING</span> not done yet, ask again next tick.</li>
+        <li><span class="chip st-SUCCESS">SUCCESS</span> done, and it worked.</li>
+        <li><span class="chip st-FAILURE">FAILURE</span> done, and it didn't work.</li>
+        <li><span class="chip st-IDLE">IDLE</span> not started yet, halted, or reset by its parent. After a parent finishes, its children go back to IDLE; the viewer keeps their last result, faded, until the next run.</li>
+      </ul>
+      <p>The tree is drawn by <b>Arborist</b>, the viewer inside Arbor, so it looks exactly like Arbor's live view of the real robot.</p>
+    </details>
+    <details>
+      <summary>The pretend robot</summary>
+      <p>Trees only <i>ask</i> for a state with <code>SetWantedState</code> (instant). The robot's state machine decides when it is really there, which <code>IsSystemState</code> checks. It is written the way our <code>RobotContainer</code> is: every condition in <code>handleStateTransition()</code>, and <code>updateLogic()</code> only asks subsystems for states.</p>
 <pre class="code">handleStateTransition():
   switch (wanted):
     AIM   -> system = aimed ? AIM : AIMING
@@ -266,17 +268,18 @@ updateLogic():
     INTAKE      -> intake INTAKE
     AUTO        -> nothing (the auto
                    sets subsystems)</pre>
-          <p class="note">Aiming takes 0.8 s and needs the camera, except at the spot right in front of the hub. The flywheel takes 0.6 s to spin up. The robot is never in SHOOT itself, so <code>IsSystemState SHOOT</code> never succeeds. That is why <code>ShootFor</code> uses a Sleep. The <code>AIMING</code> step state is made up for this lab.</p>
-          <div class="links">
-            <a href="/docs/software/controls/behavior-trees" target="_top">Behavior Trees</a>
-            <a href="/docs/software/tools/arbor" target="_top">Arbor</a>
-            <a href="/docs/software/robot_dev/autonomous" target="_top">Autonomous</a>
-            <a href="/docs/software/controls/state-machines" target="_top">State Machines</a>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+      <p>Aiming takes 0.8 s and needs the camera, except right in front of the hub. The flywheel takes 0.6 s to spin up. The robot is never in SHOOT itself, so <code>IsSystemState SHOOT</code> never succeeds; that is why <code>ShootFor</code> uses a Sleep. The <code>AIMING</code> step state is made up for this lab. The robot runs each 20 ms loop before the tree, and the auto period ends at 20 s.</p>
+    </details>
+    <details>
+      <summary>Read more in the docs</summary>
+      <div class="links">
+        <a href="/docs/software/controls/behavior-trees" target="_top">Behavior Trees</a>
+        <a href="/docs/software/tools/arbor" target="_top">Arbor</a>
+        <a href="/docs/software/robot_dev/autonomous" target="_top">Autonomous</a>
+        <a href="/docs/software/controls/state-machines" target="_top">State Machines</a>
+      </div>
+    </details>
+  </section>
   <footer class="foot">MARS/WARS · FRC Team 4143 · Tree viewer: <a href="https://github.com/coalman321/Arbor">Arborist</a> (MIT)</footer>
 </div>
 
@@ -1167,7 +1170,7 @@ const S = {
   trees: new Map(), models: null, enums: new Map(), mainId: "", diags: [], runnable: false,
   bt: null, time: 0, ticks: 0, started: false, done: false, result: "", error: "",
   playing: false, speed: 1, pending: [], log: [], tunables: {}, selection: null, runCount: 0, customRuns: 0,
-  flags: {}, // things the walkthrough watches for
+  flags: {}, ever: {}, // things the guided steps watch for
 };
 let viewer = null;
 let hostSel = false;
@@ -1175,7 +1178,7 @@ emit = (node, prev, status) => {
   const t = Math.round(S.time * 1000);
   S.pending.push([t, node.uid, prev, status]);
   S.log.push({ t: S.time, tick: S.ticks, uid: node.uid, prev, status });
-  if (node.type === "FollowTrajectory" && status === "SUCCESS" && node.attrs.trajectory === "ToBackup") S.flags.backup = true;
+  if (node.type === "FollowTrajectory" && status === "SUCCESS" && node.attrs.trajectory === "ToBackup") S.flags.backup = S.ever.backup = true;
   if (prev === "RUNNING" && status === "IDLE") S.flags.halts = (S.flags.halts || 0) + 1;
 };
 clockNow = () => S.time;
@@ -1254,7 +1257,11 @@ function stepOnce() {
     S.started = true;
     try {
       const r = S.bt.root.executeTick();
-      if (r !== "RUNNING") { S.done = true; S.result = r; S.doneAt = S.time; }
+      if (r !== "RUNNING") {
+        S.done = true; S.result = r; S.doneAt = S.time;
+        if (r === "SUCCESS" && S.mainId === "DriveAimShoot") S.ever.seqDone = true;
+        if (S.mainId === "CitrusSynergy" && inj.jam && !S.edited) S.ever.jamRun = true;
+      }
     } catch (e) {
       S.error = e instanceof BtError ? e.message : String(e);
       pause();
@@ -1313,15 +1320,15 @@ function updateUi() {
   $("ro-fuel").textContent = R.fuel; $("ro-scored").textContent = R.scored;
   const m = $("run-msg");
   m.className = "msg";
-  if (!S.runnable) { m.textContent = "This XML has errors, so it can't run. See the list under Tree XML."; m.classList.add("err"); }
+  if (!S.runnable) { m.textContent = "This XML has errors, so it can't run. See the list under the XML."; m.classList.add("err"); }
   else if (S.error) { m.textContent = `Stopped: ${S.error}`; m.classList.add("err"); }
-  else if (S.done && S.result === "HALTED") m.textContent = `The auto period ended at ${AUTO_LENGTH} s with the tree still running, so the whole tree was halted.`;
-  else if (S.done) { m.textContent = `The tree finished with ${S.result} at ${S.doneAt.toFixed(2)} s. The robot keeps doing what it was last asked until the auto ends at ${AUTO_LENGTH} s.`; m.classList.add(S.result === "SUCCESS" ? "ok" : "err"); if (S.result === "FAILURE") m.classList.remove("ok"); }
+  else if (S.done && S.result === "HALTED") m.textContent = `The auto ended at ${AUTO_LENGTH} s with the tree still running, so it was halted.`;
+  else if (S.done) { m.textContent = `The tree finished with ${S.result} at ${S.doneAt.toFixed(2)} s.`; m.classList.add(S.result === "SUCCESS" ? "ok" : "err"); if (S.result === "FAILURE") m.classList.remove("ok"); }
   else if (S.note) m.textContent = S.note;
-  else if (!S.started) m.textContent = "Press Play, or Step one tick. Each tick is one 20 ms robot loop.";
+  else if (!S.started) m.textContent = "One tick = one 20 ms robot loop.";
   else m.textContent = S.playing ? "Running…" : "Paused.";
   updateSelInfo();
-  if (WT.on) wtStatus();
+  renderGuide();
 }
 
 function buildTunables() {
@@ -1403,12 +1410,13 @@ $("log").addEventListener("click", (ev) => {
   const e = S.log[Number(row.dataset.i)];
   const n = nodeOf(e?.uid);
   if (!n) return;
-  if (S.flags) S.flags.clickedHalt = S.flags.clickedHalt || (e.prev === "RUNNING" && e.status === "IDLE");
+  if (e.prev === "RUNNING" && e.status === "IDLE") S.ever.clickedHalt = true;
   revealNode(n);
-  if (WT.on) wtStatus();
+  renderGuide();
 });
 $("log-filter").addEventListener("input", () => renderLog(true));
 $("log-follow").addEventListener("change", () => renderLog(false));
+$("log-box").addEventListener("toggle", () => { if ($("log-box").open && $("log-follow").checked) $("log").scrollTop = $("log").scrollHeight; });
 
 function revealNode(n) {
   if (shownTree !== S.mainId) backToMain();
@@ -1423,7 +1431,7 @@ function revealNode(n) {
 
 function updateSelInfo(extra = "") {
   const box = $("selinfo");
-  if (!S.selection) { if (!extra) box.innerHTML = 'Click a node to see what it does. Press <b>+</b> on a SubTree to draw it inline.'; return; }
+  if (!S.selection) { if (!extra) box.textContent = "Click a node to see what it does."; return; }
   const n = S.bt?.nodes.find((x) => x.path === S.selection);
   if (!n) return;
   const desc = n.model?.description || "";
@@ -1448,7 +1456,7 @@ $("xml-run").addEventListener("click", () => {
   S.drafts[S.fileSel] = $("xml-text").value;
   S.edited = true;
   loadProject(currentFiles(), S.mainId);
-  if (S.runnable) { S.customRuns++; S.flags.customRun = true; S.lastCustomXml = S.drafts[S.files[0].path]; play(); }
+  if (S.runnable) { S.customRuns++; S.ever.customRun = true; S.lastCustomXml = S.drafts[S.files[0].path]; play(); }
   else $("diag-box").scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
 });
 $("xml-revert").addEventListener("click", () => loadExample(S.example));
@@ -1668,83 +1676,105 @@ function backToMain() {
 }
 $("back-main").addEventListener("click", backToMain);
 
-// ===================================================================================== walkthrough
-const WT = { on: false, i: 0 };
+// ===================================================================================== guided steps
+// Guided mode (the default) shows one step and only the controls it has introduced (data-step-from="N").
+// Free play shows everything. The choice is remembered per lab.
+const MODE_KEY = "lab-mode:behavior-tree-lab";
+const G = { free: false, i: 0 };
 const camera = (on) => { inj.camera = on; $("inj-camera").checked = on; };
+const jam = (on) => { inj.jam = on; $("inj-jam").checked = on; };
+const showHalt = () => {
+  const i = S.log.findIndex((e) => e.prev === "RUNNING" && e.status === "IDLE" && nodeOf(e.uid)?.type === "RetryUntilSuccessful");
+  $("log-box").open = true;
+  if (i < 0) { camera(true); if (S.example !== "PickupAndScore") loadExample("PickupAndScore"); else resetRun(); S.speed = 4; $("speed").value = "4"; play(); return; }
+  $("log-filter").value = ""; renderLog(true);
+  const row = $("log").querySelector(`[data-i="${i}"]`);
+  if (row) { row.scrollIntoView({ block: "nearest" }); row.classList.add("flash"); row.focus(); }
+};
 const STEPS = [
   {
-    title: "1. Ticks and statuses",
-    enter() { camera(false); loadExample("DriveAimShoot"); },
-    body: () => `<p>The robot loop <b>ticks</b> the tree every 20 ms. Each tick starts at the root and travels down, and every node it visits answers with a <b>status</b>.</p>
-      <p>Press <b>Step one tick</b> a few times. The Sequence and <code>Drive path</code> turn orange: <span class="chip st-RUNNING">RUNNING</span>, "not done yet, ask me again next tick". The nodes the tick never reached stay grey: <span class="chip st-IDLE">IDLE</span>. The log lists each change.</p>`,
-    action: ["Step one tick", () => { pause(); stepOnce(); flush(); drawField(); }],
-    check: () => (S.ticks >= 5 ? `${S.ticks} ticks: Drive path is ${nodeByType("FollowTrajectory")?.status ?? "?"}` : null),
-    progress: () => `Tick ${S.ticks} of 5`,
+    title: "Press Step one tick five times.",
+    text: "Each tick starts at the top of the tree. Orange means RUNNING: not done yet, ask again next tick.",
+    enter() { camera(false); jam(false); loadExample("DriveAimShoot"); },
+    check: () => S.ticks >= 5,
   },
   {
-    title: "2. A Sequence resumes where it was",
-    enter() { camera(false); if (S.example !== "DriveAimShoot" || S.edited) loadExample("DriveAimShoot"); },
-    body: () => `<p>Press <b>Play</b>. Every tick the Sequence goes straight back to the child that was RUNNING: <code>Drive path</code> is ticked again, not the start. When it answers <span class="chip st-SUCCESS">SUCCESS</span>, the Sequence ticks the next child <i>in the same tick</i>.</p>
-      <p><code>SetWantedState AIM</code> succeeds at once (asking is instant). <code>RetryUntilSuccessful</code> keeps asking <code>IsSystemState AIM</code> until the robot is aimed. Then <code>ShootFor</code> shoots for 2 s. When the Sequence finishes, its children go back to IDLE; the viewer keeps their results, faded.</p>`,
-    action: ["Play", () => { if (S.done) resetRun(); play(); }],
-    check: () => (S.done && S.result === "SUCCESS" ? `The Sequence succeeded at ${S.doneAt.toFixed(2)} s` : null),
-    progress: () => (S.started ? "Running…" : "Press Play"),
+    title: "Press Play and watch the Sequence.",
+    text: "It ticks Drive path again each tick until it succeeds, then moves on to the next child in the same tick.",
+    enter() { camera(false); jam(false); if (S.example !== "DriveAimShoot" || S.edited) loadExample("DriveAimShoot"); },
+    check: () => S.ever.seqDone,
   },
   {
-    title: "3. Fallback: plan B",
-    enter() { camera(true); loadExample("PickupAndScore"); },
-    body: () => `<p>This is the auto from the <a href="/docs/software/controls/behavior-trees#reading-a-real-auto" target="_top">Behavior Trees</a> page. The <b>Fallback</b> tries its first child, aiming for at most 3 s, and only if that fails does it try the next one: drive to the spot in front of the hub, where the shot works without the camera.</p>
-      <p>"Camera can't see the target" is now ticked, so aiming never finishes. Press <b>Play</b> and watch the Fallback move on to <code>FollowTrajectory ToBackup</code>. Untick the camera box and run it again: the backup path stays grey, because the Fallback stopped at the first child that worked.</p>`,
-    action: ["Play with the camera blind", () => { camera(true); resetRun(); play(); }],
-    check: () => (S.flags.backup ? "Plan B ran: ToBackup succeeded" : null),
-    progress: () => (S.started ? "Running…" : "Press Play"),
+    title: "The camera is blind. Press Play.",
+    text: "Aiming can't finish, so after 3 s the Fallback tries plan B: drive to the spot right in front of the hub.",
+    enter() { camera(true); jam(false); loadExample("PickupAndScore"); },
+    check: () => S.ever.backup,
   },
   {
-    title: "4. Timeout and halting",
-    enter() { if (!S.flags.backup) { camera(true); if (S.example !== "PickupAndScore") loadExample("PickupAndScore"); } },
-    body: () => `<p>When the 3 s ran out, <code>Timeout</code> <b>halted</b> its child and answered <span class="chip st-FAILURE">FAILURE</span> itself. A halted node never finishes: it goes straight from RUNNING to IDLE. In the log those lines are marked <span class="halt" style="font-size:10px;text-transform:uppercase;color:var(--warn);border:1px solid var(--warn);border-radius:99px;padding:0 5px">halted</span>.</p>
-      <p>Find the halt of <code>RetryUntilSuccessful</code> in the log and click it. The viewer centres that node. On the robot, halting is how a running action gets told to stop and clean up.</p>`,
-    action: ["Show me the halt", () => { const i = S.log.findIndex((e) => e.prev === "RUNNING" && e.status === "IDLE" && nodeOf(e.uid)?.type === "RetryUntilSuccessful"); if (i < 0) { camera(true); if (S.example !== "PickupAndScore") loadExample("PickupAndScore"); resetRun(); S.speed = 4; $("speed").value = "4"; play(); return; } $("log-filter").value = ""; renderLog(true); const row = $("log").querySelector(`[data-i="${i}"]`); if (row) { row.scrollIntoView({ block: "center" }); row.classList.add("flash"); row.click(); row.focus(); } }],
-    check: () => (S.flags.clickedHalt ? "You found a halted node" : null),
-    progress: () => (S.flags.halts ? "There is a halt in the log: click it" : "Run the tree until the Timeout fires"),
+    title: "Open the log and click a line marked “halted”.",
+    text: "When the 3 s ran out, Timeout halted its child: RUNNING straight back to IDLE, with no result.",
+    enter() { $("log-box").open = true; if (S.example !== "PickupAndScore") { camera(true); loadExample("PickupAndScore"); } },
+    action: ["Show me", showHalt],
+    check: () => S.ever.clickedHalt,
   },
   {
-    title: "5. Edit the XML",
-    enter() { if (S.example !== "PickupAndScore") { camera(true); loadExample("PickupAndScore"); } },
-    body: () => `<p>A tree is just a text file. In <b>Tree XML</b>, change <code>msec="3000"</code> to <code>msec="1000"</code> and press <b>Run this XML</b>: plan B starts 2 s sooner. Then try a typo such as <code>msc="1000"</code>. The lab refuses to run it and marks the node, the same way the robot refuses to load a broken auto.</p>
-      <p><b>Download for Arbor</b> saves your project to open in <a href="/docs/software/tools/arbor" target="_top">Arbor</a>. How our real autos are laid out: <a href="/docs/software/robot_dev/autonomous" target="_top">Autonomous</a>.</p>`,
-    action: ["Go to the XML", () => { const ta = $("xml-text"); ta.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" }); const i = ta.value.indexOf('msec="3000"'); ta.focus({ preventScroll: true }); if (i >= 0) ta.setSelectionRange(i + 6, i + 10); }],
-    check: () => (S.flags.customRun ? "You ran your own XML" : null),
-    progress: () => "Edit, then Run this XML",
+    title: "Run the real auto, then run it again with the intake jammed.",
+    text: "The tree turns green both times, but the jammed robot scores only the 8 fuel it started with.",
+    enter() { camera(false); jam(false); loadExample("CitrusSynergy"); },
+    check: () => S.ever.jamRun,
+  },
+  {
+    title: "In the XML, change msec=\"3000\" to \"1000\", then Run this XML.",
+    text: "Plan B starts 2 s sooner. Try a typo too: the lab won't run it, just like the robot.",
+    enter() { if (S.example !== "PickupAndScore" || S.edited) { camera(true); jam(false); loadExample("PickupAndScore"); } },
+    action: ["Show me", () => { const ta = $("xml-text"); ta.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" }); const i = ta.value.indexOf('msec="3000"'); ta.focus({ preventScroll: true }); if (i >= 0) ta.setSelectionRange(i + 6, i + 10); }],
+    check: () => S.ever.customRun,
   },
 ];
 function nodeByType(t) { return S.bt?.nodes.find((n) => n.type === t); }
-function wtStatus() {
-  const st = STEPS[WT.i], el = $("wt-status");
-  const done = st.check();
-  el.style.visibility = "visible";
-  el.textContent = done || st.progress();
-  el.classList.toggle("good", !!done);
+function applyReveal() {
+  const upTo = G.free ? Infinity : G.i + 1;
+  document.querySelectorAll("[data-step-from]").forEach((el) => el.classList.toggle("not-yet", Number(el.dataset.stepFrom) > upTo));
+}
+function renderGuide() {
+  const last = G.i === STEPS.length - 1;
+  $("g-free").setAttribute("aria-pressed", String(G.free));
+  if (G.free) {
+    $("g-count").textContent = "Free play";
+    $("g-title").textContent = "Everything is switched on.";
+    $("g-text").textContent = "Pick a tree, break the robot, edit the XML. Ideas are under Go deeper.";
+    $("g-action").hidden = true; $("g-back").hidden = true; $("g-next").hidden = true;
+    return;
+  }
+  const st = STEPS[G.i], done = !!st.check();
+  $("g-back").hidden = false; $("g-next").hidden = last;
+  $("g-count").innerHTML = `Step ${G.i + 1} of ${STEPS.length}${done ? ' <span class="done-mark">✓ done</span>' : ""}`;
+  $("g-title").textContent = st.title;
+  $("g-text").textContent = done && last ? "You've got it. Try Free play to use every tree and failure." : st.text;
+  $("g-action").hidden = !st.action || done;
+  if (st.action) $("g-action").textContent = st.action[0];
+  $("g-back").disabled = G.i === 0;
+  $("g-next").classList.toggle("ready", done);
+  $("g-free").classList.toggle("ready", done && last);
 }
 function goStep(i) {
-  WT.i = Math.max(0, Math.min(STEPS.length - 1, i));
-  const st = STEPS[WT.i];
-  $("wt-steps").innerHTML = STEPS.map((x, j) => `<li class="${j === WT.i ? "now" : j < WT.i ? "done" : ""}">${j + 1}</li>`).join("");
-  $("wt-title").textContent = st.title;
-  st.enter?.();
-  $("wt-body").innerHTML = st.body();
-  $("wt-action").textContent = st.action[0];
-  $("wt-back").disabled = WT.i === 0;
-  $("wt-next").hidden = WT.i === STEPS.length - 1;
-  wtStatus();
+  G.i = Math.max(0, Math.min(STEPS.length - 1, i));
+  applyReveal();
+  STEPS[G.i].enter?.();
+  renderGuide();
+  setTimeout(() => { viewer.fit(); drawField(); }, 80);
 }
-function startWalkthrough() { WT.on = true; $("walk").hidden = false; $("wt-toggle").setAttribute("aria-pressed", "true"); goStep(0); }
-function stopWalkthrough() { WT.on = false; $("walk").hidden = true; $("wt-toggle").setAttribute("aria-pressed", "false"); }
-$("wt-toggle").addEventListener("click", () => (WT.on ? stopWalkthrough() : startWalkthrough()));
-$("wt-action").addEventListener("click", () => { STEPS[WT.i].action[1](); wtStatus(); });
-$("wt-back").addEventListener("click", () => goStep(WT.i - 1));
-$("wt-next").addEventListener("click", () => goStep(WT.i + 1));
-$("wt-exit").addEventListener("click", stopWalkthrough);
+function setFree(on) {
+  G.free = on;
+  try { localStorage.setItem(MODE_KEY, on ? "free" : "guided"); } catch (e) {}
+  if (on) { applyReveal(); renderGuide(); setTimeout(() => { viewer.fit(); drawField(); }, 80); }
+  else goStep(G.i);
+}
+function wtStatus() { renderGuide(); }
+$("g-action").addEventListener("click", () => { STEPS[G.i].action?.[1](); renderGuide(); });
+$("g-back").addEventListener("click", () => goStep(G.i - 1));
+$("g-next").addEventListener("click", () => goStep(G.i + 1));
+$("g-free").addEventListener("click", () => setFree(!G.free));
 
 // ===================================================================================== start
 const themeNow = () => (document.documentElement.dataset.theme === "light" ? "light" : document.documentElement.dataset.theme === "dark" ? "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -1754,8 +1784,8 @@ const narrow = window.matchMedia("(max-width: 600px)");
 viewer = createTreeViewer($("viewer"), {
   theme: themeNow(),
   dir: narrow.matches ? "LR" : "TB", // phones: grow the tree downward, not sideways
-  // Leave the selection to the viewer (re-rendering it from here on every click swallows double-clicks); the log
-  // and the error list take it over briefly with setOptions({ selection }) and hand it back on the next click.
+  // The viewer keeps its own selection; the log and the error list take it over briefly with
+  // setOptions({ selection }) and hand it back on the next click.
   onSelect: (p) => { S.selection = p; if (hostSel) { hostSel = false; viewer.setOptions({ selection: undefined }); } updateSelInfo(); },
   onTreeChange: (id) => { shownTree = id; $("back-main").hidden = id === S.mainId; },
 });
@@ -1764,9 +1794,12 @@ new MutationObserver(() => { readColors(); viewer.setOptions({ theme: themeNow()
   .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 window.addEventListener("resize", () => drawField());
 narrow.addEventListener("change", () => viewer.setOptions({ dir: narrow.matches ? "LR" : "TB" }));
+let savedMode = "guided";
+try { savedMode = localStorage.getItem(MODE_KEY) || "guided"; } catch (e) {}
 loadExample("DriveAimShoot");
 shownTree = S.mainId;
 buildPalette();
+if (savedMode === "free") setFree(true); else goStep(0);
 requestAnimationFrame(frame);
 </script>
 </body>

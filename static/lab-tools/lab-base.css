@@ -125,3 +125,40 @@ details code { color: var(--ink); }
 .wt-actions, .wt-nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .status { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
 .status.good { color: var(--volt); border-color: var(--volt); }
+
+/* ---- Approachable layout: guided steps first, extras folded away -------------------------------------------
+   A lab opens in guided mode: one short step card, the main view, and only the controls that step needs.
+   "Free play" shows every control. Anything a new student can skip lives in a closed <details>. */
+
+/* Short, one-sentence lede */
+.lede.short { max-width: 52ch; }
+
+/* The step card: what to do right now */
+.guide { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--brand);
+  border-radius: calc(var(--radius) * 2); padding: 12px 16px; }
+.guide-count { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.guide h2 { grid-column: 1; font-family: var(--f-display); font-size: 18px; font-weight: 600; line-height: 1.3; margin: 0; }
+.guide p { grid-column: 1; margin: 0; font-size: 15px; color: var(--ink); max-width: 70ch; }
+.guide .guide-nav { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.guide .done-mark { color: var(--volt); font-weight: 700; }
+@media (max-width: 640px) { .guide { grid-template-columns: minmax(0, 1fr); } .guide .guide-nav { grid-column: 1; grid-row: auto; justify-content: flex-start; } }
+
+/* Controls a step has not introduced yet. Guided mode hides them; free play shows everything. */
+[data-step-from].not-yet { display: none !important; }
+
+/* "More controls" and "Why?" disclosures */
+details.more { border: 1px solid var(--line); border-radius: var(--radius); padding: 0 10px; color: var(--ink); font-size: 14px; }
+details.more > summary { padding: 6px 0; font-weight: 600; color: var(--muted); list-style-position: inside; }
+details.more[open] { padding-bottom: 10px; display: grid; gap: 10px; }
+details.why > summary { color: var(--link); font-size: 13px; }
+
+/* "Go deeper": code, notes and ideas at the bottom, all closed by default */
+.deeper { display: grid; gap: 8px; }
+.deeper > h2 { font-family: var(--f-display); font-size: 18px; font-weight: 600; margin: 8px 0 0; }
+.deeper > details { background: var(--panel); border: 1px solid var(--line); border-radius: calc(var(--radius) * 2); padding: 0 16px; color: var(--ink); font-size: 15px; }
+.deeper > details > summary { padding: 12px 0; font-weight: 600; font-size: 16px; }
+.deeper > details[open] { padding-bottom: 14px; }
+
+/* A closed <details> lays out its contents without painting them; hide them so layout and audits match what shows */
+details:not([open]) > :not(summary) { display: none; }
