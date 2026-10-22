@@ -1220,11 +1220,12 @@ details:not([open]) > :not(summary) { display: none; }
     walk.free = on;
     try { localStorage.setItem(MODE_KEY, on ? "free" : "guided"); } catch (e) {}
     $("g-free").setAttribute("aria-pressed", String(on));
+    $("g-free").textContent = on ? "Back to steps" : "Free play";
     $("g-free").classList.remove("primary");
     if (on) {
       $("g-count").textContent = "Free play";
       $("g-title").textContent = "Every control is showing";
-      $("g-body").textContent = "Drive, change anything, and watch the estimate. Press Free play again to go back to the steps.";
+      $("g-body").textContent = "Drive, change anything, and watch the estimate.";
       $("g-status").textContent = ""; $("g-done").textContent = "";
       $("g-back").hidden = $("g-next").hidden = true;
       if (!opts.camOn.some(Boolean)) setCams(true);

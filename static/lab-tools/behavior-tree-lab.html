@@ -1739,6 +1739,7 @@ function applyReveal() {
 function renderGuide() {
   const last = G.i === STEPS.length - 1;
   $("g-free").setAttribute("aria-pressed", String(G.free));
+  $("g-free").textContent = G.free ? "Back to steps" : "Free play";
   if (G.free) {
     $("g-count").textContent = "Free play";
     $("g-title").textContent = "Everything is switched on.";

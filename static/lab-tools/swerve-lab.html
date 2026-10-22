@@ -769,11 +769,12 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
   function renderGuide() {
     lastStatus = "";
     $("g-free").setAttribute("aria-pressed", String(guide.free));
+    $("g-free").textContent = guide.free ? "Back to steps" : "Free play";
     $("g-show").hidden = $("g-back").hidden = $("g-next").hidden = guide.free;
     if (guide.free) {
       $("g-count").textContent = "Free play"; $("g-status").textContent = "";
       $("g-title").textContent = "Every control is out. Drive anything.";
-      $("g-body").textContent = "Ideas are under Go deeper → Things to try. Press Free play again for the guided steps.";
+      $("g-body").textContent = "Ideas are under Go deeper → Things to try.";
     } else {
       const st = STEPS[guide.i];
       $("g-count").textContent = `Step ${guide.i + 1} of ${STEPS.length}`;

@@ -27,13 +27,14 @@ button[aria-pressed="true"] kbd { color: var(--ink); }
 /* Diagram */
 #diagram .edge { fill: none; stroke: var(--muted); stroke-width: 1.8; marker-end: url(#arr); }
 #diagram .edge.on-kind { stroke: var(--success); } #diagram .edge.off-kind { stroke: var(--failure); }
-#diagram .edge.lit { stroke: var(--brand); stroke-width: 4.5; marker-end: url(#arr-lit); }
+/* The arrow that just fired: the text colour, so it never reads as an "off" (red) or "on" (green) arrow. */
+#diagram .edge.lit { stroke: var(--ink); stroke-width: 4.5; marker-end: url(#arr-fired); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ink) 55%, transparent)); }
 #diagram .edge.pulse { animation: pulse 0.9s ease-out; }
 @keyframes pulse { 0% { stroke-width: 10; } 100% { stroke-width: 4.5; } }
 #diagram .lbl rect { fill: var(--bg); stroke: var(--line); stroke-width: 1.2; }
 #diagram .lbl.on-kind rect { stroke: var(--success); } #diagram .lbl.off-kind rect { stroke: var(--failure); }
 #diagram .lbl text { fill: var(--ink); font-family: var(--f-mono); text-anchor: middle; dominant-baseline: central; }
-#diagram .lbl.lit rect { fill: color-mix(in srgb, var(--brand) 22%, var(--bg)); stroke: var(--brand); stroke-width: 2.5; }
+#diagram .lbl.lit rect { fill: color-mix(in srgb, var(--ink) 16%, var(--bg)); stroke: var(--ink); stroke-width: 2.5; }
 #diagram .lbl.lit text { font-weight: 700; }
 #diagram .lbl.link-lbl rect { stroke: var(--brand); stroke-dasharray: 4 3; }
 #diagram .link { fill: none; stroke: var(--brand); stroke-width: 2; stroke-dasharray: 6 4; marker-end: url(#arr-lit); }
@@ -62,7 +63,7 @@ h3.sub code { font-size: 14px; }
 pre.code { margin: 0; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 0; overflow-x: auto; color: var(--ink); }
 .box2 pre.code { background: var(--panel); }
 pre.code .ln { display: block; padding: 0 12px; white-space: pre; border-left: 3px solid transparent; }
-pre.code .ln.on { background: color-mix(in srgb, var(--brand) 16%, transparent); border-left-color: var(--brand); }
+pre.code .ln.on { background: color-mix(in srgb, var(--ink) 12%, transparent); border-left-color: var(--ink); }
 pre.code .ln.bad { background: color-mix(in srgb, var(--warn) 18%, transparent); }
 pre.code .c { color: var(--muted); }
 pre.code .kw { color: var(--accent); }
@@ -78,7 +79,7 @@ pre.code .kw { color: var(--accent); }
 .tt th { text-align: left; font-weight: 600; font-size: 11.5px; color: var(--muted); padding: 3px 6px; font-family: var(--f-body); }
 .tt th code { font-size: 11.5px; }
 .tt td { padding: 4px 6px; border-top: 1px solid var(--grid); vertical-align: top; }
-.tt td.on { background: color-mix(in srgb, var(--brand) 20%, transparent); box-shadow: inset 0 0 0 2px var(--brand); font-weight: 700; }
+.tt td.on { background: color-mix(in srgb, var(--ink) 14%, transparent); box-shadow: inset 0 0 0 2px var(--ink); font-weight: 700; }
 .tt td.row { color: var(--muted); white-space: nowrap; }
 .tt td.row.cur { color: var(--ink); font-weight: 700; }
 .ttwrap { overflow-x: auto; }
@@ -587,7 +588,8 @@ pre.code .kw { color: var(--accent); }
     $("diagram").setAttribute("viewBox", L.view);
     let back = `<defs>
       <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
-      <marker id="arr-lit" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--brand)"/></marker></defs>`;
+      <marker id="arr-lit" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--brand)"/></marker>
+      <marker id="arr-fired" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>`;
     const boxLbl = (x, y, text) => `<text class="boxlbl" x="${x}" y="${y}" style="font-size:${L.fs}px">${esc(text)}</text>`;
     for (const b of L.boxes || []) back += `<rect class="box" x="${b[0]}" y="${b[1]}" width="${b[2]}" height="${b[3]}" rx="10"/>${boxLbl(b[0] + 10, b[1] + L.fs + 6, b[4])}`;
     for (const g of Object.values(L.groups || {})) back += `<rect class="box group" x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="10"/>${boxLbl(g.x + 10, g.y + L.fs + 6, g.label)}`;
@@ -846,12 +848,13 @@ pre.code .kw { color: var(--accent); }
   function renderGuide() {
     const free = !WT.guided;
     $("g-free").setAttribute("aria-pressed", String(free));
+    $("g-free").textContent = free ? "Back to steps" : "Free play";
     $("g-back").hidden = $("g-next").hidden = free;
     lastGuide = "";
     if (free) {
       $("g-count").textContent = "Free play";
       $("g-title").textContent = "Pick any machine and try it";
-      $("g-body").textContent = "Press Free play again for the guided steps.";
+      $("g-body").textContent = "Switch machines with the tabs, flip any switch, or build the table.";
       $("g-why-wrap").hidden = true;
       $("g-action").hidden = true;
       return;
