@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Pose Estimator Lab for the MARS/WARS docs, served from static/lab-tools/ and embedded at /labs/pose-estimator-lab.
+<!-- Pose Estimator Lab for the MARS/WARS docs, served from static/lab-tools/ and opened at /labs/pose-estimator-lab.
      Adapted from FRC Team 1756 Argos's Pose Estimator Lab (BSD 3-Clause, see THIRD_PARTY_NOTICES.md).
      Camera layout, filter rules and standard deviations follow the 2026 MARS/WARS robot
      (mainbot-4143-2026: LocalizationSubsystem, LocalizationConstants, SimulationConstants). -->
@@ -11,30 +11,32 @@
 <link rel="stylesheet" href="lab-base.css">
 <script src="lab-theme.js"></script>
 <style>
-/* Lab-specific styles. Shared tokens and components come from lab-base.css.
-   Layout: sticky control column, then a tall field (blue wall at the bottom, like the driver station view) beside readouts and graphs. */
+/* Lab-specific styles. Shared tokens and components (including .guide, .more, .why, .deeper) come from lab-base.css.
+   Layout: the field is the hero on the left; the step card, a status strip and the controls sit beside it. */
 :root {
   --carpet: #e4e7ea; --carpet-line: #c9ced4; --tag: #7d8796;
   --truth: var(--ink); --odom: var(--setp); --fused: var(--volt); --reject: var(--warn); --tag-seen: var(--ink); --focus: var(--brand);
   --cam0: var(--pin3); --cam1: var(--pin2); --cam2: var(--running);
+  --field-h: clamp(480px, calc(100vh - 190px), 920px);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --carpet: #2b2d30; --carpet-line: #3d4045; --tag: #8a9099; }
 }
 :root[data-theme="dark"] { --carpet: #2b2d30; --carpet-line: #3d4045; --tag: #8a9099; }
 
-.info { display: grid; gap: 12px; min-width: 0; align-content: start; }
-.main { grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (min-width: 1000px) { .main { grid-template-columns: auto minmax(0, 1fr); } }
+/* Narrow: field, then step card, then the rest. Wide: field on the left, everything else beside it. */
+.stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.side-col { display: grid; gap: 12px; min-width: 0; align-content: start; }
+@media (min-width: 1000px) { .stage { grid-template-columns: auto minmax(0, 1fr); } }
 
 /* Field is portrait: 8.07 m wide, 16.54 m tall, plus a small margin */
 #field { width: 100%; aspect-ratio: 0.5 / 1; cursor: pointer; }
 /* Explicit width: with width:auto the canvas's own pixel size feeds back into the auto grid column and it grows */
 @media (min-width: 1000px) {
-  #field { height: min(80vh, 920px); width: calc(min(80vh, 920px) / 2); }
-  .field-panel { max-width: calc(min(80vh, 920px) / 2 + 34px); } /* keeps the long legend from widening the column */
+  #field { height: var(--field-h); width: calc(var(--field-h) / 2); }
+  .field-panel { max-width: calc(var(--field-h) / 2 + 34px); } /* keeps the legend from widening the column */
 }
-#err-plot { width: 100%; aspect-ratio: 16 / 5; max-height: 28vh; }
+#err-plot { width: 100%; aspect-ratio: 16 / 5; max-height: 28vh; margin-top: 8px; }
 
 .sw.truth { border-color: var(--truth); } .sw.odom { border-color: var(--odom); } .sw.fused { border-color: var(--fused); }
 .ring { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--muted); vertical-align: middle; margin-right: 6px; }
@@ -43,6 +45,13 @@
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
 .zone { display: inline-block; width: 14px; height: 10px; vertical-align: middle; margin-right: 6px; border: 1px dashed var(--blue-alliance); background: color-mix(in srgb, var(--blue-alliance) 15%, transparent); }
 
+/* Status strip: the two errors and the tolerance badge */
+.strip { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; }
+.strip .num { display: flex; flex-direction: column; }
+.strip .num b { font-family: var(--f-mono); font-weight: 500; font-size: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.strip .num b.odom { color: var(--odom); } .strip .num b.fused { color: var(--fused); }
+.badge { font-weight: 700; font-size: 15px; padding: 6px 14px; border-radius: 99px; border: 2px solid var(--line); color: var(--muted); }
+.badge.yes { color: var(--volt); border-color: var(--volt); }
 .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
 .readout b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 520px) { .readout { grid-template-columns: minmax(0, 1fr); } }
@@ -59,24 +68,29 @@ td.ok { color: var(--fused); } td.bad { color: var(--reject); }
 .row { grid-template-columns: minmax(0, 1fr) 72px; }
 .k { font-family: var(--f-body); font-weight: 600; }
 .val { font-family: var(--f-mono); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
-.rows { display: grid; gap: 12px; }
+.knob { display: grid; gap: 4px; }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
-.check { font-size: 14px; }
+.check { font-size: 14px; color: var(--ink); }
 .cam-btn { display: inline-flex; align-items: center; gap: 6px; }
 .cam-btn .dot { margin: 0; }
-h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
+h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; color: var(--ink); }
+details.why p { margin: 4px 0 0; }
 
-/* Drive pad: lights up the keys being held, and can be held with a finger or mouse */
-.keys { display: grid; grid-template-columns: repeat(3, 40px); gap: 4px; justify-content: start; }
-.keys button { display: grid; place-items: center; height: 36px; padding: 0; border-bottom-width: 3px; background: var(--field); font-family: var(--f-mono); font-size: 13px; touch-action: none; user-select: none; -webkit-user-select: none; }
-.keys button.on { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
-.drive-help { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+/* Drive keys: a diagram that lights up on a keyboard computer, holdable buttons on a touch screen */
+.drive-help { display: flex; gap: 12px; align-items: center; }
+.keys { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px; }
+.keys kbd, .keys button { display: grid; place-items: center; height: 30px; padding: 0; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: var(--radius); background: var(--field); font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+.keys button { height: 40px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.keys .on { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.keys.pad { grid-template-columns: repeat(3, 44px); display: none; }
+.coarse-only { display: none; }
+@media (pointer: coarse) { .keys.pad { display: grid; } .keys.diagram, .fine-only { display: none; } .coarse-only { display: inline; } }
 
 /* Localization state buttons: one per row, they hold long enum names */
 .states { display: grid; gap: 6px; }
 .states button { text-align: left; font-family: var(--f-mono); font-size: 13px; }
 
-/* Filter results: one bar per outcome */
+/* Camera readings: one bar per outcome */
 .results { display: grid; grid-template-columns: minmax(0, max-content) minmax(60px, 1fr) 40px; gap: 6px 10px; align-items: center; font-size: 14px; }
 .results .bar { height: 10px; border-radius: 2px; background: var(--grid); position: relative; overflow: hidden; }
 .results .bar i { position: absolute; inset: 0 auto 0 0; background: var(--reject); }
@@ -86,8 +100,11 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
 .breakdown b { font-family: var(--f-mono); font-weight: 600; font-variant-numeric: tabular-nums; }
 .breakdown span.parts { font-family: var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 0; }
 .field-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-.wt-body ul { margin: 0; padding-left: 22px; }
-.links { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 4px; }
+.deeper p, .deeper ol, .deeper ul { margin: 0 0 8px; }
+.deeper ol, .deeper ul { padding-left: 22px; display: grid; gap: 4px; }
+#g-status { color: var(--muted); }
+/* Closed disclosures render nothing (Chrome otherwise keeps their content laid out, just unpainted) */
+details:not([open]) > :not(summary) { display: none; }
 </style>
 </head>
 <body>
@@ -96,201 +113,209 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
     <div>
       <p class="eyebrow">Software · Localization</p>
       <h1>Pose Estimator Lab</h1>
-      <p class="lede">Drive a swerve robot around the 2026 REBUILT field. Wheel odometry slowly loses track of where the robot really is. Three cameras on an Nvidia Jetson read <a href="/docs/software/vision/april_tags" target="_top">AprilTags</a>, and a Kalman filter blends the two. New here? Press <b>Walkthrough</b>.</p>
+      <p class="lede short">Drive a swerve robot and watch AprilTag cameras fix the drift in its wheel odometry.</p>
     </div>
     <div class="toolbar">
-      <button id="wt-toggle" aria-pressed="false">Walkthrough</button>
       <button id="pause" aria-pressed="false">Pause</button>
       <button id="reset">Reset</button>
     </div>
   </header>
 
-  <section class="panel walk" id="walk" hidden aria-label="Walkthrough">
-    <div class="wt-main">
-      <div class="panel-head"><h2>Walkthrough</h2><ol class="wt-steps" id="wt-steps"></ol></div>
-      <h3 id="wt-title"></h3>
-      <div class="wt-body" id="wt-body"></div>
-    </div>
-    <div class="wt-side">
-      <button id="wt-action"></button>
-      <span class="status" id="wt-status" role="status" style="visibility:hidden">&nbsp;</span>
-      <div class="wt-nav"><button id="wt-back">Back</button><button id="wt-next">Next step</button><button id="wt-exit">Exit</button></div>
-    </div>
-  </section>
-
-  <div class="app">
-    <aside class="side" aria-label="Controls">
-      <div class="panel">
-        <h2>Driving</h2>
-        <div class="drive-help">
-          <div class="keys" id="keys" aria-hidden="true">
-            <button tabindex="-1" data-key="q">Q</button><button tabindex="-1" data-key="w">W</button><button tabindex="-1" data-key="e">E</button>
-            <button tabindex="-1" data-key="a">A</button><button tabindex="-1" data-key="s">S</button><button tabindex="-1" data-key="d">D</button>
-          </div>
-          <p class="note"><b>W A S D</b> move the robot field-relative, as seen from the blue driver station at the bottom. <b>Q</b> and <b>E</b> turn it. On a phone, hold the keys here.</p>
-        </div>
-        <div class="row">
-          <label for="max-speed"><span class="k">Top speed</span><span class="u">m/s</span></label>
-          <input type="range" id="max-speed" min="1" max="5" step="0.1" value="4">
-          <span class="val" id="max-speed-val">4.0</span>
-        </div>
-        <p class="note">The 2026 robot tops out at 5.0 m/s (<code>SPEED_AT_12V_MPS</code>) and turns at up to 4.7 rad/s here.</p>
+  <div class="stage">
+    <section class="panel field-panel" aria-label="Field">
+      <canvas id="field" tabindex="0" aria-label="Top-down 2026 field with the blue wall at the bottom. Click, then drive with W A S D and turn with Q and E."></canvas>
+      <div class="legend">
+        <span><i class="sw truth"></i>True robot</span>
+        <span><i class="sw dash odom"></i>Odometry</span>
+        <span><i class="sw fused"></i>Fused estimate</span>
+        <span data-step-from="2" id="lg-cams"></span>
+        <span data-step-from="2"><b class="xmark">×</b>Rejected</span>
+        <span data-step-from="3"><i class="ring"></i>Circle = σ</span>
+        <span data-step-from="5"><i class="zone" id="lg-zone"></i>Our alliance zone</span>
+        <span data-step-from="7"><i class="ring focus"></i>Focus tag</span>
       </div>
+    </section>
 
-      <div class="panel">
-        <h2>Odometry</h2>
-        <p class="note"><b>Odometry</b> means working out where you are by adding up how far the wheels turned, with the gyro giving the heading.</p>
-        <div class="row">
-          <label for="drift"><span class="k">Wheel drift</span><span class="u">% of distance</span></label>
-          <input type="range" id="drift" min="0" max="10" step="0.5" value="3">
-          <span class="val" id="drift-val">3.0</span>
-        </div>
-        <p class="note">Worn treads, carpet seams and wheel scrub make each wheel's distance a little wrong. Those errors add up the farther you drive. Pushing into the hub, a trench wall or the guardrail makes it worse, because the wheels keep turning while the robot doesn't move.</p>
-        <div class="row">
-          <label for="bump-slip"><span class="k">Slip on the bumps</span><span class="u">% of distance</span></label>
-          <input type="range" id="bump-slip" min="0" max="40" step="1" value="15">
-          <span class="val" id="bump-slip-val">15</span>
-        </div>
-        <p class="note">On a bump the wheels roll along a 0.29 rad (16°) slope, so they count about 4% more distance than the robot covers across the floor. They also skid as the robot tips over the peak.</p>
-        <div class="row">
-          <label for="gyro-drift"><span class="k">Gyro drift</span><span class="u">% of turning</span></label>
-          <input type="range" id="gyro-drift" min="0" max="3" step="0.1" value="0.3">
-          <span class="val" id="gyro-drift-val">0.3</span>
-        </div>
-        <p class="note">The gyro is very good, but not perfect. At 0.3%, one full turn (6.28 rad) leaves the heading about 0.019 rad off.</p>
-        <div class="btns">
-          <button id="shove">Get shoved by a robot</button>
-          <button id="reset-odom">Reset odometry to true pose</button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h2>Cameras</h2>
-        <div class="btns" id="cam-toggles"></div>
-        <div class="row">
-          <label for="pose-err"><span class="k">Camera pose error</span><span class="u">× a typical reading</span></label>
-          <input type="range" id="pose-err" min="0" max="3" step="0.1" value="1">
-          <span class="val" id="pose-err-val">×1.0</span>
-        </div>
-        <p class="note">How far each reading lands from the truth. It grows with tag distance, with how sharply the camera sees the tag, and with motion blur from driving or spinning while the picture is taken.</p>
-        <div class="field-row">
-          <span class="k">Alliance</span>
-          <div class="seg" role="group" aria-label="Alliance">
-            <button id="al-blue" aria-pressed="true">Blue</button>
-            <button id="al-red" aria-pressed="false">Red</button>
-          </div>
-        </div>
-        <p class="note">Three global-shutter cameras face left, right and back. Left and right sit 0.29 m off the floor, the back one 0.54 m. All tilt up 0.17 rad (10°) and see about 1.35 rad (77°) side to side. A <a href="/docs/software/hardware/jetsons" target="_top">Jetson</a> finds tags with a GPU detector at 60 frames a second per camera, solves the robot's pose, and sends it to the roboRIO with the time the picture was taken. The hub and trench walls block the view of anything behind them.</p>
-      </div>
-
-      <div class="panel">
-        <h2>Localization state</h2>
-        <div class="states" id="loc-states" role="group" aria-label="Localization state"></div>
-        <p class="note"><code>RobotContainer</code> asks for <code>SHOOTING_FOCUS</code> while aiming and shooting, and <code>FULL</code> the rest of the time. In a focus state, a reading that includes a focus tag (outlined on the field) uses the <b>focused σ</b>. Every other reading uses the <b>not-focused σ</b>. No tags are thrown away. See <a href="/docs/software/controls/state-machines" target="_top">state machines</a>.</p>
-      </div>
-
-      <div class="panel">
-        <h2>Vision filter</h2>
-        <p class="note">Every reading must pass these checks, in this order, before it reaches the Kalman filter. The defaults are the 2026 robot's values from <code>LocalizationConstants</code>.</p>
-        <div class="btns" id="filter-presets"></div>
-        <div class="rows" id="gate-rows"></div>
-        <p class="note">Always on: a reading outside the field walls is thrown away.</p>
-        <h3 class="sub">Ideas not in the 2026 code</h3>
-        <div class="rows" id="extra-rows"></div>
-        <label class="check" for="gate-bump"><input type="checkbox" id="gate-bump"><span>Reject readings while on a bump<br><span class="note">The robot is tilted, so the pose is off.</span></span></label>
-      </div>
-
-      <div class="panel">
-        <h2>Kalman filter</h2>
-        <p class="note">σ (sigma) is a <b>standard deviation</b>: how far off you expect a value to be. Small σ means "trust this a lot".</p>
-        <div class="rows" id="kf-rows"></div>
-        <label class="check" for="kf-speed"><input type="checkbox" id="kf-speed"><span>Trust vision less while moving<br><span class="note">Not in the 2026 code. Adds 25% to σ for every m/s of speed.</span></span></label>
-        <p class="note">Each accepted reading pulls the estimate a fraction <b>q ÷ (q + σ)</b> of the way toward it. That's the WPILib pose estimator's gain. With the 2026 numbers (q 0.1, σ 0.9) each reading pulls 10% of the way, in x, y and heading. The starter σ of 5.0 in the <a href="/docs/software/training/computer-vision" target="_top">Computer Vision lesson</a> pulls only 2%.</p>
-      </div>
-    </aside>
-
-    <main class="main">
-      <section class="panel field-panel">
-        <div class="panel-head">
-          <h2>Field</h2>
-          <span class="hint">Blue driver station view</span>
-        </div>
-        <canvas id="field" tabindex="0" aria-label="Top-down 2026 field with the blue wall at the bottom. Click, then drive with W A S D and turn with Q and E."></canvas>
-        <div class="legend">
-          <span><i class="sw truth"></i>True robot</span>
-          <span><i class="sw dash odom"></i>Odometry</span>
-          <span><i class="sw fused"></i>Fused estimate</span>
-          <span id="lg-cams"></span>
-          <span><i class="ring"></i>Accepted, circle = σ</span>
-          <span><b class="xmark">×</b>Rejected</span>
-          <span><i class="zone" id="lg-zone"></i>Our alliance zone</span>
-          <span><i class="ring focus"></i>Focus tag</span>
-        </div>
+    <div class="side-col">
+      <section class="guide" id="guide" aria-label="Guided steps">
+        <span class="guide-count"><span id="g-count">Step 1 of 8</span> <span id="g-status"></span> <span class="done-mark" id="g-done" aria-live="polite"></span></span>
+        <h2 id="g-title"></h2>
+        <p id="g-body"></p>
+        <div class="guide-nav"><button id="g-back">Back</button><button id="g-next">Next</button><button id="g-free" aria-pressed="false">Free play</button></div>
       </section>
 
-      <div class="info">
-        <section class="panel">
-          <h2>Where the robot is</h2>
+      <section class="panel" aria-label="How far off the estimates are">
+        <div class="strip">
+          <div class="num"><span class="label">Odometry error</span><b class="odom" id="st-odom">–</b></div>
+          <div class="num"><span class="label">Fused error</span><b class="fused" id="st-fused">–</b></div>
+          <div class="badge" id="st-tol">Within 0.06 m and 0.017 rad? Not yet</div>
+        </div>
+        <details class="more">
+          <summary>More numbers</summary>
           <div class="readout">
             <div><span>True pose</span><b id="ro-true">–</b></div>
             <div><span>Odometry (smooth pose)</span><b id="ro-odom">–</b></div>
             <div><span>Fused (field pose)</span><b id="ro-fused">–</b></div>
-            <div><span>Odometry error</span><b id="ro-err">–</b></div>
-            <div><span>Fused error</span><b id="ro-ferr">–</b></div>
-            <div><span>Within 0.06 m and 0.017 rad?</span><b id="ro-tol">–</b></div>
             <div><span>Distance driven</span><b id="ro-dist">–</b></div>
             <div><span>Speed</span><b id="ro-speed">–</b></div>
             <div><span>Surface</span><b id="ro-surface">–</b></div>
             <div><span>State</span><b id="ro-state">–</b></div>
           </div>
-          <p class="note">The robot runs two estimators. The <b>smooth pose</b> only uses odometry. The <b>field pose</b> also takes the camera readings. The tolerance is the one the <a href="/docs/software/training/computer-vision" target="_top">Computer Vision lesson</a> checks.</p>
-        </section>
+        </details>
+      </section>
 
-        <section class="panel">
-          <div class="panel-head"><h2>What each camera sees</h2><span class="hint">Values hold for 250 ms so you can read them</span></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Camera</th><th>Tags</th><th>Dist</th><th>Result</th></tr></thead>
-              <tbody id="cam-table"></tbody>
-            </table>
+      <section class="panel" aria-label="Controls">
+        <div class="drive-help">
+          <div class="keys diagram" aria-hidden="true">
+            <kbd data-key="q">Q</kbd><kbd data-key="w">W</kbd><kbd data-key="e">E</kbd>
+            <kbd data-key="a">A</kbd><kbd data-key="s">S</kbd><kbd data-key="d">D</kbd>
           </div>
-          <h3 class="sub">Why each reading is off</h3>
-          <div class="breakdown" id="err-breakdown"></div>
-          <p class="note">Expected error (1σ) = distance error × viewing-angle factor + motion blur + bump tilt. The robot never sees this number. The 2026 code gives every reading the same σ, so a blurry far reading counts as much as a sharp close one.</p>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><h2>Filter results</h2><span class="hint">Last 2 seconds of readings</span></div>
-          <div class="results" id="results"></div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <h2>Position error vs time</h2>
-            <div class="legend"><span><i class="sw odom"></i>Odometry only</span><span><i class="sw fused"></i>Fused estimate</span></div>
+          <div class="keys pad" id="pad" aria-hidden="true">
+            <button tabindex="-1" data-key="q">Q</button><button tabindex="-1" data-key="w">W</button><button tabindex="-1" data-key="e">E</button>
+            <button tabindex="-1" data-key="a">A</button><button tabindex="-1" data-key="s">S</button><button tabindex="-1" data-key="d">D</button>
           </div>
-          <canvas id="err-plot" role="img" aria-label="Graph of odometry and fused position error, in meters, over the last 30 seconds"></canvas>
-        </section>
+          <p class="note"><span class="fine-only">Click the field, then hold</span><span class="coarse-only">Hold</span> <b>W A S D</b> to drive and <b>Q E</b> to turn.</p>
+        </div>
+        <div class="btns">
+          <button id="cams-switch" aria-pressed="false">Cameras: off</button>
+          <button id="shove">Get shoved</button>
+        </div>
 
-        <section class="panel try">
-          <h2>Things to try</h2>
-          <ol>
-            <li>Turn every camera off, then spin in place with <b>Q</b> for a few turns. Watch the heading part of the fused error grow. Turn them back on and watch it shrink.</li>
-            <li>Set <b>Vision σ</b> to 0.05. The estimate follows every noisy reading and jitters. Set it to 5.0 and it barely moves. Where is the sweet spot?</li>
-            <li>Drive into our alliance zone and watch for <b>Too few tags in our zone</b>. Why might single-tag readings be risky near the wall?</li>
-            <li>Get shoved, then drive to a hub. How long until the fused estimate is back within 0.06 m?</li>
-          </ol>
-          <h3 class="sub">Read more</h3>
-          <ul class="links">
-            <li><a href="/docs/software/vision/april_tags" target="_top">AprilTag Fiducials</a>: how tags are found and turned into a pose</li>
-            <li><a href="/docs/software/hardware/jetsons" target="_top">Nvidia Jetson Vision Computer</a></li>
-            <li><a href="/docs/software/training/objects-odometry" target="_top">Objects and Odometry</a>: build a pose estimator</li>
-            <li><a href="/docs/software/training/computer-vision" target="_top">Computer Vision</a>: add camera readings to it</li>
-          </ul>
-        </section>
-      </div>
-    </main>
+        <div class="knob" data-step-from="3">
+          <div id="slot-sDefault"></div>
+          <details class="why"><summary>Why?</summary><p>σ (sigma) is how far off you expect a reading to be. Each reading pulls the estimate q ÷ (q + σ) of the way toward it. The 2026 robot uses σ 0.9 for x, y and heading, a 10% pull.</p></details>
+        </div>
+        <div class="knob" data-step-from="4">
+          <div id="slot-maxSpin"></div>
+          <details class="why"><summary>Why?</summary><p>Spinning smears the picture. The 2026 code drops every reading while the gyro reads faster than 12.57 rad/s (720°/s). This robot only turns 4.7 rad/s, so that never happens here.</p></details>
+        </div>
+        <div class="knob" data-step-from="5">
+          <label class="check" for="gate-zone"><input type="checkbox" id="gate-zone"><span>Need 2 tags in our alliance zone</span></label>
+          <details class="why"><summary>Why?</summary><p>A one-tag solve can't always tell which way the tag is tilted, so it can flip. The zone is judged from the fused estimate, since the robot can't know the truth.</p></details>
+        </div>
+        <div class="knob" data-step-from="6">
+          <div id="slot-maxRot"></div>
+          <details class="why"><summary>Why?</summary><p>A bad solve often gets the heading badly wrong too. The 2026 code has this check, but set to 6.28 rad (2π), so it never fires.</p></details>
+        </div>
+        <div class="knob" data-step-from="7">
+          <span class="k">Localization state</span>
+          <div class="states" id="loc-states" role="group" aria-label="Localization state"></div>
+          <div id="slot-sFocus"></div>
+          <div id="slot-sNot"></div>
+          <details class="why"><summary>Why?</summary><p><code>RobotContainer</code> asks for <code>SHOOTING_FOCUS</code> while aiming and shooting, <code>FULL</code> otherwise. A reading that includes a ringed tag uses the focused σ. No tags are thrown away. See <a href="/docs/software/controls/state-machines" target="_top">state machines</a>.</p></details>
+        </div>
+
+        <details class="more">
+          <summary>More controls</summary>
+          <h3 class="sub">Cameras</h3>
+          <div class="btns" id="cam-toggles"></div>
+          <div class="row">
+            <label for="pose-err"><span class="k">Camera pose error</span><span class="u">× typical</span></label>
+            <input type="range" id="pose-err" min="0" max="3" step="0.1" value="1">
+            <span class="val" id="pose-err-val">×1.0</span>
+          </div>
+          <div class="field-row">
+            <span class="k">Alliance</span>
+            <div class="seg" role="group" aria-label="Alliance">
+              <button id="al-blue" aria-pressed="true">Blue</button>
+              <button id="al-red" aria-pressed="false">Red</button>
+            </div>
+          </div>
+          <h3 class="sub">Driving and odometry</h3>
+          <div class="row">
+            <label for="max-speed"><span class="k">Top speed</span><span class="u">m/s</span></label>
+            <input type="range" id="max-speed" min="1" max="5" step="0.1" value="4">
+            <span class="val" id="max-speed-val">4.0</span>
+          </div>
+          <div class="row">
+            <label for="drift"><span class="k">Wheel drift</span><span class="u">% of distance</span></label>
+            <input type="range" id="drift" min="0" max="10" step="0.5" value="3">
+            <span class="val" id="drift-val">3.0</span>
+          </div>
+          <div class="row">
+            <label for="bump-slip"><span class="k">Slip on the bumps</span><span class="u">% of distance</span></label>
+            <input type="range" id="bump-slip" min="0" max="40" step="1" value="15">
+            <span class="val" id="bump-slip-val">15</span>
+          </div>
+          <div class="row">
+            <label for="gyro-drift"><span class="k">Gyro drift</span><span class="u">% of turning</span></label>
+            <input type="range" id="gyro-drift" min="0" max="3" step="0.1" value="0.3">
+            <span class="val" id="gyro-drift-val">0.3</span>
+          </div>
+          <div class="btns"><button id="reset-odom">Reset odometry to true pose</button></div>
+          <h3 class="sub">Filter</h3>
+          <div class="btns" id="filter-presets"></div>
+          <div id="slot-q"></div>
+          <h3 class="sub">Ideas not in the 2026 code</h3>
+          <div class="rows" id="extra-rows"></div>
+          <label class="check" for="gate-bump"><input type="checkbox" id="gate-bump"><span>Reject readings while on a bump</span></label>
+          <label class="check" for="kf-speed"><input type="checkbox" id="kf-speed"><span>Trust vision less while moving (+25% σ per m/s)</span></label>
+        </details>
+      </section>
+
+      <section class="panel" data-step-from="4" aria-label="Camera readings">
+        <div class="panel-head"><h2>Camera readings</h2><span class="hint">Last 2 seconds</span></div>
+        <div class="results" id="results"></div>
+        <div class="table-wrap" data-step-from="7">
+          <table>
+            <thead><tr><th>Camera</th><th>Tags</th><th>Dist</th><th>Result</th></tr></thead>
+            <tbody id="cam-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </div>
+
+  <section class="deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>How our cameras find the robot</summary>
+      <p>Three global-shutter cameras face left, right and back. Left and right sit 0.29 m off the floor, the back one 0.54 m. All tilt up 0.17 rad (10°) and see about 1.35 rad (77°) side to side. Because they tilt up, a tag that is too close or too low drops out of view. The hub and trench walls block anything behind them.</p>
+      <p>An <a href="/docs/software/hardware/jetsons" target="_top">Nvidia Jetson</a> finds <a href="/docs/software/vision/april_tags" target="_top">AprilTags</a> with a GPU detector at 60 frames a second per camera, solves the robot's pose, and sends it to the roboRIO with the time the picture was taken.</p>
+    </details>
+    <details>
+      <summary>How the Kalman filter blends odometry and vision</summary>
+      <p><b>Odometry</b> adds up how far the wheels turned, with the gyro giving the heading. Worn treads, carpet seams, wheel scrub, bumps (a 0.29 rad slope) and pushing into walls make it drift. Another robot shoving ours slides the wheels sideways, so odometry never sees it.</p>
+      <p>The robot runs two estimators. The <b>smooth pose</b> only uses odometry. The <b>field pose</b> also takes camera readings through <code>addVisionMeasurement(pose, timestamp, stdDevs)</code>. Each reading pulls it a fraction <b>q ÷ (q + σ)</b> of the way, the WPILib pose estimator's gain. With q 0.1 and σ 0.9 that is 10%. The <a href="/docs/software/training/computer-vision" target="_top">Computer Vision lesson</a> starts at σ 5.0, a 2% pull, and checks for 0.06 m and 0.017 rad.</p>
+    </details>
+    <details>
+      <summary>The 2026 vision checks, in order</summary>
+      <ol>
+        <li>Spin rate over 12.57 rad/s: drop the whole frame. The code compares the signed rate, so only counter-clockwise spins trip it. This lab checks both directions.</li>
+        <li>Inside our alliance zone (x &lt; 3.963 m, mirrored for red), fewer than 2 tags: skip.</li>
+        <li>Pose outside the field walls: skip.</li>
+        <li>Heading more than 6.28 rad from the estimate: skip. That never happens, so this check is off.</li>
+        <li>Everything else gets σ 0.9, or the focused / not-focused σ in a focus state.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Why each reading is off</summary>
+      <div class="breakdown" id="err-breakdown"></div>
+      <p class="note">Expected error (1σ) = distance error × viewing-angle factor + motion blur + bump tilt. The robot never sees this number. The 2026 code gives every reading the same σ, so a blurry far reading counts as much as a sharp close one.</p>
+    </details>
+    <details>
+      <summary>Error over time</summary>
+      <div class="legend"><span><i class="sw odom"></i>Odometry only</span><span><i class="sw fused"></i>Fused estimate</span></div>
+      <canvas id="err-plot" role="img" aria-label="Graph of odometry and fused position error, in meters, over the last 30 seconds"></canvas>
+    </details>
+    <details>
+      <summary>Things to try</summary>
+      <ol>
+        <li>Turn the cameras off and spin with <b>Q</b> for a few turns. The fused heading error grows. Turn them on and it shrinks.</li>
+        <li>Get shoved, then drive to a hub. How long until the badge says Yes again?</li>
+        <li>Questions for next season: should σ grow with tag distance? Should the spin check use the absolute value? Should the heading check be on? What σ should the focus states use?</li>
+      </ol>
+    </details>
+    <details>
+      <summary>Read more in the docs</summary>
+      <ul>
+        <li><a href="/docs/software/vision/april_tags" target="_top">AprilTag Fiducials</a></li>
+        <li><a href="/docs/software/hardware/jetsons" target="_top">Nvidia Jetson Vision Computer</a></li>
+        <li><a href="/docs/software/training/objects-odometry" target="_top">Objects and Odometry</a>: build a pose estimator</li>
+        <li><a href="/docs/software/training/computer-vision" target="_top">Computer Vision</a>: add camera readings to it</li>
+      </ul>
+    </details>
+  </section>
   <footer class="foot">MARS/WARS · FRC Team 4143</footer>
 </div>
 
@@ -394,7 +419,6 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
   // Gate sliders, in the order LocalizationSubsystem checks them. `off` is the slider value that disables a gate.
   const GATES = [
     { key: "maxSpin", label: "Max spin rate", unit: "rad/s, whole frame", min: 1, max: 13, step: 0.01, off: 13, fmt: (v) => v.toFixed(2) },
-    { key: "minTags", label: "Min tags in our zone", unit: "tags", min: 1, max: 4, step: 1, off: 1, fmt: (v) => v.toFixed(0) },
     { key: "maxRot", label: "Max heading difference", unit: "rad", min: 0.05, max: 3.15, step: 0.05, off: 3.15, fmt: (v) => v.toFixed(2) },
   ];
   const EXTRA_GATES = [
@@ -646,7 +670,7 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
     // so as written only counter-clockwise spins trip it. The lab checks both directions.
     if (gateOn("maxSpin") && Math.abs(sim.w) > filt.maxSpin) return "Spinning too fast";
     // Inside our alliance zone (judged by the fused estimate), a reading needs at least this many tags
-    if (gateOn("minTags") && inRect(allianceZone(), sim.est.x, sim.est.y) && r.n < filt.minTags) return "Too few tags in our zone";
+    if (filt.minTags > 1 && inRect(allianceZone(), sim.est.x, sim.est.y) && r.n < filt.minTags) return "Too few tags in our zone";
     if (r.x < 0 || r.x > FIELD.L || r.y < 0 || r.y > FIELD.W) return "Off the field";
     if (gateOn("maxRot") && Math.abs(wrap(sim.est.th - r.th)) > filt.maxRot) return "Heading too different";
     if (gateOn("maxSpeed") && Math.hypot(sim.vx, sim.vy) > filt.maxSpeed) return "Moving too fast";
@@ -922,9 +946,11 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
     $("ro-true").textContent = fmtPose(sim.truth);
     $("ro-odom").textContent = fmtPose(sim.odom);
     $("ro-fused").textContent = fmtPose(sim.est);
-    $("ro-err").textContent = `${odomErr().toFixed(2)} m · ${headErr(sim.odom).toFixed(3)} rad`;
-    $("ro-ferr").textContent = `${fusedErr().toFixed(2)} m · ${headErr(sim.est).toFixed(3)} rad`;
-    $("ro-tol").textContent = withinTol() ? "Yes" : "Not yet";
+    $("st-odom").textContent = `${odomErr().toFixed(2)} m · ${headErr(sim.odom).toFixed(3)} rad`;
+    $("st-fused").textContent = `${fusedErr().toFixed(2)} m · ${headErr(sim.est).toFixed(3)} rad`;
+    const tol = withinTol();
+    $("st-tol").textContent = `Within 0.06 m and 0.017 rad? ${tol ? "Yes" : "Not yet"}`;
+    $("st-tol").classList.toggle("yes", tol);
     $("ro-dist").textContent = sim.dist.toFixed(1) + " m";
     $("ro-speed").textContent = (sim.lastSpeed || 0).toFixed(1) + " m/s · " + Math.abs(sim.w).toFixed(1) + " rad/s";
     $("ro-surface").textContent = sim.blocked ? "Pinned, wheels slipping" : sim.onBump ? "On a bump" : inRect(allianceZone(), sim.truth.x, sim.truth.y) ? "Carpet, our zone" : "Carpet";
@@ -975,18 +1001,17 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
       while (sim.t < end) step(DT);
     }
     drawField();
-    drawErrPlot();
+    if ($("err-plot").offsetParent) drawErrPlot(); // only while "Error over time" is open
     updateReadouts();
-    updateWalkthrough();
+    updateGuide();
     requestAnimationFrame(frame);
   }
 
   // ---------- Input ----------
-  const keyBtn = (k) => document.querySelector(`#keys button[data-key="${k}"]`);
   function press(k, down) {
     keys[k] = down;
     if (down) started = true;
-    keyBtn(k).classList.toggle("on", down);
+    for (const el of document.querySelectorAll(`.keys [data-key="${k}"]`)) el.classList.toggle("on", down);
   }
   function setKey(e, down) {
     const k = e.key.toLowerCase();
@@ -1002,7 +1027,7 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
   window.addEventListener("blur", releaseAll);
   $("field").addEventListener("pointerdown", () => $("field").focus());
   // On-screen pad: hold a key with a finger or the mouse
-  $("keys").addEventListener("pointerdown", (e) => {
+  $("pad").addEventListener("pointerdown", (e) => {
     const b = e.target.closest("button[data-key]");
     if (!b) return;
     e.preventDefault();
@@ -1010,20 +1035,9 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
     press(b.dataset.key, true);
   });
   for (const ev of ["pointerup", "pointercancel", "lostpointercapture"]) {
-    $("keys").addEventListener(ev, (e) => { const b = e.target.closest("button[data-key]"); if (b) press(b.dataset.key, false); });
+    $("pad").addEventListener(ev, (e) => { const b = e.target.closest("button[data-key]"); if (b) press(b.dataset.key, false); });
   }
-  $("keys").addEventListener("contextmenu", (e) => e.preventDefault());
-
-  $("cam-toggles").innerHTML = CAMS.map((cam, i) =>
-    `<button class="cam-btn" data-cam="${i}" aria-pressed="true">${dot(i)}${cam.name}</button>`).join("");
-  $("cam-toggles").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-cam]");
-    if (!b) return;
-    const i = +b.dataset.cam;
-    opts.camOn[i] = !opts.camOn[i];
-    b.setAttribute("aria-pressed", String(opts.camOn[i]));
-  });
-  $("lg-cams").innerHTML = CAMS.map((_, i) => dot(i)).join("") + "Vision readings";
+  $("pad").addEventListener("contextmenu", (e) => e.preventDefault());
 
   $("max-speed").addEventListener("input", (e) => { opts.maxSpeed = +e.target.value; $("max-speed-val").textContent = opts.maxSpeed.toFixed(1); });
   $("drift").addEventListener("input", (e) => { opts.drift = +e.target.value / 100; $("drift-val").textContent = (+e.target.value).toFixed(1); });
@@ -1033,7 +1047,7 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
   $("bump-slip").addEventListener("input", (e) => { opts.bumpSlip = +e.target.value / 100; $("bump-slip-val").textContent = e.target.value; });
   $("reset-odom").addEventListener("click", () => { Object.assign(sim.odom, sim.truth); Object.assign(sim.est, sim.truth); sim.estHist = []; });
 
-  // Filter and Kalman sliders, built from GATES, EXTRA_GATES and KF so presets can update them
+  // Filter and Kalman sliders, each built into its slot so presets can update them
   function sliderRow(def) {
     const row = document.createElement("div");
     row.className = "row";
@@ -1044,15 +1058,14 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
     input.addEventListener("input", () => { filt[def.key] = +input.value; showFilter(); });
     return row;
   }
-  $("gate-rows").replaceChildren(...GATES.map(sliderRow));
-  $("extra-rows").replaceChildren(...EXTRA_GATES.map(sliderRow));
-  $("kf-rows").replaceChildren(...KF.map(sliderRow));
+  for (const def of ALL_SLIDERS) ($("slot-" + def.key) || $("extra-rows")).append(sliderRow(def));
 
   function showFilter() {
     for (const def of ALL_SLIDERS) {
       $(`f-${def.key}`).value = filt[def.key];
       $(`f-${def.key}-val`).textContent = def.off !== undefined && filt[def.key] === def.off ? "off" : def.fmt(filt[def.key]);
     }
+    $("gate-zone").checked = filt.minTags > 1;
     $("gate-bump").checked = filt.gateBump;
     $("kf-speed").checked = filt.speedTrust;
     for (const b of $("filter-presets").children) {
@@ -1065,12 +1078,13 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
     const b = e.target.closest("button[data-name]");
     if (b) applyPreset(b.dataset.name);
   });
+  $("gate-zone").addEventListener("change", (e) => { filt.minTags = e.target.checked ? 2 : 1; showFilter(); });
   $("gate-bump").addEventListener("change", (e) => { filt.gateBump = e.target.checked; showFilter(); });
   $("kf-speed").addEventListener("change", (e) => { filt.speedTrust = e.target.checked; showFilter(); });
   function applyPreset(name) { Object.assign(filt, PRESETS[name]); showFilter(); }
   showFilter();
 
-  // ---------- Alliance and localization state ----------
+  // ---------- Alliance, cameras and localization state ----------
   function setAlliance(a) {
     opts.alliance = a;
     $("al-blue").setAttribute("aria-pressed", String(a === "blue"));
@@ -1083,135 +1097,148 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
     opts.locState = s;
     for (const b of $("loc-states").children) b.setAttribute("aria-pressed", String(b.dataset.state === s));
   }
-  function setCams(on) {
-    opts.camOn = opts.camOn.map(() => on);
-    for (const b of $("cam-toggles").children) b.setAttribute("aria-pressed", String(on));
+  function showCams() {
+    for (const b of $("cam-toggles").children) b.setAttribute("aria-pressed", String(opts.camOn[+b.dataset.cam]));
+    const any = opts.camOn.some(Boolean);
+    $("cams-switch").setAttribute("aria-pressed", String(any));
+    $("cams-switch").textContent = any ? "Cameras: on" : "Cameras: off";
   }
+  function setCams(on) { opts.camOn = opts.camOn.map(() => on); showCams(); }
+  $("cam-toggles").innerHTML = CAMS.map((cam, i) =>
+    `<button class="cam-btn" data-cam="${i}" aria-pressed="true">${dot(i)}${cam.name}</button>`).join("");
+  $("cam-toggles").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-cam]");
+    if (!b) return;
+    opts.camOn[+b.dataset.cam] = !opts.camOn[+b.dataset.cam];
+    showCams();
+  });
+  $("cams-switch").addEventListener("click", () => setCams(!opts.camOn.some(Boolean)));
+  $("lg-cams").innerHTML = CAMS.map((_, i) => dot(i)).join("") + "Camera readings";
   $("loc-states").innerHTML = Object.keys(LOC_STATES).map((k) => `<button data-state="${k}" title="${LOC_STATES[k].hint}">${k}</button>`).join("");
   $("loc-states").addEventListener("click", (e) => { const b = e.target.closest("button[data-state]"); if (b) setLocState(b.dataset.state); });
   $("al-blue").addEventListener("click", () => setAlliance("blue"));
   $("al-red").addEventListener("click", () => setAlliance("red"));
   setLocState("FULL");
 
-  // ---------- Walkthrough ----------
-  // Each step sets up a scenario on enter(), and status() returns [text, goodYet] for the live pill
+  // ---------- Guided steps ----------
+  // Each step sets up a scenario on enter(), and status() returns [text, doneYet]. Once a step is done it stays done.
+  // Controls tagged data-step-from="N" only appear from step N on; free play shows everything.
   const teamDefaults = () => { applyPreset("2026 robot"); setLocState("FULL"); setCams(true); };
   const STEPS = [
     {
-      tag: "Drift", title: "Drive with odometry only",
-      body: `<p>All three cameras are off, so the robot only knows where it is from its wheels and gyro. Drive around: cross a bump, push into the hub for a second, or get shoved by another robot.</p>
-        <p>The dashed purple odometry robot drifts away from the real one. The green fused estimate drifts with it, because nothing is correcting it yet.</p>`,
+      title: "Drive around with W A S D",
+      body: "The cameras are off, so only the wheels and gyro track the robot. Watch the dashed purple odometry robot drift away from the real one.",
       enter: () => { teamDefaults(); setCams(false); },
-      action: ["Get shoved by a robot", shove],
-      status: () => [`Odometry error: ${odomErr().toFixed(2)} m`, odomErr() > 0.4],
+      status: () => [`Odometry error ${odomErr().toFixed(2)} of 0.40 m`, odomErr() > 0.4],
     },
     {
-      tag: "Vision", title: "Turn the cameras on",
-      body: `<p>The cameras are back on with the 2026 robot's settings. Drive more than 5 m, then stop where a camera can see a hub. This is the check in the <a href="/docs/software/training/computer-vision" target="_top">Computer Vision lesson</a>.</p>
-        <p>Each accepted reading pulls the green estimate 10% of the way toward where the camera says the robot is, in x, y and heading. Readings arrive 60 times a second from each camera, so the estimate settles onto the real robot. The purple odometry robot stays wrong.</p>
-        <p>The goal: within <b>0.06 m</b> and <b>0.017 rad</b> (about 1°) of the true pose. If the Result column says <b>Too few tags in our zone</b>, turn so a camera sees two tags, or park outside the shaded zone. Step 5 explains why.</p>`,
-      enter: () => { setCams(true); wt.dist0 = sim.dist; },
+      title: "Turn the cameras on, drive 5 m, then stop facing a hub",
+      body: "The green fused estimate blends wheels and cameras. Park outside the shaded strip by our wall and watch the badge.",
+      enter: () => { wt.dist0 = sim.dist; },
       status: () => {
+        if (!opts.camOn.some(Boolean)) return ["Cameras are off", false];
         const d = sim.dist - wt.dist0, still = (sim.lastSpeed || 0) < 0.05 && Math.abs(sim.w) < 0.05;
-        const err = `${fusedErr().toFixed(3)} m · ${headErr(sim.est).toFixed(3)} rad`;
-        if (d < 5) return [`Driven ${d.toFixed(1)} of 5 m · error ${err}`, false];
-        return [`${still ? "Stopped" : "Moving"} · error ${err}`, still && withinTol()];
+        if (d < 5) return [`Driven ${d.toFixed(1)} of 5 m`, false];
+        return [still ? "Stopped" : "Now stop", still && withinTol()];
       },
     },
     {
-      tag: "Trust", title: "How much to trust the cameras",
-      body: `<p>σ is how far off you expect a reading to be. The <b>Vision σ</b> slider sets it for every reading. The 2026 robot uses 0.9 m (and 0.9 rad for heading).</p>
-        <p>Park near a hub. Press the button to try the lesson's starter value, 5.0: the estimate barely moves. Then drag Vision σ down to 0.3 or less and watch it follow the readings closely, jitter and all.</p>`,
+      title: "Drag Vision σ up to 5.0, then down to 0.3",
+      body: "At 5.0 the estimate barely moves toward the cameras. At 0.3 it follows every noisy reading.",
       enter: () => { teamDefaults(); wt.minSigma = Infinity; wt.maxSigma = 0; },
-      action: ["Set vision σ to 5.0", () => { filt.sDefault = 5; showFilter(); }],
       status: () => {
         const f = (v) => (Number.isFinite(v) && v > 0 ? v.toFixed(2) : "–");
-        return [`σ used: ${f(wt.minSigma)} to ${f(wt.maxSigma)}`, wt.minSigma <= 0.3 && wt.maxSigma >= 5];
+        return [`σ used ${f(wt.minSigma)} to ${f(wt.maxSigma)}`, wt.minSigma <= 0.3 && wt.maxSigma >= 5];
       },
     },
     {
-      tag: "Spin", title: "Spinning blurs the image",
-      body: `<p>When the robot spins fast, the picture smears and the solve gets worse. The 2026 code throws away every reading while the gyro says it is turning faster than <b>12.57 rad/s</b> (720°/s). This robot can only turn 4.7 rad/s, so that never happens here.</p>
-        <p><b>Max spin rate</b> is now 3 rad/s. Hold <b>Q</b> or <b>E</b> near some tags. Rejected readings show as red ×'s and the estimate coasts on odometry. Stop spinning and watch it snap back.</p>`,
-      enter: () => { teamDefaults(); filt.maxSpin = 3; showFilter(); wt.spin = 0; },
-      status: () => [`Rejected for spinning: ${wt.spin}`, wt.spin >= 30],
+      title: "Set Max spin rate to 3 rad/s, then hold Q near some tags",
+      body: "Readings taken while spinning faster than the limit are thrown away as red ×'s. The estimate coasts on odometry until you stop.",
+      enter: () => { teamDefaults(); wt.spin = 0; },
+      status: () => [`Rejected for spinning: ${wt.spin} of 30`, wt.spin >= 30],
     },
     {
-      tag: "Zone", title: "Two tags near our wall",
-      body: `<p>The shaded strip is our <b>alliance zone</b>. Inside it, the 2026 code only accepts a reading that saw at least <b>2 tags</b>. A one-tag solve can't always tell which way the tag is tilted, so it can flip.</p>
-        <p>The zone is judged from the fused estimate, not the true pose, since the robot can't know the truth. Drive around inside the zone and turn so only one tag is in view. Watch for <b>Too few tags in our zone</b>.</p>`,
+      title: "Drive into the shaded strip by our wall",
+      body: "In our alliance zone a reading needs 2 tags. Turn until a camera sees only one and watch it get rejected.",
       enter: () => { teamDefaults(); wt.zone = 0; },
-      status: () => [`Rejected in our zone: ${wt.zone}`, wt.zone >= 10],
+      status: () => [`Rejected in our zone: ${wt.zone} of 10`, wt.zone >= 10],
     },
     {
-      tag: "Outliers", title: "Catch the bad readings",
-      body: `<p><b>Accept everything</b> is on, with vision σ 0.3 so each reading pulls hard. Park near a hub and watch. About 1 reading in 100 is a bad solve that lands meters away with the heading badly wrong, and the estimate jerks toward it.</p>
-        <p>The 2026 code has a <b>Max heading difference</b> check, but it is set to 6.28 rad (2π), so it never fires. Set it to 0.2 rad, or press the button. Readings whose heading disagrees with the gyro-backed estimate now get rejected.</p>`,
+      title: "Park near a hub and set Max heading difference to 0.2 rad",
+      body: "Every check is off and vision σ is 0.3 now. About 1 reading in 100 is a bad solve that yanks the estimate, and this check catches it.",
       enter: () => { teamDefaults(); applyPreset("Accept everything"); wt.heading = 0; },
-      action: ["Set max heading difference to 0.2 rad", () => { filt.maxRot = 0.2; showFilter(); }],
       status: () => [`Rejected for heading: ${wt.heading}`, wt.heading >= 1],
     },
     {
-      tag: "Focus", title: "Localization states",
-      body: `<p>When the robot aims or shoots, <code>RobotContainer</code> calls <code>localization_.setWantedState(SHOOTING_FOCUS)</code>. Our hub's tags get a ring on the field.</p>
-        <p>Pick <b>SHOOTING_FOCUS</b>, then set <b>Focused σ</b> to 0.3 and <b>Not-focused σ</b> to 3. Drive near our hub: readings that include a hub tag show <b>focus</b> in the Result column and pull harder. In the 2026 code all four σ values are still 0.9, so the states don't change anything yet.</p>`,
+      title: "Pick SHOOTING_FOCUS and drive near our hub",
+      body: "Readings with a ringed hub tag use the focused σ. Try Focused σ 0.3 and Not-focused σ 3, and watch the Result column.",
       enter: () => { teamDefaults(); wt.focused = 0; },
-      action: ["Use SHOOTING_FOCUS", () => setLocState("SHOOTING_FOCUS")],
-      status: () => [`${opts.locState} · focused readings: ${wt.focused}`, opts.locState !== "FULL" && wt.focused >= 20],
+      status: () => [`Focused readings: ${wt.focused} of 20`, opts.locState !== "FULL" && wt.focused >= 20],
     },
     {
-      tag: "Done", title: "Questions for next season",
-      body: `<p>Everything is back to the 2026 robot's settings. Some things to test before changing the localization code:</p>
-        <ul><li>Every reading gets σ 0.9, near or far. Should σ grow with tag distance, or shrink with more tags?</li>
-        <li>The spin check compares the signed yaw rate, so only counter-clockwise spins trip it. Should it use the absolute value?</li>
-        <li>Should the heading check be turned on? What value?</li>
-        <li>Should readings taken on a bump, or at high speed, be rejected? Try the ideas under <b>Vision filter</b>.</li>
-        <li>What σ values should <code>SHOOTING_FOCUS</code> and <code>CLIMBING_FOCUS</code> really use?</li></ul>`,
+      title: "You've got it. Try Free play",
+      body: "Settings are back to the 2026 robot. Free play shows every control, and Go deeper below has ideas to try.",
       enter: teamDefaults,
+      status: () => ["", true],
     },
   ];
-  const walk = { on: false, i: 0 };
+  const MODE_KEY = "pose-estimator-lab.mode";
+  const walk = { free: false, i: 0, done: STEPS.map(() => false) };
   let lastStatus = "";
 
+  function applyReveal() {
+    const upto = walk.free ? Infinity : walk.i + 1;
+    for (const el of document.querySelectorAll("[data-step-from]")) el.classList.toggle("not-yet", +el.dataset.stepFrom > upto);
+  }
   function goStep(i) {
     walk.i = i;
     const st = STEPS[i];
     if (st.enter) st.enter();
-    $("wt-steps").innerHTML = STEPS.map((x, j) => `<li class="${j < i ? "done" : j === i ? "now" : ""}"${j === i ? ' aria-current="step"' : ""}>${j + 1}. ${x.tag}</li>`).join("");
-    $("wt-title").textContent = st.title;
-    $("wt-body").innerHTML = st.body;
-    $("wt-action").style.visibility = st.action ? "visible" : "hidden";
-    $("wt-action").textContent = st.action ? st.action[0] : "–";
-    $("wt-back").disabled = i === 0;
-    $("wt-next").hidden = i === STEPS.length - 1;
+    $("g-count").textContent = `Step ${i + 1} of ${STEPS.length}`;
+    $("g-title").textContent = st.title;
+    $("g-body").textContent = st.body;
+    $("g-back").hidden = false; $("g-back").disabled = i === 0;
+    $("g-next").hidden = i === STEPS.length - 1;
     lastStatus = "";
+    applyReveal();
+    updateGuide();
   }
-  function updateWalkthrough() {
-    if (!walk.on) return;
-    const st = STEPS[walk.i], el = $("wt-status");
-    if (!st.status) { el.style.visibility = "hidden"; return; }
-    const [text, good] = st.status();
-    const key = text + good;
+  function updateGuide() {
+    if (walk.free) return;
+    const [text, good] = STEPS[walk.i].status();
+    if (good) walk.done[walk.i] = true;
+    const done = walk.done[walk.i];
+    const key = text + done;
     if (key === lastStatus) return;
     lastStatus = key;
-    el.style.visibility = "visible";
-    el.textContent = (good ? "Good · " : "") + text;
-    el.title = el.textContent;
-    el.classList.toggle("good", good);
+    $("g-status").textContent = text && !done ? "· " + text : "";
+    $("g-done").textContent = done ? "✓ Done" : "";
+    $("g-next").classList.toggle("primary", done);
+    $("g-free").classList.toggle("primary", walk.i === STEPS.length - 1);
   }
-  function setWalkthrough(on) {
-    walk.on = on;
-    $("walk").hidden = !on;
-    $("wt-toggle").setAttribute("aria-pressed", String(on));
-    if (on) goStep(0);
+  function setFree(on) {
+    walk.free = on;
+    try { localStorage.setItem(MODE_KEY, on ? "free" : "guided"); } catch (e) {}
+    $("g-free").setAttribute("aria-pressed", String(on));
+    $("g-free").textContent = on ? "Back to steps" : "Free play";
+    $("g-free").classList.remove("primary");
+    if (on) {
+      $("g-count").textContent = "Free play";
+      $("g-title").textContent = "Every control is showing";
+      $("g-body").textContent = "Drive, change anything, and watch the estimate.";
+      $("g-status").textContent = ""; $("g-done").textContent = "";
+      $("g-back").hidden = $("g-next").hidden = true;
+      if (!opts.camOn.some(Boolean)) setCams(true);
+      applyReveal();
+    } else {
+      goStep(walk.i);
+    }
   }
-  $("wt-toggle").addEventListener("click", () => setWalkthrough(!walk.on));
-  $("wt-exit").addEventListener("click", () => setWalkthrough(false));
-  $("wt-back").addEventListener("click", () => goStep(Math.max(0, walk.i - 1)));
-  $("wt-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, walk.i + 1)));
-  $("wt-action").addEventListener("click", () => { const a = STEPS[walk.i].action; if (a) a[1](); });
+  $("g-free").addEventListener("click", () => setFree(!walk.free));
+  $("g-back").addEventListener("click", () => goStep(Math.max(0, walk.i - 1)));
+  $("g-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, walk.i + 1)));
 
-  $("reset").addEventListener("click", resetSim);
+  $("reset").addEventListener("click", () => { resetSim(); wt.dist0 = 0; });
   $("pause").addEventListener("click", (e) => {
     paused = !paused;
     e.currentTarget.setAttribute("aria-pressed", String(paused));
@@ -1220,6 +1247,9 @@ h3.sub { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
 
   setAlliance("blue");
   resetSim();
+  let savedMode = null;
+  try { savedMode = localStorage.getItem(MODE_KEY); } catch (e) {}
+  if (savedMode === "free") setFree(true); else goStep(0);
   requestAnimationFrame(frame);
 })();
 </script>

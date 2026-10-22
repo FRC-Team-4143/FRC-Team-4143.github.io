@@ -5,14 +5,14 @@ hide_table_of_contents: true
 sidebar_position: 5
 ---
 
-import {LabEmbed} from '@site/src/components/LabEmbed';
+import {LabLink} from '@site/src/components/LabLink';
 
 # State Machines
 
 State machines are one of the most fundamental and powerful concepts in robotics programming. They help us organize complex robot behaviors by breaking them down into simple, manageable pieces called **states**. Think of a state machine like a flowchart that describes how something behaves. It's a way to model systems that can be in different "modes" or "states" at any given time, and can transition between these states based on certain conditions. They are very useful for controlling robots because they allow us to define clear behaviors and transitions.
 
 :::tip Try it in the State Machine Lab
-Hold the driver's buttons and step the robot loop one 20 ms tick at a time to watch `handleStateTransition` and `updateLogic` work. [Jump to the State Machine Lab](#state-machine-lab)
+Click through states and transitions on a live state diagram, then step the loop to watch `handleStateTransition` and `updateLogic` work. <LabLink slug="state-machine-lab" />
 :::
 
 ---
@@ -194,6 +194,6 @@ The subsystem version of the same table, with the `switch (system_state_)` then 
 [Subsystems](../robot_dev/subsystems.mdx#implement-state-transitions) page.
 
 #### Try It: State Machine Lab {#state-machine-lab}
-Drive the 2026 robot's super state machine one 20 ms loop at a time. Hold a button to ask for a state, then watch `handleStateTransition` pick where the robot goes and `updateLogic` ask each subsystem for a state. At the bottom, build a shooter's transition table yourself.
+Everything on this page on one live state diagram: states and transitions, asking for a state versus being in it, the loop of `handleStateTransition` then `updateLogic`, and splitting a state instead of adding an `if`. Then build a transition table yourself and test it.
 
-<LabEmbed slug="state-machine-lab" />
+<LabLink slug="state-machine-lab" button />

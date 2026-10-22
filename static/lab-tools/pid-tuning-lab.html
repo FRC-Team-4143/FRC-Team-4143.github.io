@@ -13,16 +13,30 @@
    Workbench: sticky control column beside the mechanism view and live strip charts. */
 .rows { display: grid; gap: 12px; }
 /* Long method names like setTargetPositionMotionProfile(...) must wrap at phone width */
-.try code, .note code, .wt-body code { overflow-wrap: anywhere; }
-.stage, .below { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.try code, .note code, .wt-body code, .guide code { overflow-wrap: anywhere; }
+/* Narrow: mechanism, step card, controls, then graphs. Wide: controls column | step card over mechanism + graphs. */
+.app { display: flex; flex-direction: column; gap: 16px; }
+.main { display: contents; }
+#mech-panel { order: 1; } #guide { order: 2; } .side { order: 3; } #graph-panel { order: 4; } #metrics-panel { order: 5; }
 @media (min-width: 1000px) {
-  .stage { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
-  .below { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+  .app { display: grid; }
+  .main { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+  .side, #mech-panel, #guide, #graph-panel, #metrics-panel { order: 0; }
+  #guide { grid-column: 1 / -1; }
+  #mech-panel { grid-column: 1; grid-row: 2; }
+  #graph-panel { grid-column: 2; grid-row: 2 / span 2; }
+  #metrics-panel { grid-column: 1; grid-row: 3; }
 }
-
+.volt-block { display: grid; gap: 10px; }
+@media (min-width: 641px) { .guide .guide-nav { grid-row: 1 / span 6; } }
+.g-act { grid-column: 1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.g-act .status { min-width: 0; }
+.g-extra, .guide .why { grid-column: 1; }
+.guide .why .wt-body { padding-top: 6px; font-size: 14px; }
+.deeper .note { font-size: 14px; }
 canvas { width: 100%; }
 /* Height caps keep the mechanism and both graphs inside one screen on wide monitors */
-#mech { aspect-ratio: 5 / 4; max-height: 50vh; touch-action: none; cursor: crosshair; }
+#mech { aspect-ratio: 5 / 4; max-height: 44vh; touch-action: none; cursor: crosshair; }
 #plot-pos { aspect-ratio: 16 / 7; max-height: 34vh; }
 #plot-volt { aspect-ratio: 16 / 4.2; max-height: 20vh; }
 
@@ -31,6 +45,7 @@ canvas { width: 100%; }
 .goals { display: flex; flex-wrap: wrap; gap: 6px; }
 .goals button { font-size: 13px; padding: 5px 10px; }
 .goals button small { font-family: var(--f-mono); color: var(--muted); margin-left: 4px; }
+@media (max-width: 640px) { .goals .deg { display: none; } }
 
 .terms { display: grid; grid-template-columns: 56px minmax(0, 1fr) 76px; gap: 6px 10px; align-items: center; font-family: var(--f-mono); font-size: 13px; }
 .terms .total { font-weight: 500; }
@@ -60,8 +75,6 @@ canvas { width: 100%; }
 
 .row.locked { opacity: .4; }
 .row.focus { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 4px; }
-.adv summary { font-size: 14px; color: var(--ink); }
-.adv[open] { display: grid; gap: 10px; }
 
 .wt-table { border-collapse: collapse; font-family: var(--f-mono); font-size: 13px; }
 .wt-table th, .wt-table td { padding: 3px 18px 3px 0; text-align: left; }
@@ -75,76 +88,61 @@ canvas { width: 100%; }
     <div>
       <p class="eyebrow">Software · Controls</p>
       <h1>PID Tuning Lab</h1>
-      <p class="lede">Tune a simulated FRC mechanism. The faded ghost is the goal you set, the solid part is where the mechanism really is, and the graph records both over time.</p>
+      <p class="lede short">Tune a simulated robot arm one gain at a time, the way we tune real mechanisms.</p>
     </div>
     <div class="toolbar">
-      <div class="seg" role="group" aria-label="Mechanism">
+      <div class="seg" role="group" aria-label="Mechanism" data-step-from="Done">
         <button id="mech-arm" aria-pressed="true">Arm</button>
         <button id="mech-elevator" aria-pressed="false">Elevator</button>
         <button id="mech-flywheel" aria-pressed="false">Flywheel</button>
       </div>
-      <button id="wt-toggle" aria-pressed="false">Tuning walkthrough</button>
       <button id="pause" aria-pressed="false">Pause</button>
-      <button id="slow" aria-pressed="false">Slow motion</button>
       <button id="reset">Reset</button>
     </div>
   </header>
 
-  <section class="panel walk" id="walk" hidden>
-    <div class="wt-main">
-      <div class="panel-head"><h2>Tuning walkthrough</h2><ol class="wt-steps" id="wt-steps"></ol></div>
-      <h3 id="wt-title"></h3>
-      <div class="wt-body" id="wt-body"></div>
-    </div>
-    <div class="wt-side">
-      <button id="wt-action"></button>
-      <span class="status" id="wt-status" style="visibility:hidden">&nbsp;</span>
-      <div class="wt-nav"><button id="wt-back">Back</button><button id="wt-next">Next step</button><button id="wt-exit">Exit</button></div>
-    </div>
-  </section>
-
   <div class="app">
   <aside class="side" aria-label="Tuning controls">
-    <div class="panel">
+    <div class="panel" data-step-from="kG|kS">
       <h2>Feedforward</h2>
       <div id="ff-rows" class="rows"></div>
-      <details>
-        <summary>What these do</summary>
-        <p class="note" style="margin-top:6px">Feedforward doesn't wait for error. <b>kG</b> holds the mechanism up against gravity. <b>kS</b> overcomes friction in the direction of the error. On our robots that is <code>kS</code> in the gain slot with <code>StaticFeedforwardSign = UseClosedLoopSign</code>, like the 2026 shooter hood. <b>kV</b> supplies the voltage a moving setpoint needs, so on the arm and elevator it only matters with the motion profile on. <a href="/docs/software/controls/system-control/feed-fwd" target="_top">Feed Forward Control</a> explains each term.</p>
-      </details>
     </div>
     <div class="panel">
       <h2>Feedback (PID)</h2>
       <div id="pid-rows" class="rows"></div>
-      <details class="adv" id="adv-gains">
-        <summary>Advanced: kI and kD</summary>
-        <div id="adv-rows" class="rows"></div>
-        <p class="note">With good feedforward, many FRC mechanisms only need kP. <b>kI</b> can remove a small leftover error, but it builds up during long moves and causes overshoot. <b>kD</b> damps overshoot when kP alone rings.</p>
-      </details>
-      <details>
-        <summary>Copying gains to the robot</summary>
-        <p class="note" id="robot-units" style="margin-top:6px"></p>
-      </details>
-      <div class="presets" id="presets"></div>
     </div>
-    <div class="panel">
-      <h2>Conditions</h2>
-      <label class="check" for="opt-profile"><input type="checkbox" id="opt-profile"><span>Trapezoid motion profile<br><span class="note">Moves the setpoint smoothly toward the goal with a speed and acceleration limit, like calling <code>setTargetPositionMotionProfile(...)</code> instead of <code>setTargetPosition(...)</code> on an MW-Lib mechanism.</span></span></label>
+    <details class="more" data-step-from="kP">
+      <summary>More controls</summary>
+      <label class="check" for="opt-profile" data-step-from="free"><input type="checkbox" id="opt-profile"><span>Motion profile (smooth setpoint)</span></label>
       <div class="row">
         <label for="opt-noise"><span>Sensor noise</span><span class="u" id="noise-val">off</span></label>
         <input type="range" id="opt-noise" min="0" max="1" step="0.05" value="0" style="grid-column:1/-1">
       </div>
       <button id="bump">Bump the mechanism</button>
-      <details>
-        <summary>Simulated plant constants</summary>
-        <p id="plant-consts" style="margin:6px 0 0"></p>
-      </details>
-    </div>
+      <button id="slow" aria-pressed="false">Slow motion</button>
+      <div data-step-from="free"><span class="label">Presets</span><div class="presets" id="presets"></div></div>
+    </details>
   </aside>
 
   <main class="main">
-  <section class="stage">
-    <div class="panel">
+    <section class="guide" id="guide" aria-label="Guided steps">
+      <span class="guide-count" id="g-count"></span>
+      <h2 id="wt-title"></h2>
+      <p id="g-text"></p>
+      <div class="g-act" id="g-act">
+        <button id="wt-action"></button>
+        <span class="status" id="wt-status" style="visibility:hidden">&nbsp;</span>
+      </div>
+      <div class="g-extra" id="g-extra" hidden></div>
+      <details class="why" id="g-why"><summary>Why?</summary><div class="wt-body" id="wt-body"></div></details>
+      <div class="guide-nav">
+        <button id="wt-back">Back</button>
+        <button id="wt-next">Next</button>
+        <button id="g-free" aria-pressed="false">Free play</button>
+      </div>
+    </section>
+
+    <div class="panel" id="mech-panel">
       <div class="panel-head"><h2 id="mech-title">Single-jointed arm</h2><span class="hint">Click or drag to move the goal</span></div>
       <canvas id="mech" aria-label="Mechanism view. Click or drag to set the goal position."></canvas>
       <div class="readout">
@@ -155,11 +153,11 @@ canvas { width: 100%; }
       <div class="goals" id="goals"></div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="graph-panel">
       <div class="panel-head">
         <div class="head-left">
           <h2>Position vs time</h2>
-          <div class="seg small" role="group" aria-label="Position graph view">
+          <div class="seg small" role="group" aria-label="Position graph view" data-step-from="kV">
             <button id="view-live" aria-pressed="true">Live</button>
             <button id="view-cmp" aria-pressed="false">Step tests</button>
           </div>
@@ -167,7 +165,7 @@ canvas { width: 100%; }
         <div class="legend" id="lg-live">
           <span><i class="sw dash goal"></i>Goal</span>
           <span id="lg-setp" hidden><i class="sw setp"></i>Profile setpoint</span>
-          <span><i class="sw actual"></i>Measured position</span>
+          <span><i class="sw actual"></i>Measured</span>
         </div>
         <div class="legend" id="lg-cmp" hidden>
           <span><i class="sw dash goal"></i>Goal</span>
@@ -175,39 +173,52 @@ canvas { width: 100%; }
         </div>
       </div>
       <canvas id="plot-pos"></canvas>
-      <div class="runs">
+      <div class="runs" data-step-from="kV">
         <button id="run-step">Run step test</button>
         <button id="pin-run" disabled>Pin this run</button>
         <ul class="pins" id="pins"></ul>
       </div>
-      <div class="panel-head">
-        <h2>Motor output</h2>
-        <div class="legend"><span><i class="sw volt"></i>Applied voltage</span><span><i class="sw dash warn"></i>±12 V battery limit</span></div>
+      <div class="volt-block" data-step-from="kG|kS">
+        <div class="panel-head">
+          <h2>Motor output</h2>
+          <div class="legend"><span><i class="sw volt"></i>Voltage</span><span><i class="sw dash warn"></i>±12 V limit</span></div>
+        </div>
+        <canvas id="plot-volt"></canvas>
+        <div class="terms" id="terms"></div>
       </div>
-      <canvas id="plot-volt"></canvas>
-      <div class="terms" id="terms"></div>
     </div>
-  </section>
 
-    <section class="below">
-      <div class="panel">
-        <div class="panel-head"><h2>Last step response</h2><span class="hint">Since the goal last changed</span></div>
-        <dl class="metrics">
-          <div><dt>Rise time 10–90%</dt><dd id="m-rise">–</dd></div>
-          <div><dt>Overshoot</dt><dd id="m-over">–</dd></div>
-          <div><dt>Settling time ±2%</dt><dd id="m-settle">–</dd></div>
-          <div><dt>Error now</dt><dd id="m-err">–</dd></div>
-          <div><dt id="m-rec-label">Bump recovery</dt><dd id="m-rec">–</dd></div>
-        </dl>
-        <p class="note">The controller runs every 20 ms like a roboRIO loop. The physics runs every 1 ms.</p>
-      </div>
-      <div class="panel try">
-        <h2>Things to try</h2>
-        <ol id="try-list"></ol>
-      </div>
-    </section>
+    <div class="panel" id="metrics-panel" data-step-from="kP">
+      <div class="panel-head"><h2>Last step response</h2><span class="hint">Since the goal last changed</span></div>
+      <dl class="metrics">
+        <div><dt>Rise time 10–90%</dt><dd id="m-rise">–</dd></div>
+        <div><dt>Overshoot</dt><dd id="m-over">–</dd></div>
+        <div><dt>Settling time ±2%</dt><dd id="m-settle">–</dd></div>
+        <div><dt>Error now</dt><dd id="m-err">–</dd></div>
+        <div><dt id="m-rec-label">Bump recovery</dt><dd id="m-rec">–</dd></div>
+      </dl>
+    </div>
   </main>
   </div>
+
+  <section class="deeper" aria-label="Go deeper">
+    <h2>Go deeper</h2>
+    <details class="try"><summary>Things to try</summary><ol id="try-list"></ol></details>
+    <details><summary>What the feedforward terms do</summary>
+      <p class="note">Feedforward doesn't wait for error. <b>kG</b> holds the mechanism up against gravity. <b>kS</b> overcomes friction in the direction of the error. On our robots that is <code>kS</code> in the gain slot with <code>StaticFeedforwardSign = UseClosedLoopSign</code>, like the 2026 shooter hood. <b>kV</b> supplies the voltage a moving setpoint needs, so on the arm and elevator it only matters with the motion profile on. <a href="/docs/software/controls/system-control/feed-fwd" target="_top">Feed Forward Control</a> explains each term.</p>
+    </details>
+    <details><summary>kP, kI and kD</summary>
+      <p class="note">With good feedforward, many FRC mechanisms only need kP. <b>kI</b> can remove a small leftover error, but it builds up during long moves and causes overshoot. <b>kD</b> damps overshoot when kP alone rings. See <a href="/docs/software/controls/system-control/pid" target="_top">PID Controllers</a>.</p>
+    </details>
+    <details><summary>The motion profile</summary>
+      <p class="note">A trapezoid motion profile moves the setpoint smoothly toward the goal with a speed and acceleration limit. On an MW-Lib mechanism that is calling <code>setTargetPositionMotionProfile(...)</code> instead of <code>setTargetPosition(...)</code>. Turn it on under <b>More controls</b> in Free play.</p>
+    </details>
+    <details><summary>Copying gains to the robot</summary><p class="note" id="robot-units"></p></details>
+    <details><summary>The simulated mechanism</summary>
+      <p class="note" id="plant-consts"></p>
+      <p class="note">The controller runs every 20 ms like a roboRIO loop. The physics runs every 1 ms.</p>
+    </details>
+  </section>
   <footer class="foot">MARS/WARS · FRC Team 4143</footer>
 </div>
 
@@ -232,7 +243,7 @@ canvas { width: 100%; }
       test: { hold: 0, creep: [0, 20 * DEG], step: [-60 * DEG, 90 * DEG], kpGood: [16, 48] },
       start: { pos: -80 * DEG, goal: 45 * DEG },
       chart: { min: -90 * DEG, max: 180 * DEG, ticks: [-1, 0, 1, 2, 3], fmt: (v) => +v.toFixed(2) + " rad" },
-      goalFmt: (v) => `${v.toFixed(2)} rad (${Math.round(v / DEG)}°)`,
+      goalFmt: (v) => `${v.toFixed(2)} rad<span class="deg"> (${Math.round(v / DEG)}°)</span>`,
       noiseFmt: (n) => n.toFixed(3) + " rad",
       goals: [["Stow", -60 * DEG], ["Level", 0], ["Score", 45 * DEG], ["Vertical", 90 * DEG], ["Back", 135 * DEG]],
       params: {
@@ -313,7 +324,7 @@ canvas { width: 100%; }
       test: { creep: [0, 30], step: [0, 375], kpGood: [0.032, 0.24] },
       start: { pos: 0, goal: 375 },
       chart: { min: -30, max: 690, ticks: [0, 100, 200, 300, 400, 500, 600], fmt: (v) => +v.toFixed(1) + " rad/s" },
-      goalFmt: (v) => `${v} rad/s (${rpm(v)} RPM)`,
+      goalFmt: (v) => `${v} rad/s<span class="deg"> (${rpm(v)} RPM)</span>`,
       noiseFmt: (n) => n.toFixed(1) + " rad/s",
       goals: [["Idle", 0], ["Close shot", 250], ["Mid shot", 375], ["Far shot", 500]],
       params: {
@@ -975,6 +986,8 @@ canvas { width: 100%; }
     const row = document.createElement("div");
     row.className = p.log ? "row log" : "row";
     row.dataset.k = k;
+    // Guided mode shows each gain from the step that introduces it; kI is for free play only
+    row.dataset.stepFrom = { kP: "Move", kG: "kG", kS: "kS", kV: "kV", kD: "kD", kI: "free" }[k];
     const slider = p.log
       ? `<input type="range" id="${k}-range" min="0" max="${LOG_STEPS}" step="1" aria-label="${k} (log scale)">`
       : `<input type="range" id="${k}-range" min="0" max="${p.max}" step="${p.step}" aria-label="${k}">`;
@@ -1010,8 +1023,7 @@ canvas { width: 100%; }
 
   function buildGainRows() {
     $("ff-rows").replaceChildren(...["kG", "kS", "kV"].filter((k) => M.params[k]).map(gainRow));
-    $("pid-rows").replaceChildren(gainRow("kP"));
-    $("adv-rows").replaceChildren(gainRow("kI"), gainRow("kD"));
+    $("pid-rows").replaceChildren(gainRow("kP"), gainRow("kD"), gainRow("kI"));
     applyLocks();
   }
 
@@ -1046,13 +1058,27 @@ canvas { width: 100%; }
   const isVel = () => M.kind === "velocity";
   const STEPS = [
     {
-      tag: "Start", title: "Start from zero", unlock: [],
-      body: () => `<p>All gains are now 0 and the motion profile is off. You'll add one term at a time: feedforward first (${isVel() ? "<code>kS</code>, <code>kV</code>" : "<code>kG</code>, <code>kS</code>, <code>kV</code>"}), then feedback (<code>kP</code>${isVel() ? "" : ", <code>kD</code>"}).</p>
-        <p>Feedforward is the voltage you already know the mechanism needs. Feedback only corrects what feedforward misses. A well-tuned mechanism gets most of its voltage from feedforward. This is the same order as <a href="/docs/software/controls/system-control/pid#tuning-a-pid-controller" target="_top">Tuning a PID Controller</a> in our docs.</p>`,
-      enter: () => { setProfile(false); isVel() ? teleport(0, 0) : holdTest(); },
+      tag: "Move", title: "Meet kP", unlock: ["kP"],
+      body: () => `<p>${isVel() ? "The wheel levels off below the goal speed. A flywheel needs voltage just to keep spinning against friction and drag" : "It stops short of the goal. Gravity pulls down"}, and P only pushes when there is error. That leftover gap is called steady-state error.</p>
+        <p>Next you start from zero and add one term at a time: feedforward first (${isVel() ? "<code>kS</code>, <code>kV</code>" : "<code>kG</code>, <code>kS</code>, <code>kV</code>"}), then feedback (<code>kP</code>${isVel() ? "" : ", <code>kD</code>"}). Feedforward is the voltage you already know the mechanism needs. Feedback only corrects what feedforward misses. A well-tuned mechanism gets most of its voltage from feedforward. This is the same order as <a href="/docs/software/controls/system-control/pid#tuning-a-pid-controller" target="_top">Tuning a PID Controller</a> in our docs.</p>`,
+      enter: () => {
+        Object.assign(gains[mechKey], M.presets["P only"]);
+        buildGainRows(); markPreset(); setProfile(false);
+        const rest = M.goals[0][1];
+        teleport(rest, rest);
+        WT.g0 = rest;
+      },
+      status: () => {
+        if (Math.abs(s.goal - WT.g0) < 1e-9) return [isVel() ? "Press a goal button or drag the gauge" : "Press a goal button or drag the goal", false];
+        // Settled = the measurement barely changed over the last half second
+        const recent = hist.filter((h) => h.t >= s.t - 0.5).map((h) => h.meas);
+        const band = Math.max(M.tol * 2, 0.01 * Math.abs(s.goal - WT.g0));
+        if (recent.length < 20 || Math.max(...recent) - Math.min(...recent) > band) return ["Moving…", false];
+        return [`${isVel() ? "Leveled off" : "Stopped"} ${fmtPos(Math.abs(s.goal - s.pos))} from the goal`, true];
+      },
     },
     {
-      tag: "kG", kinds: ["position"], title: "Hold it up against gravity", unlock: ["kG"],
+      tag: "kG", kinds: ["position"], title: "Hold it up against gravity", unlock: ["kG"], hide: ["kP"],
       body: () => `<p>${isArm() ? "The arm is placed at level (0 rad), where gravity pulls hardest." : "The carriage is placed at 0.80 m."} Raise <code>kG</code> slowly and the test restarts each time.</p>
         <p>Write down the value where it <b>stops falling</b>. Keep raising it and write down where it <b>starts rising</b>. Set <code>kG</code> halfway between those two values.</p>`,
       action: ["Restart hold test", holdTest], rerun: holdTest,
@@ -1064,7 +1090,7 @@ canvas { width: 100%; }
       },
     },
     {
-      tag: "kS", title: "Overcome friction", unlock: ["kS"],
+      tag: "kS", title: "Overcome friction", unlock: ["kS"], hide: ["kP"],
       body: () => isVel()
         ? `<p>A wheel at rest needs a little voltage just to break free of friction. That's <code>kS</code>.</p>
           <p>The goal is set to 30 rad/s. Raise <code>kS</code> until the wheel just starts to spin. Moving the slider restarts the test.</p>`
@@ -1079,7 +1105,7 @@ canvas { width: 100%; }
       },
     },
     {
-      tag: "kV", unlock: ["kV"],
+      tag: "kV", unlock: ["kV"], hide: ["kP"],
       title: () => (isVel() ? "Hold a speed with kV" : "Keep up with a moving setpoint"),
       body: () => isVel()
         ? `<p>A spinning wheel needs voltage to keep spinning, and the faster it spins, the more it needs. <code>kV</code> is the voltage per rad/s.</p>
@@ -1119,9 +1145,8 @@ canvas { width: 100%; }
     },
     {
       tag: "kD", kinds: ["position"], title: "Damp the overshoot with kD", unlock: ["kD"],
-      body: () => `<p>If kP alone rings, <code>kD</code> can calm it. It pushes back against fast motion, like a shock absorber. It's under <b>Advanced</b> in the Feedback panel, now opened for you. First press <b>Pin this run</b> to keep your kP-only curve for comparison. Then raise kD until the step test overshoots less than 5% and settles.</p>
+      body: () => `<p>If kP alone rings, <code>kD</code> can calm it. It pushes back against fast motion, like a shock absorber. It's now in the Feedback panel. First press <b>Pin this run</b> to keep your kP-only curve for comparison. Then raise kD until the step test overshoots less than 5% and settles.</p>
         <p>Too much kD makes the motor output plot jumpy, especially with sensor noise on.</p>`,
-      enter: () => { $("adv-gains").open = true; },
       action: ["Run step test", runStepTest],
       status: () => {
         const o = overshoot(), settled = s.t - step.lastOut >= 1;
@@ -1136,15 +1161,52 @@ canvas { width: 100%; }
         const rows = ["kG", "kS", "kV", "kP", "kD"].filter((k) => tuned.includes(k)).map((k) => `<tr><td>${k}</td><td>${fmtGain(k, g[k])}</td><td>${fmtGain(k, ref[k])}</td></tr>`).join("");
         return `<p>Here are your gains next to the Tuned preset. They don't need to match exactly. Lots of combinations work well.</p>
           <div style="overflow-x:auto"><table class="wt-table"><tr><th>Gain</th><th>Yours</th><th>Tuned preset</th></tr>${rows}</table></div>
-          <p>On the robot you tune the same gains live from AdvantageScope with the mechanism's NetworkTables tunables, then copy them into your constants (see <a href="/docs/software/robot_dev/mechanisms#tuning-mechanisms" target="_top">Tuning Mechanisms</a> and <b>Copying gains to the robot</b> in the Feedback panel). Exit the walkthrough to unlock everything, including kI.</p>`;
+          <p>On the robot you tune the same gains live from AdvantageScope with the mechanism's NetworkTables tunables, then copy them into your constants (see <a href="/docs/software/robot_dev/mechanisms#tuning-mechanisms" target="_top">Tuning Mechanisms</a> and <b>Copying gains to the robot</b> under Go deeper).</p>`;
       },
     },
   ];
 
   const steps = () => STEPS.filter((x) => !x.kinds || x.kinds.includes(M.kind));
 
+  // The step card: one action ([0]) and at most two short sentences ([1]). The longer text above goes under "Why?".
+  const thing = () => (isArm() ? "arm" : "carriage");
+  const GUIDE = {
+    Move: () => isVel()
+      ? ["Press a goal button to spin the wheel up", "kP is set for you, so the motor pushes harder the further the wheel is from the goal speed. Watch where it levels off."]
+      : [`Press a goal button to move the ${isArm() ? "arm" : "elevator"}`, `kP is set for you, so the motor pushes harder the further the ${thing()} is from the goal. Watch where it stops.`],
+    kG: () => [`Raise kG until the ${thing()} stops falling`, "Keep raising it until it starts to rise, then set kG halfway between. The FF bar under Motor output shows kG's voltage."],
+    kS: () => isVel()
+      ? ["Raise kS until the wheel starts to spin", "The goal is 30 rad/s. kS is the voltage that breaks free of friction."]
+      : [`Raise kS until the ${thing()} creeps to the goal`, "The goal is set just above it. kS is the voltage that breaks free of friction."],
+    kV: () => isVel()
+      ? ["Run a step test, then raise kV until the wheel holds 375 rad/s", "kV is the voltage per rad/s the wheel needs to keep spinning. kP is still 0, so this is feedforward alone."]
+      : ["Run a step test, then raise kV until blue follows purple", `The purple line is the motion profile: where the ${thing()} should be right now. kV adds voltage in proportion to how fast it moves.`],
+    kP: () => isVel()
+      ? ["Shoot a game piece, then double kP for a faster recovery", "Watch Shot recovery under the graphs. Stop before the motor output starts to chatter."]
+      : ["Double kP and run a step test until it rings", "Then press ÷2 once. Every step test makes the same move, so you can compare them."],
+    kD: () => ["Pin this run, then raise kD until overshoot is under 5%", "kD pushes back against fast motion, like a shock absorber. Too much makes the motor output jumpy."],
+    Done: () => ["You've got it — try Free play", isArm() ? "Try the same steps on the elevator or flywheel, or press Free play to see every control." : "Try another mechanism, or press Free play to see every control."],
+  };
+
+  // Guided mode hides everything a step hasn't introduced yet: data-step-from="kG|kS" means "from the first of these
+  // steps this mechanism has"; a tag it doesn't have (or "free") means free play only.
+  function applyReveal() {
+    const list = steps(), st = list[WT.i], hide = WT.on ? st.hide || [] : [];
+    document.querySelectorAll("[data-step-from]").forEach((el) => {
+      let show = true;
+      if (WT.on) {
+        const from = Math.min(...el.dataset.stepFrom.split("|").map((t) => { const j = list.findIndex((x) => x.tag === t); return j < 0 ? Infinity : j; }));
+        show = WT.i >= from && !hide.includes(el.dataset.k);
+      }
+      el.classList.toggle("not-yet", !show);
+    });
+    const pid = $("pid-rows");
+    pid.closest(".panel").classList.toggle("not-yet", [...pid.children].every((r) => r.classList.contains("not-yet")));
+  }
+
   function applyLocks() {
-    const allowed = new Set(WT.on ? steps().slice(0, WT.i + 1).flatMap((x) => x.unlock) : Object.keys(M.params));
+    const hide = WT.on ? steps()[WT.i].hide || [] : [];
+    const allowed = new Set(WT.on ? steps().slice(0, WT.i + 1).flatMap((x) => x.unlock).filter((k) => !hide.includes(k)) : Object.keys(M.params));
     const focus = WT.on ? steps()[WT.i].unlock[0] : null;
     document.querySelectorAll(".row[data-k]").forEach((row) => {
       const ok = allowed.has(row.dataset.k);
@@ -1154,40 +1216,71 @@ canvas { width: 100%; }
     });
     for (const b of $("presets").children) b.disabled = WT.on;
     $("opt-profile").disabled = WT.on;
+    applyReveal();
   }
 
   function goStep(i) {
+    const prev = WT.i;
     WT.i = i;
-    const st = steps()[i];
+    const st = steps()[i], n = steps().length;
+    // Leaving "Meet kP" for the tuning steps: start from zero, profile off, mechanism at its test position
+    if (i === 1 && prev === 0) {
+      for (const k of Object.keys(gains[mechKey])) gains[mechKey][k] = 0;
+      buildGainRows(); markPreset(); setProfile(false);
+      isVel() ? teleport(0, 0) : holdTest();
+    }
     if (st.enter) st.enter();
-    $("wt-steps").innerHTML = steps().map((x, j) =>
-      `<li class="${j < i ? "done" : j === i ? "now" : ""}">${j + 1}. ${x.tag}</li>`).join("");
-    $("wt-title").textContent = typeof st.title === "function" ? st.title() : st.title;
-    $("wt-body").innerHTML = st.body();
-    $("wt-action").style.visibility = st.action ? "visible" : "hidden";
-    $("wt-action").textContent = st.action ? st.action[0] : "–";
+    const [say, more] = GUIDE[st.tag]();
+    $("g-count").textContent = `Step ${i + 1} of ${n}`;
+    $("wt-title").textContent = say;
+    $("g-text").textContent = more;
+    const last = i === n - 1;
+    $("g-extra").hidden = !last;
+    $("g-extra").innerHTML = last ? st.body() : "";
+    $("g-why").hidden = last;
+    $("g-why").open = false;
+    $("wt-body").innerHTML = last ? "" : st.body();
+    $("g-act").hidden = !st.action && !st.status;
+    $("wt-action").hidden = !st.action;
+    $("wt-action").textContent = st.action ? st.action[0] : "";
+    $("wt-back").hidden = false;
     $("wt-back").disabled = i === 0;
-    $("wt-next").hidden = i === steps().length - 1;
+    $("wt-next").hidden = last;
+    $("wt-next").classList.remove("primary");
+    $("wt-status").style.visibility = "hidden";
     lastStatus = "";
     applyLocks();
   }
 
+  const MODE_KEY = "pid-tuning-lab.mode";
+  function saveMode() { try { localStorage.setItem(MODE_KEY, WT.on ? "guided" : "free"); } catch (e) {} }
+
   function startWalkthrough() {
     WT.on = true;
     for (const k of Object.keys(gains[mechKey])) gains[mechKey][k] = 0;
-    $("walk").hidden = false;
-    $("wt-toggle").setAttribute("aria-pressed", "true");
-    $("adv-gains").open = false;
+    $("g-free").setAttribute("aria-pressed", "false");
+    $("g-free").textContent = "Free play";
     buildGainRows();
     markPreset();
+    WT.i = 0;
     goStep(0);
   }
 
   function stopWalkthrough() {
     WT.on = false;
-    $("walk").hidden = true;
-    $("wt-toggle").setAttribute("aria-pressed", "false");
+    $("g-free").setAttribute("aria-pressed", "true");
+    $("g-free").textContent = "Back to steps";
+    $("g-count").textContent = "Free play";
+    $("wt-title").textContent = "Every control is out";
+    $("g-text").textContent = "Switch mechanisms, load a preset under More controls, or pick an idea from Go deeper.";
+    for (const id of ["g-act", "g-extra", "g-why", "wt-back", "wt-next"]) $(id).hidden = true;
     applyLocks();
+  }
+
+  function toggleMode() {
+    if (WT.on) stopWalkthrough();
+    else { WT.on = true; selectMech("arm"); }
+    saveMode();
   }
 
   let lastStatus = "";
@@ -1200,9 +1293,10 @@ canvas { width: 100%; }
     if (key === lastStatus) return;
     lastStatus = key;
     el.style.visibility = "visible";
-    el.textContent = (good ? "Good · " : "") + text;
+    el.innerHTML = (good ? '<span class="done-mark" aria-hidden="true">✓</span> Good · ' : "") + text;
     el.title = el.textContent;
     el.classList.toggle("good", good);
+    $("wt-next").classList.toggle("primary", good);
   }
 
   function markPreset() {
@@ -1233,7 +1327,6 @@ canvas { width: 100%; }
       b.textContent = name; b.dataset.name = name;
       b.addEventListener("click", () => {
         Object.assign(gains[mechKey], M.presets[name]);
-        if (M.presets[name].kI > 0 || M.presets[name].kD > 0) $("adv-gains").open = true;
         buildGainRows();
         markPreset();
       });
@@ -1311,8 +1404,7 @@ canvas { width: 100%; }
   $("pin-run").addEventListener("click", pinRun);
   $("view-live").addEventListener("click", () => setView("live"));
   $("view-cmp").addEventListener("click", () => setView("cmp"));
-  $("wt-toggle").addEventListener("click", () => (WT.on ? stopWalkthrough() : startWalkthrough()));
-  $("wt-exit").addEventListener("click", stopWalkthrough);
+  $("g-free").addEventListener("click", toggleMode);
   $("wt-back").addEventListener("click", () => goStep(Math.max(0, WT.i - 1)));
   $("wt-next").addEventListener("click", () => goStep(Math.min(steps().length - 1, WT.i + 1)));
   $("wt-action").addEventListener("click", () => { const a = steps()[WT.i].action; if (a) a[1](); });
@@ -1321,6 +1413,10 @@ canvas { width: 100%; }
   buildTerms();
   buildMechUI();
   resetSim();
+  // First visit opens the guided steps; a returning student gets the mode they last used
+  let mode = null;
+  try { mode = localStorage.getItem(MODE_KEY); } catch (e) {}
+  if (mode === "free") stopWalkthrough(); else startWalkthrough();
   requestAnimationFrame(frame);
 })();
 </script>

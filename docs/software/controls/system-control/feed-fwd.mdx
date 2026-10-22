@@ -5,6 +5,8 @@ hide_table_of_contents: false
 sidebar_position: 2
 ---
 
+import {LabLink} from '@site/src/components/LabLink';
+
 # Feed Forward Control
 Feed Forward control is a type of open loop control that uses a mathematical model of the system to predict the required input to achieve a desired output. This is the primary open loop control concept, because there are not many other options without requiring feedback.
 ```mermaid
@@ -26,7 +28,7 @@ Typically we won't even refer to this method as feed forward control, we will ju
 See the [Just Getting the Darn Thing to Move](#just-getting-the-darn-thing-to-move) section below for more info.
 :::
 :::tip Try it in the PID Tuning Lab
-Find kG, kS and kV by hand on a simulated arm and elevator, then add PID on top. [Open the PID Tuning Lab](/docs/software/controls/system-control/pid#pid-tuning-lab)
+Find kG, kS and kV by hand on a simulated arm and elevator, then add PID on top. <LabLink slug="pid-tuning-lab" />
 :::
 
 ---

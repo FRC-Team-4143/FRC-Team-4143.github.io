@@ -5,6 +5,10 @@ hide_table_of_contents: false
 sidebar_position: 8
 ---
 
+import {LabLink} from '@site/src/components/LabLink';
+import ArboristTree from '@site/src/components/ArboristTree';
+import * as BT from '@site/src/data/btTrees';
+
 # Autonomous
 Autonomous covers the first 15 seconds of the match, when the robot runs with no driver. A good auto scores while
 the field is still empty, so it is worth a lot, and it has to work the same every match.
@@ -38,7 +42,7 @@ open in Groot2. You never need to edit those files by hand.
 :::
 
 :::tip Try it in the Behavior Tree Lab
-Step through an auto like ours tick by tick and see what `Timeout` and `Fallback` do when aiming fails. [Open the Behavior Tree Lab](/docs/software/controls/behavior-trees#behavior-tree-lab)
+Step through an auto like ours tick by tick and see what `Timeout` and `Fallback` do when aiming fails. <LabLink slug="behavior-tree-lab" />
 :::
 
 ---
@@ -73,8 +77,15 @@ Paths come from [Choreo](../tools/choreo.mdx) and live next door in `src/main/de
 ---
 
 ## Anatomy of an Auto
-The trees on this page are written as outlines: each line is one node on Arbor's canvas, its ports (the values you
-fill in on the inspector) after it, and indented lines are its children. This is the 2026 robot's `CitrusSynergy`:
+The trees on this page are drawn by Arborist, the viewer inside Arbor, so they look the way they do on Arbor's canvas.
+Click one to pan and zoom, select a node to see its ports (the values you fill in on the inspector), and press **+** on
+a `SubTree` to draw it inline. Each one also has a text outline: one line per node, its ports after it, and indented
+lines for its children. This is the 2026 robot's `CitrusSynergy`, with the shared blocks it uses from `common.xml`:
+
+<ArboristTree files={BT.CITRUS_SYNERGY} tree="CitrusSynergy" dir="LR" height={520} label="CitrusSynergy: a Sequence of SetShooterTarget HUB, SetIntakeState STORE, Sleep 1000, a ParallelDeadline (FollowTrajectory SynergyP1 and SubTree IntakeOnEvent), a Delay of middle_wait_msec around FollowTrajectory SynergyP2, and SubTree ShootFor" />
+
+<details>
+<summary>Text outline</summary>
 
 ```text
 CitrusSynergy                          tree port: middle_wait_msec = 3000 (int)
@@ -89,6 +100,8 @@ CitrusSynergy                          tree port: middle_wait_msec = 3000 (int)
    │  └─ FollowTrajectory              trajectory = SynergyP2, end_state = IDLE
    └─ SubTree ShootFor                 duration_msec = 2000
 ```
+
+</details>
 
 Rules for every auto:
 - **One auto, one file, one name.** The chooser lists an auto by its file name, and the robot runs the file's main
@@ -118,6 +131,11 @@ robot has finished the sequence, retry `IsSystemState` (the robot is in the stat
 state once its step states are done (`AIM` comes after `AIMING`), so the wait ends when the work does. The tree
 adds the fail handling that only autos need, while teleop keeps using the exact same sequence:
 
+<ArboristTree xml={BT.AIM_WITH_FALLBACK} height={400} label="SetWantedState AIM, then a Fallback: a Timeout of 3000 ms around RetryUntilSuccessful around IsSystemState AIM, else FollowTrajectory ToBackupSpot" />
+
+<details>
+<summary>Text outline</summary>
+
 ```text
 ├─ SetWantedState                      state = AIM
 └─ Fallback
@@ -127,12 +145,19 @@ adds the fail handling that only autos need, while teleop keeps using the exact 
    └─ FollowTrajectory                 trajectory = ToBackupSpot
 ```
 
+</details>
+
 In Arbor, select the `IsSystemState` node and use *Wrap in…* to put `RetryUntilSuccessful`, then `Timeout`, then
 `Fallback` around it.
 
 Some robot states keep going until something else is asked for (`SHOOT` on the 2026 robot never "finishes"; the
 driver lets go of the trigger). In an auto, put a `Sleep` next to it in a `ParallelDeadline` so the time decides,
 then hand the robot back to `AUTO`. That is exactly what the shared `ShootFor` sub-tree does:
+
+<ArboristTree files={BT.SHOOT_FOR} tree="ShootFor" height={340} label="ShootFor: a Sequence of a ParallelDeadline (Sleep duration_msec and SetWantedState SHOOT), then SetWantedState AUTO" />
+
+<details>
+<summary>Text outline</summary>
 
 ```text
 ShootFor                               tree port: duration_msec = 2000 (int)
@@ -142,6 +167,8 @@ ShootFor                               tree port: duration_msec = 2000 (int)
    │  └─ SetWantedState                state = SHOOT
    └─ SetWantedState                   state = AUTO
 ```
+
+</details>
 
 :::tip AUTO is a hands-off state
 While the robot is in `AUTO`, `RobotContainer.updateLogic` asks the subsystems for nothing, so the tree's
@@ -168,12 +195,19 @@ stowing the intake when a path passes an event marker: `SetIntakeState`, `SetSho
 Choreo event markers fire while a path runs. Handle them *next to the path* in a `ParallelDeadline`, path first.
 The path decides when the group ends, and a handler still waiting for an event that never came is stopped with it:
 
+<ArboristTree files={BT.CHOREO_EVENTS} tree="SlopAuto" height={340} label="A ParallelDeadline: FollowTrajectory SlopAutoStart first, then SubTree IntakeOnEvent for Intake Out and for Intake In" />
+
+<details>
+<summary>Text outline</summary>
+
 ```text
 └─ ParallelDeadline
    ├─ FollowTrajectory                 trajectory = SlopAutoStart, end_state = FIELD_CENTRIC_ROTATION_LOCK
    ├─ SubTree IntakeOnEvent            event = Intake Out, state = INTAKE
    └─ SubTree IntakeOnEvent            event = Intake In, state = STORE
 ```
+
+</details>
 
 `IntakeOnEvent` (in `common.xml`) is a `Sequence` of `WaitForChoreoEvent` and `SetIntakeState`. For a different
 action, build the same two-step `Sequence` in place. `WaitForChoreoEvent` only works while its path is running, so

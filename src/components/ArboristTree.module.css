@@ -1,0 +1,97 @@
+.figure {
+  margin: 0 0 1.5rem;
+}
+
+.viewer {
+  position: relative;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  overflow: hidden;
+  background: var(--ifm-background-color);
+}
+
+.host {
+  position: absolute;
+  inset: 0;
+}
+
+/* Arborist's surfaces follow the docs theme. */
+.host :global(.arbor-viewer) {
+  --canvas: var(--ifm-background-color);
+  font-family: var(--ifm-font-family-base);
+}
+
+/* Resting: let the page scroll and swipe over the diagram. */
+.resting :global(.react-flow),
+.resting :global(.react-flow__pane),
+.resting :global(.react-flow__renderer) {
+  touch-action: pan-x pan-y !important;
+}
+
+.active {
+  border-color: var(--ifm-color-primary);
+}
+
+.msg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  text-align: center;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.9rem;
+}
+
+.hint {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 99px;
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-emphasis-800);
+  font-size: 0.75rem;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.buttons button {
+  min-width: 2.2rem;
+}
+
+.caption {
+  flex: 1 1 18rem;
+  min-height: 2.8em;
+  font-size: 0.95rem;
+}
+
+.label {
+  display: inline-block;
+  margin-right: 0.35rem;
+  padding: 0 0.45rem;
+  border-radius: 99px;
+  background: var(--ifm-color-emphasis-200);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.count {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+}

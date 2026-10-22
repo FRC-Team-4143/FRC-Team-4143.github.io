@@ -7,55 +7,59 @@
 <link rel="stylesheet" href="lab-base.css">
 <script src="lab-theme.js"></script>
 <style>
-/* Swerve Kinematics Lab. Layout: field + sticks and the module view side by side, control column on the left. */
-.stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.below { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+/* Swerve Kinematics Lab. Guided by default: step card, field + module view, sticks. Extras folded away. */
+.lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px;
+  grid-template-areas: "field" "guide" "sticks" "mods" "fixes"; }
+.guide { grid-area: guide; } #p-field { grid-area: field; } #p-sticks { grid-area: sticks; } #p-mods { grid-area: mods; } #p-fixes { grid-area: fixes; }
 @media (min-width: 1000px) {
-  .stage { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
-  .below { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+  .lab { grid-template-columns: minmax(0, 6fr) 220px minmax(0, 5fr); align-items: start; grid-template-rows: auto auto 1fr;
+    grid-template-areas: "guide guide guide" "field sticks mods" "field fixes mods"; }
+  #p-fixes .check span small { font-size: 12px; }
+  #p-sticks .sticks { flex-direction: column; justify-content: flex-start; gap: 6px; }
+  #p-sticks .pad { width: 84px; height: 84px; }
+  #p-sticks .speeds .line { font-size: 15px; gap: 0; }
+  #p-fixes { gap: 6px; } #p-fixes h2 { font-size: 17px; }
+  #p-sticks .speeds { flex: 0 0 auto; }
+  #p-sticks .speeds .line { flex-direction: column; align-items: center; }
 }
-#field { width: 100%; aspect-ratio: 1 / 1; max-height: 56vh; touch-action: none; }
-#mods { width: 100%; aspect-ratio: 1 / 1; max-height: 52vh; }
+.lab > .panel { gap: 8px; }
+#field { width: 100%; aspect-ratio: 1 / 1; max-height: max(300px, calc(100vh - 470px)); touch-action: none; margin: 0 auto; }
+#mods { width: 100%; aspect-ratio: 1 / 1; max-height: max(280px, calc(100vh - 470px)); margin: 0 auto; }
 .sw.t { border-color: var(--actual); } .sw.r { border-color: var(--setp); } .sw.m { border-color: var(--goal); }
 .sw.b { border-color: var(--warn); } .sw.v { border-color: var(--volt); }
+.guide-nav button.primary { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent); }
+.guide-status { font-size: 13px; color: var(--muted); }
+.guide-status.good { color: var(--volt); }
 
 /* Sticks */
-.sticks { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 14px; align-items: center; }
-.stick { display: grid; justify-items: center; gap: 4px; }
+.sticks { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.stick { display: grid; justify-items: center; gap: 2px; }
 .stick .label { text-align: center; }
-.pad { position: relative; width: 112px; height: 112px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); touch-action: none; cursor: grab; }
+.pad { position: relative; width: 96px; height: 96px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); touch-action: none; cursor: grab; }
 .pad::before, .pad::after { content: ""; position: absolute; background: var(--grid); }
 .pad::before { left: 50%; top: 8px; bottom: 8px; width: 1px; }
 .pad::after { top: 50%; left: 8px; right: 8px; height: 1px; }
 .pad.hz::before { display: none; }
-.pad.hz { background: linear-gradient(var(--bg), var(--bg)) padding-box; }
-.pad .db { position: absolute; left: 50%; top: 50%; width: 11.2px; height: 11.2px; margin: -5.6px; border-radius: 50%; border: 1px dashed var(--muted); opacity: .6; }
-.pad.hz .db { border-radius: 2px; height: 30px; margin-top: -15px; }
-.knob { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px; border-radius: 50%; background: var(--brand); box-shadow: 0 1px 3px rgba(0,0,0,.35); z-index: 1; pointer-events: none; }
+.knob { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px; border-radius: 50%; background: var(--brand); box-shadow: 0 1px 3px rgba(0,0,0,.35); z-index: 1; pointer-events: none; }
 .pad:active { cursor: grabbing; }
 .pad.locked { opacity: .45; }
-.sticks .mid { display: grid; gap: 6px; min-width: 0; }
-.sticks .readout { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.sticks .readout b { font-size: 15px; }
-.src { font-size: 12px; color: var(--muted); text-align: center; }
-@media (max-width: 520px) {
-  .pad { width: 96px; height: 96px; }
-  .knob { width: 34px; height: 34px; margin: -17px; }
-  .sticks { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .sticks .mid { grid-column: 1 / -1; grid-row: 2; }
-}
-.check .note { display: block; line-height: 1.45; margin-top: 2px; }
+.speeds { flex: 1 1 200px; display: grid; gap: 4px; min-width: 0; text-align: center; }
+.speeds .line { font-family: var(--f-mono); font-size: 16px; font-variant-numeric: tabular-nums; color: var(--goal); display: flex; flex-wrap: wrap; gap: 2px 14px; justify-content: center; }
+.speeds .line span { white-space: nowrap; }
+.speeds .line i { font-style: normal; color: var(--muted); }
+.src { font-size: 12px; color: var(--muted); }
+@media (max-width: 520px) { .sticks { justify-content: space-around; } .speeds { order: 3; flex-basis: 100%; } }
 
-@media (max-width: 520px) { .toolbar .seg button { padding-inline: 9px; font-size: 13px; white-space: nowrap; } }
 .readout.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 520px) { .readout.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.readout .c { color: var(--goal); } .readout .m { color: var(--actual); }
-.codeline { font-family: var(--f-mono); font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px; overflow-x: auto; white-space: pre; }
-.mode-note { margin: 0; font-size: 14px; }
+.readout .m { color: var(--actual); }
+.codeline { font-family: var(--f-mono); font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px; overflow-x: auto; white-space: pre; color: var(--ink); }
+.modes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 520px) { .modes .seg button { padding-inline: 9px; font-size: 13px; white-space: nowrap; } }
 
 /* Module table */
 .tbl-wrap { overflow-x: auto; }
-table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink); margin-top: 6px; }
 .mt th, .mt td { padding: 3px 8px 3px 0; text-align: right; white-space: nowrap; }
 .mt th:first-child, .mt td:first-child { text-align: left; }
 .mt th { font-family: var(--f-body); font-weight: 500; font-size: 12px; color: var(--muted); }
@@ -63,13 +67,15 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
 .mt .flip { font-family: var(--f-body); font-size: 11px; font-weight: 600; color: var(--setp); border: 1px solid var(--setp); border-radius: 99px; padding: 0 6px; }
 .mt small { color: var(--muted); }
 @media (max-width: 520px) { table.mt { font-size: 12px; } .mt th { font-size: 11px; white-space: normal; } .mt small { display: none; } }
-.rows { display: grid; gap: 10px; }
 .sat-pill[hidden] { display: none; }
 .kbd { font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--bg); }
-.wt-body ul { margin: 0; padding-left: 20px; }
-.consts { margin: 6px 0 0; display: grid; grid-template-columns: auto auto; gap: 2px 12px; }
+.consts { margin: 6px 0 0; display: grid; grid-template-columns: auto auto; gap: 2px 12px; justify-content: start; }
 .consts dt { color: var(--muted); } .consts dd { margin: 0; font-family: var(--f-mono); color: var(--ink); }
+.deeper p, .deeper ol { margin: 0 0 8px; }
+.deeper ol { padding-left: 22px; display: grid; gap: 6px; }
+.check span small { display: block; font-size: 13px; color: var(--muted); line-height: 1.4; }
 </style>
+
 </head>
 <body>
 <div class="wrap">
@@ -77,181 +83,157 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
     <div>
       <p class="eyebrow">Software · Drivetrain</p>
       <h1>Swerve Kinematics Lab</h1>
-      <p class="lede">Drive a swerve robot with two sticks and watch the math. The sticks become one <code>ChassisSpeeds</code>, kinematics turns it into a speed and angle for each of the four wheels, and the wheels move the robot. New here? Press <b>Walkthrough</b>.</p>
+      <p class="lede short">Drive a swerve robot and watch two sticks become four wheel speeds and angles.</p>
     </div>
     <div class="toolbar">
-      <div class="seg" role="group" aria-label="Swerve state">
-        <button id="m-fc" aria-pressed="true">Field-centric</button>
-        <button id="m-rc" aria-pressed="false">Robot-centric</button>
-        <button id="m-lock" aria-pressed="false">Rotation lock</button>
-      </div>
-      <button id="wt-toggle" aria-pressed="false">Walkthrough</button>
       <button id="pause" aria-pressed="false">Pause</button>
-      <button id="slow" aria-pressed="false">Slow motion</button>
       <button id="reset">Reset</button>
     </div>
   </header>
 
-  <section class="panel walk" id="walk" hidden aria-label="Walkthrough">
-    <div class="wt-main">
-      <div class="panel-head"><h2>Walkthrough</h2><ol class="wt-steps" id="wt-steps"></ol></div>
-      <h3 id="wt-title"></h3>
-      <div class="wt-body" id="wt-body"></div>
-    </div>
-    <div class="wt-side">
-      <button id="wt-action" class="primary"></button>
-      <span class="status" id="wt-status" style="visibility:hidden">&nbsp;</span>
-      <div class="wt-nav"><button id="wt-back">Back</button><button id="wt-next">Next step</button><button id="wt-exit">Exit</button></div>
-    </div>
-  </section>
-
-  <div class="app">
-    <aside class="side" aria-label="Lab controls">
-      <div class="panel">
-        <h2>Wheel math</h2>
-        <label class="check" for="o-desat"><input type="checkbox" id="o-desat" checked><span>Desaturate wheel speeds<br><span class="note">If any wheel is asked for more than 5.0 m/s, scale <i>all four</i> down by the same amount (WPILib <code>desaturateWheelSpeeds</code>). Off: each motor just tops out at 5.0 m/s on its own.</span></span></label>
-        <label class="check" for="o-opt"><input type="checkbox" id="o-opt" checked><span>Optimize module angle<br><span class="note">Never turn a wheel more than 90° (π/2 rad). Turn the short way and spin the wheel backward instead (<code>state.optimize(...)</code>).</span></span></label>
-        <label class="check" for="o-cos"><input type="checkbox" id="o-cos" checked><span>Cosine scaling<br><span class="note">Slow a wheel down while it still points the wrong way (<code>state.cosineScale(...)</code>).</span></span></label>
-        <label class="check" for="o-disc"><input type="checkbox" id="o-disc" checked><span>Discretize<br><span class="note">Correct for the robot spinning during each 20 ms loop (<code>ChassisSpeeds.discretize</code>). Off: the robot drifts sideways when it drives and spins at once.</span></span></label>
-        <details>
-          <summary>Which of these does our robot use?</summary>
-          <p class="note" style="margin-top:6px">MWLib's <code>Module.runSetpoint</code> calls <code>optimize</code> and <code>cosineScale</code> on every module, and every drive request calls <code>discretize</code>. The drive requests do not call <code>desaturateWheelSpeeds</code>; in open-loop teleop, a wheel asked for more than <code>SPEED_AT_12V_MPS</code> simply runs at full 12 V. Turn desaturation off to see what that does.</p>
-        </details>
+  <div class="lab">
+    <section class="guide" id="guide" aria-live="polite">
+      <span class="guide-count"><span id="g-count">Step 1 of 7</span> <span class="guide-status" id="g-status"></span></span>
+      <h2 id="g-title"></h2>
+      <p id="g-body"></p>
+      <div class="guide-nav">
+        <button id="g-show">Show me</button>
+        <button id="g-back">Back</button>
+        <button id="g-next">Next</button>
+        <button id="g-free" aria-pressed="false">Free play</button>
       </div>
-      <div class="panel">
-        <h2>View</h2>
-        <label class="check" for="o-vec"><input type="checkbox" id="o-vec"><span>Show the vector sum<br><span class="note">Draw each wheel's translation part and rotation part (ω × r) tip to tail.</span></span></label>
+    </section>
+
+    <section class="panel" id="p-field">
+      <div class="panel-head">
+        <h2>Field</h2>
+        <div class="legend">
+          <span><i class="sw v"></i>Robot velocity</span>
+          <span id="lg-lock" hidden><i class="sw dash r"></i>Aim at hub</span>
+        </div>
+      </div>
+      <canvas id="field" aria-label="Top-down view of the blue half of the field. The blue driver station wall is at the bottom."></canvas>
+      <div class="modes" id="modes" data-step-from="3">
+        <div class="seg" role="group" aria-label="Swerve state">
+          <button id="m-fc" aria-pressed="true">Field-centric</button>
+          <button id="m-rc" aria-pressed="false">Robot-centric</button>
+          <button id="m-lock" aria-pressed="false" data-step-from="7">Rotation lock</button>
+        </div>
+        <button id="turn90">Turn robot +π/2</button>
+      </div>
+    </section>
+
+    <section class="panel" id="p-sticks" aria-label="Driver sticks">
+      <div class="sticks">
+        <div class="stick">
+          <div class="pad" id="pad-l" tabindex="0" role="application" aria-label="Left stick: drive. Drag, or focus and use the arrow keys."><span class="knob" id="knob-l"></span></div>
+          <span class="label">Left stick · drive</span>
+        </div>
+        <div class="speeds">
+          <span class="label">ChassisSpeeds</span>
+          <div class="line"><span><i>vx</i> <b id="r-vx">–</b></span><span><i>vy</i> <b id="r-vy">–</b></span><span><i>ω</i> <b id="r-w">–</b></span></div>
+          <span class="src" id="src">Keys: W A S D, Q E · gamepads work too</span>
+        </div>
+        <div class="stick" data-step-from="2">
+          <div class="pad hz" id="pad-r" tabindex="0" role="application" aria-label="Right stick: turn, left and right only. Drag, or focus and use the arrow keys."><span class="knob" id="knob-r"></span></div>
+          <span class="label">Right stick · turn</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-mods">
+      <div class="panel-head">
+        <h2>Wheels</h2>
+        <span class="pill sat-pill" id="sat-pill" hidden>Saturated</span>
+      </div>
+      <div class="legend">
+        <span><i class="sw m"></i>Wheel command</span>
+        <span data-step-from="5"><i class="sw dash b"></i>Before desaturation</span>
+        <span id="lg-t" hidden><i class="sw t"></i>Translation</span>
+        <span id="lg-r" hidden><i class="sw r"></i>ω × r</span>
+      </div>
+      <canvas id="mods" aria-label="The four swerve modules seen from above, robot front at the top. Each wheel shows its angle and an arrow for its commanded speed. The dashed circle is the 5.0 m/s limit."></canvas>
+      <label class="check" for="o-vec" data-step-from="4"><input type="checkbox" id="o-vec"><span>Show the vector sum (translation + ω × r)</span></label>
+      <details id="numbers">
+        <summary>Show numbers</summary>
+        <div class="tbl-wrap">
+          <table class="mt" aria-label="Module states">
+            <thead><tr><th>Module</th><th>Angle (rad)</th><th>Asked (m/s)</th><th>Sent (m/s)</th><th>Steer travel (rad)</th></tr></thead>
+            <tbody id="mt-body"></tbody>
+          </table>
+        </div>
+        <p class="note">Asked: straight out of kinematics. Sent: after desaturation and optimization (minus = wheel spins backward).</p>
+        <div class="readout four" style="margin-top:8px">
+          <div><span>Heading θ</span><b id="r-th">–</b></div>
+          <div><span>Measured vx m/s</span><b class="m" id="r-mvx">–</b></div>
+          <div><span>Measured vy m/s</span><b class="m" id="r-mvy">–</b></div>
+          <div><span>Measured ω rad/s</span><b class="m" id="r-mw">–</b></div>
+        </div>
+        <p class="note">Measured speeds come back from the wheels. If they differ from what you asked, the robot isn't doing what the driver wanted.</p>
+      </details>
+    </section>
+
+    <section class="panel" id="p-fixes" data-step-from="5">
+      <h2>Wheel fixes</h2>
+      <label class="check" for="o-desat"><input type="checkbox" id="o-desat" checked><span>Desaturate<small>Too fast? Scale all four wheels down together.</small></span></label>
+      <label class="check" for="o-opt" data-step-from="6"><input type="checkbox" id="o-opt" checked><span>Optimize<small>Never steer more than π/2; spin the wheel backward instead.</small></span></label>
+      <div class="row" data-step-from="6">
+        <label for="o-steer"><span>Steering speed</span><span><span class="k" id="steer-val">20</span> <span class="u">rad/s</span></span></label>
+        <input type="range" id="o-steer" min="2" max="30" step="1" value="20" style="grid-column:1/-1">
+      </div>
+      <details class="more" data-step-from="7">
+        <summary>More controls</summary>
+        <label class="check" for="o-cos"><input type="checkbox" id="o-cos" checked><span>Cosine scaling<small>Slow a wheel while it still points the wrong way.</small></span></label>
+        <label class="check" for="o-disc"><input type="checkbox" id="o-disc" checked><span>Discretize<small>Correct for spinning during each 20 ms loop.</small></span></label>
         <label class="check" for="o-trail"><input type="checkbox" id="o-trail" checked><span>Show the robot's path</span></label>
-      </div>
-      <div class="panel">
-        <h2>Driver</h2>
-        <div class="rows">
-          <div class="row">
-            <label for="o-scalar"><span>Teleop speed scalar</span><span class="k" id="scalar-val">1.00</span></label>
-            <input type="range" id="o-scalar" min="0.1" max="1" step="0.05" value="1" style="grid-column:1/-1">
-            <p class="note" style="grid-column:1/-1">Same as <code>swerve_.setTeleOpVelocityScalar(...)</code>. Our robot uses 0.25 while shooting.</p>
-          </div>
-          <div class="row">
-            <label for="o-steer"><span>Steering speed</span><span><span class="k" id="steer-val">20</span> <span class="u">rad/s</span></span></label>
-            <input type="range" id="o-steer" min="2" max="30" step="1" value="20" style="grid-column:1/-1">
-            <p class="note" style="grid-column:1/-1">How fast the steer motor can turn a wheel. Lower it to see steering in slow motion.</p>
-          </div>
+        <div class="row">
+          <label for="o-scalar"><span>Teleop speed scalar</span><span class="k" id="scalar-val">1.00</span></label>
+          <input type="range" id="o-scalar" min="0.1" max="1" step="0.05" value="1" style="grid-column:1/-1">
         </div>
-        <div class="toolbar">
-          <button id="turn90">Turn robot +π/2</button>
-          <button id="zero">Zero gyro</button>
-        </div>
-        <details>
-          <summary>Keyboard and gamepad</summary>
-          <p class="note" style="margin-top:6px"><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> drive (left stick). <span class="kbd">Q</span> turns left (counter-clockwise), <span class="kbd">E</span> turns right (right stick). Hold <span class="kbd">Shift</span> for half stick. You can also focus a stick and use the arrow keys. A plugged-in gamepad works too: press any button on it once so the browser sees it.</p>
-        </details>
-        <details>
-          <summary>Robot constants used here</summary>
-          <dl class="consts">
-            <dt>Module positions</dt><dd>±0.1905 m (7.5 in)</dd>
-            <dt>Track width / wheelbase</dt><dd>0.381 m</dd>
-            <dt>SPEED_AT_12V_MPS</dt><dd>5.0 m/s</dd>
-            <dt>MAX_TRANSLATION_RATE</dt><dd>5.0 m/s</dd>
-            <dt>MAX_ANGULAR_RATE</dt><dd>10.0 rad/s</dd>
-            <dt>MAX_TRANSLATION_ACCEL</dt><dd>40 m/s²</dd>
-            <dt>CONTROLLER_DEADBAND</dt><dd>0.1</dd>
-            <dt>HEADING_CONTROLLER</dt><dd>kP 10, kD 1</dd>
-            <dt>Hub (blue)</dt><dd>(4.61, 4.02) m</dd>
-          </dl>
-          <p class="note" style="margin-top:6px">From the 2026 robot's <code>SwerveConstants</code> (AlphaBot) and MWLib's <code>MwSwerveConstants</code> defaults.</p>
-        </details>
-      </div>
-    </aside>
-
-    <main class="main">
-      <section class="stage">
-        <div class="panel">
-          <div class="panel-head">
-            <h2>Field (blue half)</h2>
-            <div class="legend">
-              <span><i class="sw v"></i>Robot velocity</span>
-              <span id="lg-lock" hidden><i class="sw dash r"></i>Aim line</span>
-            </div>
-          </div>
-          <canvas id="field" aria-label="Top-down view of the blue half of the field. The blue driver station wall is at the bottom. The robot drives with the sticks below."></canvas>
-          <div class="sticks">
-            <div class="stick">
-              <div class="pad" id="pad-l" tabindex="0" role="application" aria-label="Left stick: translation. Drag, or focus and use the arrow keys."><span class="db"></span><span class="knob" id="knob-l"></span></div>
-              <span class="label">Left stick · drive</span>
-            </div>
-            <div class="mid">
-              <span class="label">ChassisSpeeds (robot-relative)</span>
-              <div class="readout">
-                <div><span>vx m/s</span><b class="c" id="r-vx">–</b></div>
-                <div><span>vy m/s</span><b class="c" id="r-vy">–</b></div>
-                <div><span>ω rad/s</span><b class="c" id="r-w">–</b></div>
-              </div>
-              <span class="src" id="src">Input: on-screen sticks</span>
-            </div>
-            <div class="stick">
-              <div class="pad hz" id="pad-r" tabindex="0" role="application" aria-label="Right stick: rotation, left and right only. Drag, or focus and use the arrow keys."><span class="db"></span><span class="knob" id="knob-r"></span></div>
-              <span class="label">Right stick · turn</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h2>Modules</h2>
-            <span class="pill sat-pill" id="sat-pill" hidden>Saturated</span>
-          </div>
-          <div class="legend">
-            <span><i class="sw m"></i>Wheel command</span>
-            <span><i class="sw dash b"></i>Before desaturation</span>
-            <span id="lg-t" hidden><i class="sw t"></i>Translation</span>
-            <span id="lg-r" hidden><i class="sw r"></i>ω × r</span>
-          </div>
-          <canvas id="mods" aria-label="The four swerve modules seen from above, robot front at the top. Each wheel shows its angle and an arrow for its commanded speed. The circle is the 5.0 m/s limit."></canvas>
-          <div class="tbl-wrap">
-            <table class="mt" aria-label="Module states">
-              <thead><tr><th>Module</th><th>Angle (rad)</th><th>Asked (m/s)</th><th>Sent (m/s)</th><th>Steer travel (rad)</th></tr></thead>
-              <tbody id="mt-body"></tbody>
-            </table>
-          </div>
-          <p class="note">Order is FL, FR, BL, BR, the same as WPILib's <code>SwerveDriveKinematics</code>. <b>Asked</b> is straight out of kinematics. <b>Sent</b> is after desaturation and optimization; a minus sign means the wheel spins backward. Steer travel adds up how far each wheel has turned since the last reset.</p>
-        </div>
-      </section>
-
-      <section class="below">
-        <div class="panel">
-          <div class="panel-head"><h2>What the robot is doing</h2></div>
-          <div class="readout four">
-            <div><span>Heading θ</span><b id="r-th">–</b></div>
-            <div><span>Measured vx m/s</span><b class="m" id="r-mvx">–</b></div>
-            <div><span>Measured vy m/s</span><b class="m" id="r-mvy">–</b></div>
-            <div><span>Measured ω rad/s</span><b class="m" id="r-mw">–</b></div>
-          </div>
-          <p class="note">Measured speeds come back from the wheels (forward kinematics). When they don't match the ChassisSpeeds you asked for, the robot is not doing what the driver wanted.</p>
-          <span class="label">The state RobotContainer asks for</span>
-          <div class="codeline" id="code"></div>
-          <p class="mode-note" id="mode-note"></p>
-          <details>
-            <summary>From stick to ChassisSpeeds, step by step</summary>
-            <div class="codeline" id="pipe" style="margin-top:6px"></div>
-            <p class="note" style="margin-top:6px">This is MWLib's <code>calculateSpeedsBasedOnJoystickInputs()</code>: deadband each axis, flip the sign (stick forward reads negative, and WPILib +y is left), multiply by the max rate, then a slew limiter on vx and vy. Read more on the <a href="/docs/software/robot_dev/swerve" target="_top">Swerve</a> and <a href="/docs/software/robot_dev/oi" target="_top">Operator Interface</a> pages.</p>
-          </details>
-        </div>
-        <div class="panel try">
-          <h2>Things to try</h2>
-          <ol>
-            <li>Press <b>Turn robot +π/2</b> so the robot faces left, then push the left stick forward in <b>Field-centric</b> and in <b>Robot-centric</b>. Which one would a driver standing at the blue wall want?</li>
-            <li>Spin in place with only the right stick. All four wheels point along a circle around the center, and the table shows the same speed on each: ω × 0.269 m.</li>
-            <li>Turn on <b>Show the vector sum</b>, then drive forward and spin at the same time. The front-left and back-left wheels end up different lengths. Why?</li>
-            <li>Full forward plus full spin. The fastest wheel is asked for over 7 m/s. Look at the dashed arrows, then turn off <b>Desaturate</b> and watch the path bend.</li>
-            <li>With <b>Optimize</b> on, flick the stick from full forward to full back. No wheel turns; they all spin backward. Turn <b>Optimize</b> off, lower <b>Steering speed</b> to 4 rad/s and do it again.</li>
-            <li>Turn off both <b>Optimize</b> and <b>Cosine scaling</b> and reverse quickly. The robot lurches the wrong way while the wheels turn. Cosine scaling is the fix.</li>
-            <li>Pick <b>Rotation lock</b> and strafe around the hub. The heading controller spins the robot so the front always faces the hub, and the right stick does nothing.</li>
-            <li>Turn off <b>Discretize</b>, then drive straight while spinning hard in <b>Field-centric</b>. The path drifts to one side. That drift is what <code>ChassisSpeeds.discretize</code> removes.</li>
-          </ol>
-        </div>
-      </section>
-    </main>
+        <div class="toolbar"><button id="zero">Zero gyro</button><button id="slow" aria-pressed="false">Slow motion</button></div>
+      </details>
+    </section>
   </div>
+
+  <section class="deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>Things to try</summary>
+      <ol>
+        <li>Spin in place with only the right stick. Every wheel shows the same speed: ω × 0.269 m.</li>
+        <li>Full forward plus full spin, then turn off <b>Desaturate</b>. The path bends.</li>
+        <li>Turn off <b>Optimize</b>, set steering to 4 rad/s and flick from full forward to full back.</li>
+        <li>Turn off <b>Optimize</b> and <b>Cosine scaling</b>, then reverse fast. The robot lurches the wrong way first.</li>
+        <li>Turn off <b>Discretize</b> and drive straight while spinning hard in field-centric. The path drifts.</li>
+        <li>In <b>Rotation lock</b>, strafe around the hub. The right stick does nothing.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>In our robot code</summary>
+      <p>The state <code>RobotContainer</code> asks for:</p>
+      <div class="codeline" id="code"></div>
+      <p style="margin-top:8px" id="mode-note"></p>
+      <p><b>Which fixes we use.</b> MWLib's <code>Module.runSetpoint</code> calls <code>optimize</code> and <code>cosineScale</code> on every module, and every drive request calls <code>ChassisSpeeds.discretize</code>. The drive requests do not call <code>desaturateWheelSpeeds</code>: in open-loop teleop a wheel asked for more than <code>SPEED_AT_12V_MPS</code> just runs at 12 V. Turn <b>Desaturate</b> off to see that.</p>
+      <p><b>From stick to ChassisSpeeds.</b> MWLib's <code>calculateSpeedsBasedOnJoystickInputs()</code> deadbands each axis, flips the sign (stick forward reads negative, and WPILib +y is left), multiplies by the max rate, then slew-limits vx and vy:</p>
+      <div class="codeline" id="pipe"></div>
+    </details>
+    <details>
+      <summary>Robot constants and further reading</summary>
+      <p>Modules, <code>ChassisSpeeds</code>, inverse kinematics and the wheel fixes are explained in <a href="/docs/software/robot_dev/swerve#how-swerve-works" target="_top">How Swerve Works</a>. Controller axes: <a href="/docs/software/robot_dev/oi" target="_top">Operator Interface</a>.</p>
+      <dl class="consts">
+        <dt>Module positions</dt><dd>±0.1905 m (7.5 in)</dd>
+        <dt>Track width / wheelbase</dt><dd>0.381 m</dd>
+        <dt>SPEED_AT_12V_MPS</dt><dd>5.0 m/s</dd>
+        <dt>MAX_TRANSLATION_RATE</dt><dd>5.0 m/s</dd>
+        <dt>MAX_ANGULAR_RATE</dt><dd>10.0 rad/s</dd>
+        <dt>MAX_TRANSLATION_ACCEL</dt><dd>40 m/s²</dd>
+        <dt>CONTROLLER_DEADBAND</dt><dd>0.1</dd>
+        <dt>HEADING_CONTROLLER</dt><dd>kP 10, kD 1</dd>
+        <dt>Hub (blue)</dt><dd>(4.61, 4.02) m</dd>
+      </dl>
+      <p style="margin-top:8px">From the 2026 robot's <code>SwerveConstants</code> (AlphaBot) and MWLib's <code>MwSwerveConstants</code> defaults. Keys: <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> drive, <span class="kbd">Q</span>/<span class="kbd">E</span> turn, <span class="kbd">Shift</span> half stick.</p>
+    </details>
+  </section>
   <footer class="foot">MARS/WARS · FRC Team 4143</footer>
 </div>
 
@@ -546,6 +528,7 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
     const [rx0, ry0] = P(robot.x, robot.y), [rx1, ry1] = P(robot.x + fvx * 0.35, robot.y + fvy * 0.35);
     arrow(ctx, rx0, ry0, rx1, ry1, C.volt, 3);
     // "stick forward drives this way" compass
+    if ($("modes").classList.contains("not-yet")) return;
     const fwd = mode === "ROBOT_CENTRIC" ? robot.th : 0;
     const cx = ox + 34, cy = oy + 40;
     ctx.fillStyle = C.bg; ctx.globalAlpha = 0.85; ctx.fillRect(ox + 4, oy + 6, 112, 64); ctx.globalAlpha = 1; ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.strokeRect(ox + 4.5, oy + 6.5, 112, 64);
@@ -622,10 +605,10 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
   let lastRO = 0;
   function updateReadouts(now) {
     if (now - lastRO < 80) return; lastRO = now;
-    $("r-vx").textContent = sgn(cmd.vx); $("r-vy").textContent = sgn(cmd.vy); $("r-w").textContent = sgn(cmd.w);
+    $("r-vx").textContent = sgn(cmd.vx) + " m/s"; $("r-vy").textContent = sgn(cmd.vy) + " m/s"; $("r-w").textContent = sgn(cmd.w) + " rad/s";
     $("r-mvx").textContent = sgn(meas.vx); $("r-mvy").textContent = sgn(meas.vy); $("r-mw").textContent = sgn(meas.w);
     $("r-th").textContent = `${f2(robot.th)} rad (${Math.round(robot.th * DEG)}°)`;
-    $("src").textContent = "Input: " + ({ sticks: "on-screen sticks", keyboard: "keyboard", gamepad: "gamepad", walkthrough: "walkthrough (hands off)" })[source];
+    $("src").textContent = ({ sticks: "Keys: W A S D, Q E · gamepads work too", keyboard: "Input: keyboard", gamepad: "Input: gamepad", walkthrough: "Input: Show me (hands off)" })[source];
     rows.forEach((tr, i) => {
       const m = mods[i];
       tr.innerHTML = `<td>${MODS[i].n}${m.flipped ? ' <span class="flip">flip</span>' : ""}</td>` +
@@ -673,7 +656,7 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
   $("o-steer").addEventListener("input", (e) => setSteer(+e.target.value));
   $("turn90").addEventListener("click", () => { robot.th = wrap(robot.th + Math.PI / 2); });
   $("zero").addEventListener("click", () => { robot.th = 0; });
-  $("reset").addEventListener("click", () => resetSim());
+  $("reset").addEventListener("click", () => { if (guide.free) resetSim(); else goStep(guide.i); });
   $("pause").addEventListener("click", (e) => { paused = !paused; e.currentTarget.setAttribute("aria-pressed", String(paused)); e.currentTarget.textContent = paused ? "Resume" : "Pause"; });
   $("slow").addEventListener("click", (e) => { slow = !slow; e.currentTarget.setAttribute("aria-pressed", String(slow)); });
 
@@ -710,99 +693,119 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
   window.addEventListener("keyup", (ev) => { const k = ev.key.toLowerCase(); keys.delete(k); if (k === "shift") keys.delete("shift"); });
   window.addEventListener("blur", () => { keys.clear(); padKeys.l.clear(); padKeys.r.clear(); });
 
-  // ---- Walkthrough ----
-  const run = (segs, tag) => { script = { segs, t: 0 }; if (tag) stats.run = { tag, opt: opt.optimize, start: mods.reduce((a, m) => a + m.travel, 0), flips0: stats.flips }; };
+  // ---- Guided steps ----
+  const run = (segs, tag) => { script = { segs, t: 0 }; if (tag) stats.run = { tag, opt: opt.optimize, start: totalTravel() }; };
   const totalTravel = () => mods.reduce((a, m) => a + m.travel, 0);
   const STEPS = [
     {
-      tag: "Sticks", title: "Sticks become one ChassisSpeeds",
-      body: `<p>The robot code asks for three numbers every 20 ms: <b>vx</b> (forward, m/s), <b>vy</b> (left, m/s) and <b>ω</b> ("omega", turning speed in rad/s, counter-clockwise is positive). Together WPILib calls them a <code>ChassisSpeeds</code>.</p>
-        <p>The left stick sets vx and vy, the right stick sets ω. MWLib ignores tiny stick wobble (a 0.1 deadband), then multiplies by the max rates: 5.0 m/s and 10 rad/s. Drag the left stick, use <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span>, or press the button.</p>`,
-      action: ["Drive forward for me", () => run([{ dur: 1.4, ly: -1 }])],
-      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); setOpt("vectors", "o-vec", false); stats.drove = null; stats.dmax = 0; },
-      status: () => { if (Math.hypot(cmd.vx, cmd.vy) > Math.max(1, stats.dmax || 0)) stats.dmax = Math.hypot(cmd.vx, cmd.vy), stats.drove = `vx ${sgn(cmd.vx)}, vy ${sgn(cmd.vy)} m/s`; return stats.drove ? [stats.drove, true] : ["Push the left stick", false]; },
+      title: "Push the left stick forward.",
+      body: "vx is forward speed in m/s. Full stick is 5.0 m/s. Notice all four wheels point the same way.",
+      show: () => run([{ dur: 1.4, ly: -1 }]),
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); setOpt("vectors", "o-vec", false); stats.dmax = 0; stats.drove = null; },
+      status: () => { const v = Math.hypot(cmd.vx, cmd.vy); if (v > Math.max(1, stats.dmax || 0)) { stats.dmax = v; stats.drove = `${v.toFixed(1)} m/s`; } return stats.drove ? [stats.drove, true] : ["", false]; },
     },
     {
-      tag: "Field vs robot", title: "Field-centric or robot-centric?",
-      body: `<p>The robot now faces left (θ = π/2 rad). In <b>Robot-centric</b>, stick forward means "drive toward the robot's front", so it drives left. In <b>Field-centric</b>, stick forward means "drive away from the driver", whichever way the robot faces. The gyro heading θ makes that possible.</p>
-        <p>Drive forward in both modes using the buttons at the top. The compass at the top-left of the field shows where "stick forward" will go. Our robot drives in <code>FIELD_CENTRIC</code>; the operator can toggle to <code>ROBOT_CENTRIC</code>.</p>`,
-      action: ["Push forward", () => run([{ dur: 1.2, ly: -0.7 }])],
+      title: "Spin in place with the right stick.",
+      body: "ω is turning speed in rad/s; counter-clockwise is positive. Each wheel now points along a circle around the center.",
+      show: () => run([{ dur: 1.6, rx: -0.8 }]),
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); stats.spun = false; },
+      status: () => { if (Math.abs(cmd.w) > 3 && Math.hypot(cmd.vx, cmd.vy) < 0.5) stats.spun = true; return stats.spun ? ["spun in place", true] : ["", false]; },
+    },
+    {
+      title: "Drive forward in Robot-centric, then in Field-centric.",
+      body: "The robot faces left. Robot-centric drives toward its front. Field-centric drives away from the driver, using the gyro.",
+      show: () => run([{ dur: 1.2, ly: -0.7 }]),
       enter: () => { resetSim(); robot.th = Math.PI / 2; robot.x = 2.6; robot.y = 5.6; setMode("ROBOT_CENTRIC"); stats.fcMoved = stats.rcMoved = false; },
-      status: () => stats.fcMoved && stats.rcMoved ? ["Tried both modes", true] : [stats.rcMoved ? "Now try Field-centric" : stats.fcMoved ? "Now try Robot-centric" : "Drive forward in each mode", false],
+      status: () => stats.fcMoved && stats.rcMoved ? ["tried both", true] : [stats.rcMoved ? "now Field-centric" : stats.fcMoved ? "now Robot-centric" : "", false],
     },
     {
-      tag: "Vectors", title: "Each wheel adds two vectors",
-      body: `<p>Kinematics gives every wheel the same <b style="color:var(--actual)">translation</b> (vx, vy), plus a <b style="color:var(--setp)">rotation part</b> that depends on where the wheel sits: ω × r = (−ω·y, ω·x), with the wheel's position r = (±0.1905, ±0.1905) m. The <b style="color:var(--goal)">gold</b> arrow is the sum. Its direction is the wheel angle and its length is the wheel speed.</p>
-        <p>Drive and turn at the same time. On the side the robot turns toward, the two parts partly cancel; on the other side they add up.</p>`,
-      action: ["Drive and turn", () => run([{ dur: 2.5, ly: -0.5, rx: -0.5 }])],
-      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); setOpt("vectors", "o-vec", true); setOpt("desat", "o-desat", true); },
-      status: () => Math.hypot(cmd.vx, cmd.vy) > 0.5 && Math.abs(cmd.w) > 0.5 ? ["Driving and turning", true] : ["Use both sticks at once", false],
+      title: "Drive and turn at the same time.",
+      body: "Each wheel adds the same translation (blue) to its own rotation part ω × r (purple). The gold sum is the wheel's speed and angle.",
+      show: () => run([{ dur: 2.5, ly: -0.5, rx: -0.5 }]),
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); setOpt("vectors", "o-vec", true); stats.both = false; },
+      status: () => { if (Math.hypot(cmd.vx, cmd.vy) > 0.5 && Math.abs(cmd.w) > 0.5) stats.both = true; return stats.both ? ["driving and turning", true] : ["", false]; },
     },
     {
-      tag: "Desaturate", title: "Too fast? Scale every wheel down together",
-      body: `<p>Full forward (5.0 m/s) plus full spin (10 rad/s) asks the fastest wheel for over 7 m/s. No wheel can go faster than 5.0 m/s. <code>desaturateWheelSpeeds</code> divides all four by the same number, so the robot keeps the <i>direction</i> you asked for, just slower. The dashed arrows show what was asked.</p>
-        <p>Run it once, then untick <b>Desaturate wheel speeds</b> and run it again. Now only the fast wheels get clipped, the wheels no longer agree, and the path bends.</p>`,
-      action: ["Full forward + full spin", () => { resetSim(); run([{ dur: 1.6, ly: -1, rx: -1 }]); }],
-      enter: () => { resetSim(); setMode("ROBOT_CENTRIC"); setOpt("vectors", "o-vec", false); setOpt("desat", "o-desat", true); stats.satOn = stats.satOff = 0; },
+      title: "Full forward + full spin, then untick Desaturate and repeat.",
+      body: "One wheel is asked for over 7 m/s but tops out at 5.0. Desaturate slows all four together, so the path stays true. Without it, the path bends.",
+      show: () => { resetSim(); run([{ dur: 1.6, ly: -1, rx: -1 }]); },
+      enter: () => { resetSim(); setMode("ROBOT_CENTRIC"); setOpt("vectors", "o-vec", false); stats.satOn = stats.satOff = 0; },
       status: () => {
-        if (stats.satOn > 5 && stats.satOff > 5) return ["Seen it scaled and clipped", true];
-        if (maxBefore > MAX_V + 0.01) return [`Asked ${maxBefore.toFixed(1)} m/s → ${opt.desat ? "scaled ×" + scaleK.toFixed(2) : "clipped at 5.0"}`, false];
-        return [stats.satOn > 5 ? "Now untick Desaturate and run again" : "Press the button", false];
+        if (stats.satOn > 5 && stats.satOff > 5) return ["seen scaled and clipped", true];
+        if (maxBefore > MAX_V + 0.01) return [`asked ${maxBefore.toFixed(1)} m/s → ${opt.desat ? "scaled ×" + scaleK.toFixed(2) : "clipped at 5.0"}`, false];
+        return [stats.satOn > 5 ? "now untick Desaturate" : "", false];
       },
     },
     {
-      tag: "Optimize", title: "Never turn a wheel more than 90°",
-      body: `<p>Going from full forward to full backward, a wheel could turn 180° (π rad). That is slow. <b>Optimization</b> notices that the same motion is just the wheel spinning backward, so it flips the speed's sign and turns 0° instead. Any change bigger than π/2 rad gets flipped like this.</p>
-        <p>Steering is slowed to 6 rad/s here so you can see it. Run it, then untick <b>Optimize module angle</b> and run it again. Compare the steer travel in the table.</p>`,
-      action: ["Forward, then reverse", () => run([{ dur: 1.0, ly: -0.8 }, { dur: 1.4, ly: 0.8 }], "opt")],
-      enter: () => { resetSim(); robot.x = 3.0; robot.y = 6.2; robot.th = -Math.PI / 2; setMode("ROBOT_CENTRIC"); setOpt("optimize", "o-opt", true); setSteer(6); stats.runs = {}; },
+      title: "Go forward, then reverse. Then untick Optimize and repeat.",
+      body: "With Optimize, wheels spin backward instead of turning π rad. Steering is slowed so you can see it. Open Show numbers to compare steer travel.",
+      show: () => run([{ dur: 1.0, ly: -0.8 }, { dur: 1.4, ly: 0.8 }], "opt"),
+      enter: () => { resetSim(); robot.x = 3.0; robot.y = 6.2; robot.th = -Math.PI / 2; setMode("ROBOT_CENTRIC"); setSteer(6); stats.runs = {}; },
       status: () => {
         const r = stats.runs;
-        if (r.on != null && r.off != null) return [`Steer travel ${r.on.toFixed(1)} rad vs ${r.off.toFixed(1)} rad`, true];
-        if (r.on != null) return [`${r.on.toFixed(1)} rad with optimizing. Now untick it`, false];
-        if (r.off != null) return [`${r.off.toFixed(1)} rad without. Now tick it`, false];
-        return ["Press the button", false];
+        if (r.on != null && r.off != null) return [`steer travel ${r.on.toFixed(1)} vs ${r.off.toFixed(1)} rad`, true];
+        if (r.on != null) return [`${r.on.toFixed(1)} rad with Optimize; now untick it`, false];
+        if (r.off != null) return [`${r.off.toFixed(1)} rad without; now tick it`, false];
+        return ["use Show me for a clean test", false];
       },
     },
     {
-      tag: "Rotation lock", title: "Rotation lock: face the hub while you drive",
-      body: `<p>When our robot aims, <code>RobotContainer</code> asks for <code>FIELD_CENTRIC_ROTATION_LOCK</code>. The driver still translates with the left stick, but the right stick is ignored. A heading controller computes ω from the heading error: ω = 10 × error + 1 × (change in error per second).</p>
-        <p>Strafe sideways. The robot keeps its front on the hub the whole time, so every wheel is both translating and turning. Watch the aim line: while the robot moves, the heading lags a little behind the hub (about 0.1 rad). The real code removes that lag with a feedforward, the turn rate it already knows it will need, passed in by <code>setDesiredRotationLockCORWithFF(...)</code>.</p>`,
-      action: ["Strafe past the hub", () => run([{ dur: 2.6, lx: 0.6 }, { dur: 2.6, lx: -0.6 }])],
-      enter: () => { resetSim(); setSteer(20); setMode("FIELD_CENTRIC_ROTATION_LOCK"); robot.x = 1.6; robot.y = 5.6; stats.lockGood = 0; },
-      status: () => { const e = Math.abs(wrap(lockTarget - robot.th)); return stats.lockGood > 15 ? [`Locked on the hub · error ${e.toFixed(2)} rad`, true] : ["Drive with the left stick", false]; },
+      title: "Pick Rotation lock and strafe past the hub.",
+      body: "A heading controller turns the robot to face the hub; the right stick is ignored. You've got it — try Free play, and see Go deeper for ideas.",
+      show: () => { setMode("FIELD_CENTRIC_ROTATION_LOCK"); run([{ dur: 2.6, lx: 0.6 }, { dur: 2.6, lx: -0.6 }]); },
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); robot.x = 1.6; robot.y = 5.6; stats.lockGood = 0; },
+      status: () => stats.lockGood > 15 ? [`locked on · error ${Math.abs(wrap(lockTarget - robot.th)).toFixed(2)} rad`, true] : ["", false],
     },
   ];
-  const walk = { on: false, i: 0 };
+  const guide = { free: false, i: 0 };
   let lastStatus = "";
-  function goStep(i) {
-    walk.i = i; const st = STEPS[i];
+  try { guide.free = localStorage.getItem("swerve-lab-mode") === "free"; } catch (e) {}
+  function applyReveal() {
+    document.querySelectorAll("[data-step-from]").forEach((el) => el.classList.toggle("not-yet", !guide.free && +el.dataset.stepFrom > guide.i + 1));
+  }
+  function defaults() {
     setOpt("desat", "o-desat", true); setOpt("optimize", "o-opt", true); setOpt("cosine", "o-cos", true); setOpt("disc", "o-disc", true); setSteer(20);
-    if (st.enter) st.enter();
-    $("wt-steps").innerHTML = STEPS.map((x, j) => `<li class="${j < i ? "done" : j === i ? "now" : ""}">${j + 1}. ${x.tag}</li>`).join("");
-    $("wt-title").textContent = st.title; $("wt-body").innerHTML = st.body;
-    $("wt-action").style.visibility = st.action ? "visible" : "hidden";
-    $("wt-action").textContent = st.action ? st.action[0] : "–";
-    $("wt-back").disabled = i === 0; $("wt-next").hidden = i === STEPS.length - 1;
+  }
+  function renderGuide() {
     lastStatus = "";
+    $("g-free").setAttribute("aria-pressed", String(guide.free));
+    $("g-free").textContent = guide.free ? "Back to steps" : "Free play";
+    $("g-show").hidden = $("g-back").hidden = $("g-next").hidden = guide.free;
+    if (guide.free) {
+      $("g-count").textContent = "Free play"; $("g-status").textContent = "";
+      $("g-title").textContent = "Every control is out. Drive anything.";
+      $("g-body").textContent = "Ideas are under Go deeper → Things to try.";
+    } else {
+      const st = STEPS[guide.i];
+      $("g-count").textContent = `Step ${guide.i + 1} of ${STEPS.length}`;
+      $("g-title").textContent = st.title; $("g-body").textContent = st.body;
+      $("g-back").disabled = guide.i === 0;
+      $("g-next").disabled = guide.i === STEPS.length - 1;
+      $("g-next").classList.remove("primary");
+    }
+    applyReveal();
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
   }
-  function updateWalkthrough() {
-    if (!walk.on) return;
-    const st = STEPS[walk.i], el = $("wt-status");
-    if (!st.status) { el.style.visibility = "hidden"; return; }
-    const [text, good] = st.status(), key = text + good;
+  function goStep(i) { guide.i = i; defaults(); STEPS[i].enter(); renderGuide(); }
+  function setFree(on) {
+    guide.free = on; script = null;
+    try { localStorage.setItem("swerve-lab-mode", on ? "free" : "guided"); } catch (e) {}
+    if (on) renderGuide(); else goStep(guide.i);
+  }
+  function updateGuide() {
+    if (guide.free) return;
+    const [text, good] = STEPS[guide.i].status(), key = text + good;
     if (key === lastStatus) return; lastStatus = key;
-    el.style.visibility = "visible"; el.textContent = (good ? "Good · " : "") + text; el.title = el.textContent; el.classList.toggle("good", good);
+    const el = $("g-status");
+    el.textContent = good ? `✓ ${text}` : text ? `· ${text}` : "";
+    el.classList.toggle("good", good);
+    el.classList.toggle("done-mark", good);
+    $("g-next").classList.toggle("primary", good && guide.i < STEPS.length - 1);
   }
-  function setWalkthrough(on) {
-    walk.on = on; $("walk").hidden = !on; $("wt-toggle").setAttribute("aria-pressed", String(on));
-    if (on) { goStep(0); $("walk").scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
-  }
-  $("wt-toggle").addEventListener("click", () => setWalkthrough(!walk.on));
-  $("wt-exit").addEventListener("click", () => setWalkthrough(false));
-  $("wt-back").addEventListener("click", () => goStep(Math.max(0, walk.i - 1)));
-  $("wt-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, walk.i + 1)));
-  $("wt-action").addEventListener("click", () => { const a = STEPS[walk.i].action; if (a) a[1](); });
+  $("g-free").addEventListener("click", () => setFree(!guide.free));
+  $("g-back").addEventListener("click", () => goStep(Math.max(0, guide.i - 1)));
+  $("g-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, guide.i + 1)));
+  $("g-show").addEventListener("click", () => STEPS[guide.i].show());
 
   // ---- Main loop ----
   let acc = 0, last = performance.now();
@@ -825,11 +828,12 @@ table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); f
     }
     moveKnobs(raw);
     drawField(); drawMods();
-    updateReadouts(now); updateWalkthrough();
+    updateReadouts(now); updateGuide();
     requestAnimationFrame(frame);
   }
   setMode("FIELD_CENTRIC");
   resetSim();
+  if (guide.free) renderGuide(); else goStep(0);
   requestAnimationFrame(frame);
 })();
 </script>

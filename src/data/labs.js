@@ -17,7 +17,7 @@ const labs = [
     title: 'State Machine Lab',
     area: 'Controls',
     icon: '🔀',
-    blurb: 'Press buttons and step through the robot loop to see the super state machine pick states and ask each subsystem for one.',
+    blurb: 'Click through states and transitions on a live diagram, step the loop, and build a transition table yourself.',
     docs: [{label: 'State Machines', to: '/docs/software/controls/state-machines'}],
   },
   {

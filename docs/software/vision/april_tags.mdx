@@ -5,7 +5,7 @@ hide_table_of_contents: true
 sidebar_position: 1
 ---
 
-import {LabEmbed} from '@site/src/components/LabEmbed';
+import {LabLink} from '@site/src/components/LabLink';
 
 import april_tags from '@site/static/img/software/vision/april_tags.png';
 
@@ -18,7 +18,7 @@ field elements, such as scoring areas or game piece pickup locations.
 <img src={april_tags} style={{maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}}/>
 
 :::tip Try it in the Pose Estimator Lab
-Drive a robot around the field and watch AprilTag measurements pull a drifting odometry estimate back into place. [Jump to the Pose Estimator Lab](#pose-estimator-lab)
+Drive a robot around the field and watch AprilTag measurements pull a drifting odometry estimate back into place. <LabLink slug="pose-estimator-lab" />
 :::
 
 ## AprilTag Detection
@@ -45,6 +45,6 @@ pose.
 ### Try It: Pose Estimator Lab {#pose-estimator-lab}
 Drive a swerve robot on the 2026 field. Wheel odometry slowly loses track of where the robot really is, while our cameras read AprilTags and a Kalman filter blends the two, using the same filter rules as the 2026 robot.
 
-<LabEmbed slug="pose-estimator-lab" />
+<LabLink slug="pose-estimator-lab" button />
 
 
