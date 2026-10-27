@@ -12,8 +12,11 @@ processing images from the cameras mounted on the robot and providing data to th
 The Jetson runs an Ubuntu Linux-based operating system and runs our AprilTag detection software during matches. 
 It also often runs other vision processing tasks such as game piece detection.
 
-See [Object Detection](../vision/obj_det.mdx) and [AprilTag Fiducials](../vision/april_tags.mdx) for more information
-on the vision processing tasks themselves.
+The software it runs is [Aquila Vision](https://github.com/coalman321/Aquila-Vision). See
+[How Our Vision System Works](../vision/pipeline.mdx) for how it gets from a camera picture to a robot pose,
+and [Setting Up the Cameras](../vision/camera-setup.mdx) for its camera web page at port 5800.
+[Object Detection](../vision/obj_det.mdx) and [AprilTag Fiducials](../vision/april_tags.mdx) cover the
+vision processing tasks themselves.
 
 It can be accessed over SSH when connected to the robot's network.
 

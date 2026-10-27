@@ -1,0 +1,159 @@
+---
+title: "Deep Dive: How Neural Networks Work"
+description: What machine learning is, how a neural network turns numbers into answers, how it learns from examples, and how it sees pictures.
+sidebar_position: 11
+---
+
+# Deep Dive: How Neural Networks Work
+
+Our [AprilTag detector](./detector-deep-dive.mdx) follows rules a person wrote down: find black and white
+edges, look for four corners, read the bits. That works because an AprilTag was *designed* to be easy for
+rules to find.
+
+A game piece is different. It can be lit from any side, half hidden behind a robot, blurred because we're
+driving past it, squished by a bumper, or sitting next to something the same color. Nobody can write rules
+for every one of those cases. **Machine learning** takes a different approach: instead of writing the rules,
+we show the computer thousands of examples with the right answers and let it work out the rules itself.
+
+The tool that does this for pictures is a **neural network**. This page explains how one works, from a
+single "neuron" up to the networks that find game pieces on our robot. You'll need some algebra and the idea
+of a slope; there's no calculus you have to do yourself.
+
+## One neuron
+
+A neural network is built out of very simple pieces called **neurons** (named after brain cells, though they
+work quite differently). A neuron takes in a few numbers and gives back one:
+
+![A neuron: each input is multiplied by its weight, the results are added up with a bias, and the sum goes through an activation function](/img/software/vision/ml/1-neuron.webp)
+
+1. Multiply each input $x_i$ by a **weight** $w_i$. A big weight means "this input matters a lot", a
+   negative weight means "this input counts against".
+2. Add them all up, plus one extra number called the **bias** $b$.
+3. Pass the sum through an **activation function**. The most common one, **ReLU**, just replaces negative
+   numbers with 0.
+
+$$
+\text{output} = \text{ReLU}\left(w_1 x_1 + w_2 x_2 + w_3 x_3 + b\right),
+\qquad
+\text{ReLU}(z) = \max(0, z)
+$$
+
+For example, with inputs $(0.9, 0.2, 0.5)$, weights $(2.0, -1.0, 0.5)$ and bias $-0.6$: the sum is
+$1.8 - 0.2 + 0.25 - 0.6 = 1.25$, which is positive, so the output is $1.25$.
+
+On its own, a neuron isn't very smart: without the activation function it's just the equation of a line
+(or a flat plane, with more inputs). The activation function is what bends it. Throw away everything below
+zero, and lots of these bent pieces can be added together into any shape you like.
+
+## A network: neurons in layers
+
+A **neural network** is many neurons arranged in **layers**. The first layer takes the inputs (for a
+picture, the brightness of every pixel). Each neuron in the next layer takes *all* the outputs of the layer
+before it as its inputs, and so on, until the last layer gives the answer. Layers in between are called
+**hidden layers**, and a network with many of them is a **deep** network, which is where the name
+**deep learning** comes from.
+
+All the network "knows" is stored in its weights and biases, called its **parameters**. The smallest YOLOv8
+object detection model (YOLOv8 nano) has about **3 million** of them. Nobody sets those numbers by hand: they are
+learned.
+
+## Learning from examples
+
+Here's a small network learning, trained right here for this page. It has two inputs, two hidden layers of
+16 neurons and one output neuron, which uses a different activation (the **sigmoid**) to squeeze its answer into a
+number from 0 to 1 meaning "how sure am I this dot is red". Each dot is one
+training example, and the shaded background shows what the network would answer for every point:
+
+![Four snapshots of a small network learning to separate red dots from blue dots. At the start its boundary is random; after 3000 steps it follows the curve between the two groups exactly.](/img/software/vision/ml/2-learning.webp)
+
+At step 0 the weights are random numbers, so the network's answers are random too (60% right, barely better
+than guessing). By the end, it has bent its boundary into exactly the curve between the two groups. Nobody
+told it the shape. It found it by being corrected over and over. Here's how.
+
+### 1. Measure how wrong it is: the loss
+
+We need one number that says how wrong the network is on all the examples together. That number is the
+**loss**. For "yes or no" answers like this one, we use **cross-entropy loss**: if the right answer is red
+and the network says it's 90% sure of red, the loss for that example is small, $-\ln(0.9) \approx 0.11$. If
+it says only 10%, the loss is big, $-\ln(0.1) \approx 2.3$. Being confidently wrong costs the most.
+
+Training means **making the loss as small as possible** by changing the weights.
+
+### 2. Walk downhill: gradient descent
+
+Picture the loss as a landscape: every possible setting of the weights is a spot on the map, and the height
+there is the loss. We want to reach the lowest valley.
+
+We can't see the whole landscape (with 3 million weights, it has 3 million directions), but we can feel which
+way the ground slopes right where we stand. That slope is the **gradient**: for each weight, "if I nudge this
+weight up a tiny bit, does the loss go up or down, and how fast?" Then we take a small step downhill:
+
+$$
+w_{\text{new}} = w - \eta \cdot \frac{\partial\,\text{loss}}{\partial w}
+$$
+
+$\frac{\partial\,\text{loss}}{\partial w}$ is the slope of the loss for that one weight, and $\eta$ (eta)
+is the **learning rate**: how big a step to take. Too small and training takes forever; too big and you jump
+right over the valley. Repeat this thousands of times and the loss goes down:
+
+![The loss dropping from about 0.5 to under 0.01 over 3000 training steps](/img/software/vision/ml/3-loss.webp)
+
+### 3. Share out the blame: backpropagation
+
+How do we find the slope for every weight, even ones buried deep in the network? We work backwards from the
+answer. The output was too high by some amount; each neuron in the last layer contributed to that error in
+proportion to its weight, so it gets that share of the blame. Those neurons pass their blame back to the
+layer before them in the same way, and so on, all the way to the first layer. This is **backpropagation**,
+and it is really just the chain rule from calculus applied over and over. It lets a computer find all
+3 million slopes in about the same time it takes to run the network once.
+
+## How a network sees a picture
+
+A 640 × 640 color picture is 1.2 million numbers. Connecting every one of them to every neuron would need an
+enormous number of weights, and it would ignore something important: **what's next to a pixel matters more
+than what's far away**, and a ball is a ball whether it's in the top left or the bottom right.
+
+So picture networks use **convolution**. A convolution slides a small grid of weights (a **filter**, often
+3 × 3) across the picture. At every position, it multiplies the 9 pixels under it by the 9 weights and adds
+them up, giving one output pixel. The same 9 weights are used everywhere in the picture.
+
+Different weights find different things. Here are three filters, written by hand, run on a picture of an
+AprilTag:
+
+![Three 3 by 3 filters and what they do: one lights up vertical edges, one lights up horizontal edges, and one blurs the picture](/img/software/vision/ml/4-convolution.webp)
+
+The vertical edge filter is negative on the left and positive on the right, so it gives a big answer
+wherever the picture gets brighter from left to right: a vertical edge. Flat areas add up to 0.
+
+A **convolutional neural network (CNN)** is layers of convolutions with ReLU in between, and here's the key
+idea: **the filter weights are learned**, exactly like the weights in the small network above. Nobody tells
+the network to look for edges. It works out, during training, that the first layer needs edge and color
+filters. The next layers combine those into curves, corners and textures; layers after that into parts of
+objects (a round yellow highlight, the shadow under a ball); and the last layers into whole objects. Each
+layer also shrinks the picture, so deeper layers each "see" a bigger patch of the original.
+
+## Data is everything
+
+A network only knows what its training examples taught it. Most of the work in a real project is the data:
+
+- **Labeling.** Someone draws a box around every game piece in thousands of pictures and says what it is. We
+  do this in [Roboflow](https://app.roboflow.com/4143-marswars).
+- **Variety.** Pictures from different fields, lighting, distances, angles, with pieces touching, half
+  hidden and blurred, and pictures with **no** pieces in them so the network learns what isn't one.
+- **Augmentation.** During training, each picture is randomly flipped, cropped, brightened, darkened or
+  blurred, so one real picture teaches the network about many situations.
+- **Training, validation and test sets.** The pictures are split up. The network learns only from the
+  **training** set. The **validation** set, which it never trains on, shows whether it is really learning or
+  just memorizing. A network that does great on its training pictures but badly on new ones is
+  **overfitting**: it memorized the answers instead of learning the idea, like a student who memorized last
+  year's test.
+
+## Learn more
+
+- [Object Detection](./obj_det.mdx): how a network like this finds game pieces on our robot.
+- [3Blue1Brown: Neural networks](https://www.3blue1brown.com/topics/neural-networks): a beautifully animated
+  video series on everything on this page, including the calculus behind backpropagation.
+- [TensorFlow Playground](https://playground.tensorflow.org): train a small network in your browser and watch
+  it learn, just like the red and blue dots above.
+- [CNN Explainer](https://poloclub.github.io/cnn-explainer/): an interactive look inside a real convolutional
+  network.

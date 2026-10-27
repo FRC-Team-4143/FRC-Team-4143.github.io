@@ -1,0 +1,189 @@
+---
+title: "Deep Dive: How the Tag Detector Works"
+description: Step by step, how our GPU AprilTag detector turns a camera picture into tag IDs and corners.
+sidebar_position: 4
+---
+
+# Deep Dive: How the Tag Detector Works
+
+This page is for anyone who wants to know what actually happens inside the AprilTag detector on our
+[Jetson](../hardware/jetsons.mdx). You don't need it to *use* vision on the robot (that's
+[How Our Vision System Works](./pipeline.mdx)), but it's a great look at how a computer can "see".
+
+Our detector is a GPU version of the [AprilTag 3](https://april.eecs.umich.edu/software/apriltag) algorithm
+from the University of Michigan, rewritten for NVIDIA GPUs by FRC Team 971 and now part of
+[Aquila Vision](https://github.com/coalman321/Aquila-Vision) (`perception/apriltag_detector`). Every picture
+from every camera goes through the same eight steps.
+
+The pictures on this page come from running each step on a made-up camera picture of tag 7, so you can
+see what the detector "sees" at each stage.
+
+![A camera picture with tag 7 in it, seen at an angle, with uneven lighting](/img/software/vision/detector/1-camera.webp)
+
+## What makes a tag easy to find
+
+An AprilTag is designed to be easy for a computer to find and hard to confuse with anything else:
+
+- A **thick black square border**, surrounded by a **white margin**. A dark square inside a light square is
+  a strong, simple shape to look for.
+- Inside the border, a **6 × 6 grid of black and white cells**. Each cell is one **bit** (white = 1,
+  black = 0), so a tag holds 36 bits. That pattern is the tag's ID.
+
+FRC uses the **tag36h11** family: 36 bits, chosen so that any two tags in the family differ in at least
+**11** of those bits. We'll see why that matters in step 8.
+
+## Step 1: Make the picture smaller (decimation)
+
+The detector first keeps only every other pixel in each direction (the setting is called
+`quad_decimate = 2`). A 1280 × 960 picture becomes 640 × 480: a quarter of the pixels, so every step after
+this is about four times faster.
+
+Finding the *outline* of a tag doesn't need every pixel. The full-size picture comes back in step 7 to place
+the corners as precisely as possible.
+
+## Step 2: Black, white, or "not sure" (adaptive thresholding)
+
+Next, every pixel is sorted into **black** or **white**. The obvious way is to pick one brightness, say
+128 out of 255, and call everything darker "black". That fails as soon as the lighting isn't even, and on a
+real field it never is:
+
+![Left: one threshold for the whole picture turns the darker half of the wall black and merges it with the tag. Right: a threshold per tile keeps the tag's border separate.](/img/software/vision/detector/3-threshold.webp)
+
+Instead, the detector uses a different threshold for each part of the picture:
+
+1. Cut the picture into **tiles of 4 × 4 pixels**, and find the darkest (min) and brightest (max) pixel in
+   each tile.
+2. Spread each tile's min and max to its neighbors, so each tile uses the darkest and brightest values in
+   the **3 × 3 block of tiles** around it (12 × 12 pixels).
+3. If max − min is tiny (less than 5 out of 255), the area is flat: no edge here. The pixel is marked
+   **"not sure"** (the gray in the picture) and ignored from then on.
+4. Otherwise, the pixel is **white** if it is brighter than the halfway point $\frac{\min + \max}{2}$, and
+   **black** if it is darker.
+
+A black-and-white edge in a dim corner and the same edge in a bright corner both end up crisp, because each
+one is compared with its own neighborhood. The flat wall comes out as noise, which is fine: the following
+steps throw away anything that doesn't look like a tag.
+
+## Step 3: Group touching pixels (connected components)
+
+Now the detector groups pixels into **blobs**: a blob is a set of same-colored pixels that touch each other.
+Every blob gets its own ID number. In the picture below, every blob has a random color:
+
+![Every connected black or white region gets its own color](/img/software/vision/detector/4-blobs.webp)
+
+Look at the tag: its black border is one big blob, the white margin around it is another, and each white
+patch inside is its own blob.
+
+The detector uses an algorithm called **union-find** (a GPU version by Allegretti et al., 2019). Each pixel
+starts in its own group; whenever two touching pixels have the same color, their groups are merged. On a
+GPU, thousands of pixels are checked at the same time, which is why this takes a fraction of a millisecond.
+
+## Step 4: Find the edges between blobs
+
+A tag's outline is where a black blob meets a white blob. For every pixel, the detector checks its neighbors
+to the right and below (including the diagonals). Each time a black pixel touches a white one, it records a
+**boundary point** halfway between them, labeled with **which pair of blobs** it separates.
+
+Then all the points are sorted by their blob pair, so each pair's edge is one list. Most pairs are tiny
+specks of noise, so the detector keeps only pairs whose edge has **at least 24 points** and that cover a
+reasonable area. It also checks which side the black is on, so it only keeps edges with the right
+"dark inside, light outside" shape.
+
+![Left: every black/white edge in the picture. Right: only the edges big enough to be a tag are left.](/img/software/vision/detector/5-boundaries.webp)
+
+## Step 5: Find the four corners
+
+Each remaining edge is a list of points that might go around a square. To find out, the detector:
+
+1. Finds the center of the points and **sorts them by angle** around it, so they go around the shape in
+   order.
+2. For each point, fits a straight line through it and its neighbors on both sides, and measures how badly
+   the line fits (the **line-fit error**).
+
+Along a straight side, the neighbors lie on a line and the error is almost zero. At a corner, half the
+neighbors are on one side and half on the next, so no single line fits them and the error jumps. **The four
+biggest peaks are the corners:**
+
+![The line-fit error around the tag's edge: four sharp peaks, one at each corner](/img/software/vision/detector/6-corner-peaks.webp)
+
+How is "how badly a line fits" measured? For a set of points, the best-fitting line goes through their
+average point. How spread out the points are *across* that line is the smallest eigenvalue of their
+covariance matrix, a 2 × 2 matrix built from sums of $x^2$, $y^2$ and $xy$. The detector keeps running
+totals of those sums so it can work out the fit for any group of neighbors with a few subtractions,
+instead of adding up every point again.
+
+## Step 6: Fit the four sides
+
+With the corners known, the points between each pair of corners are one side. The detector fits the best
+straight line to each side's points (least squares, the same "line of best fit" as in math class) and finds
+where neighboring lines cross. Those four crossings are the corners of a **quad**:
+
+![The four sides' points in four colors, the fitted quad in yellow and its corners circled](/img/software/vision/detector/7-quad.webp)
+
+Using lines fitted through dozens of points gives far better corners than just picking the corner pixels,
+because the small errors in each point average out.
+
+Quads that can't be a tag are thrown away: ones that aren't convex, are too small, or have corners too sharp
+or too flat.
+
+## Step 7: Sharpen the edges on the full picture
+
+The quad came from the half-size picture. Now the detector goes back to the **full-resolution** picture and
+improves each side: it walks along the side, looks across it for the spot where the brightness changes
+fastest (the true edge), and fits a new line through those spots.
+
+This is also where the camera's lens comes in. Real lenses bend straight lines a little, especially near the
+edges of the picture. Our version of this step uses the camera's [calibration](./camera-setup.mdx#calibration)
+to undo that bending while it fits the lines, so the corners are where a perfect camera would have seen
+them.
+
+## Step 8: Read the code (decoding)
+
+Now we know where the tag is, but not which tag it is. A tag seen at an angle is squished into a
+non-square shape, so the detector computes a **homography**: a formula that maps any point on a flat,
+square tag to where it appears in the picture. With it, the detector can find the middle of every cell of
+the tag's grid, however tilted the tag is:
+
+![The tag's grid drawn on the picture, with the bit read from the middle of each of the 36 cells](/img/software/vision/detector/8-decode.webp)
+
+For each of the 36 data cells, it samples the brightness at the cell's center and compares it with the
+brightness of the black border and the white margin nearby: closer to white is a 1, closer to black is a 0.
+That gives a 36-bit number.
+
+Then it looks that number up in the list of all **587** tag36h11 codes, trying all four rotations (the
+detector doesn't know which way is up yet). The comparison counts the **Hamming distance**: how many bits
+are different.
+
+- For the picture above, the best match is **tag 7 with 0 bits different**. The next best tag in the whole
+  family is **11 bits** away, exactly as the family promises.
+- Our detector accepts a match with **up to 1 wrong bit** (`bits_corrected = 1`). A smudge, a glare spot or
+  a person's hand over one cell still reads correctly.
+- Because every code is at least 11 bits from every other, it would take many wrong bits to turn one tag
+  into another. Accepting more wrong bits would find damaged tags more often, but it would also make it more
+  likely that random patterns (a poster, a bumper number) get read as a tag. One bit keeps false tags very
+  rare.
+
+Whichever rotation matched tells the detector which corner is the tag's top left, so the four corners are
+reported in a fixed order. The detector's output for each tag is its **ID** and its **four corners in
+pixels**. Turning those corners into a position on the field is the job of
+[PnP](./pnp-deep-dive.mdx).
+
+## Why use a GPU?
+
+A GPU (graphics processing unit) has thousands of small cores that all run the same instructions on
+different data at the same time. Steps 1 to 6 do the same small job for every pixel or every point, which
+is exactly what a GPU is good at: the Jetson works on a whole picture at once instead of one pixel after
+another. Decoding (step 8) runs on the Jetson's CPU, spread over 6 threads, since by then there are only a
+handful of quads left.
+
+That speed is what lets one Jetson keep up with several cameras at high frame rates, and it means the
+picture is as fresh as possible when its pose reaches the robot.
+
+## Learn more
+
+- [AprilTag: A robust and flexible visual fiducial system](https://april.eecs.umich.edu/papers/details.php?name=olson2011tags)
+  (Olson, 2011) and the AprilTag 3 [source code](https://github.com/AprilRobotics/apriltag), which this
+  detector follows step by step.
+- The detector's code in Aquila Vision: `perception/apriltag_detector/detector_lib` (`threshold.cu` for
+  step 2, `labeling_allegretti_2019_BKE.cu` for step 3, `971apriltag.cu` and `line_fit_filter.cu` for steps
+  4 to 6, `apriltag_detect.cu` for steps 7 and 8).

@@ -18,8 +18,9 @@ field elements, such as scoring areas or game piece pickup locations.
 ## AprilTag Detection
 To detect AprilTags, we use the algorithm described in the [WPILIB documentation](https://frcdocs.wpi.edu/en/latest/docs/software/vision-processing/apriltag/apriltag-intro.html#processing-technique) 
 for AprilTag detection. Unlike the reference implementation, which uses the [AprilTag C library](https://april.eecs.umich.edu/software/apriltag.html),
-we use a [GPU accelerated version](https://github.com/FRC-Team-4143/GpuDetectorJNI) of the library, 
-originally written by FRC Team 971. This version of the library is optimized to run on Nvidia Jetson 
+we use a GPU accelerated version of the library, 
+originally written by FRC Team 971, which is now part of our Jetson vision software,
+[Aquila Vision](https://github.com/coalman321/Aquila-Vision). This version of the library is optimized to run on Nvidia Jetson 
 vision computers, allowing for real time detection of AprilTags from multiple 60 FPS camera streams.
 
 ## Pose Estimation
@@ -36,4 +37,8 @@ by providing the 3d positions of the tag corners in field space, rather than rel
 and using multiple tags in the field of view, we can get a more accurate estimate of the camera's
 pose.
 
+See [How Our Vision System Works](./pipeline.mdx) for how this runs on the robot, from the camera to the
+pose estimator.
 
+For the details, see [Deep Dive: How the Tag Detector Works](./detector-deep-dive.mdx) and
+[Deep Dive: How PnP Finds the Camera](./pnp-deep-dive.mdx).

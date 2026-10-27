@@ -1,0 +1,164 @@
+---
+title: Using Vision in Robot Code
+description: Reading tag solutions from MW-Lib's ProxyServerThread and giving them to the pose estimator.
+sidebar_position: 3
+---
+
+# Using Vision in Robot Code
+
+On the roboRIO, the camera poses from the [Jetson](../hardware/jetsons.mdx) arrive through MW-Lib's
+`ProxyServerThread` (package `com.marswars.proxy_server`). This page shows how robot code reads them and
+uses them to correct the robot's position. See [How Our Vision System Works](./pipeline.mdx) for how they
+are made.
+
+The [Computer Vision training](../training/computer-vision.mdx) builds all of this step by step in
+Scriptum.
+
+## Starting the proxy server
+
+`ProxyServerThread` is a singleton that listens for the Jetsons on UDP port 5809 in its own thread, so a
+slow network never holds up the robot loop. The first call to `ProxyServerThread.getInstance()` creates it
+and starts listening; don't call `start()` yourself. In log replay it doesn't listen at all.
+
+It keeps the **last 20** tag solutions it has received, from all cameras together.
+
+## Reading tag solutions
+
+```java
+List<TagSolutionData> solutions = ProxyServerThread.getInstance().getLatestTagSolutions();
+```
+
+Each `TagSolutionData` has:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pose` | `Pose2d` | Where the camera thinks the **center of the robot** is on the field: x and y in meters, heading in radians |
+| `timestamp` | `Timestamp` | When the picture was taken, in roboRIO FPGA time. `timestamp.getSeconds()` gives seconds |
+| `detectedIds` | `ArrayList<Integer>` | The IDs of the AprilTags used to work out the pose |
+| `cameraSerial` | `String` | Which camera took the picture |
+
+`getLatestTagSolutions()` also logs everything it returns under `Proxy/TagSolutions`. In
+[log replay](../robot_dev/telemetry.mdx), it returns the logged solutions instead of listening to the
+network, so vision code replays exactly as it ran on the robot.
+
+:::warning Every call returns old solutions too
+The proxy server hands back **all** of its last 20 solutions on every call, not just the new ones. Keep the
+newest picture time you've used for each camera and skip anything that isn't newer, or the same picture
+gets counted over and over.
+:::
+
+```java
+private final Map<String, Double> last_seen_seconds_ = new HashMap<>();
+
+private boolean isNew(TagSolutionData solution) {
+  double picture_seconds = solution.timestamp.getSeconds();
+  double last_seen = last_seen_seconds_.getOrDefault(solution.cameraSerial, -1.0);
+  if (picture_seconds <= last_seen) {
+    return false;
+  }
+  last_seen_seconds_.put(solution.cameraSerial, picture_seconds);
+  return true;
+}
+```
+
+## Giving them to the pose estimator
+
+WPILib's pose estimators (`SwerveDrivePoseEstimator`, `DifferentialDrivePoseEstimator`) blend two sources:
+
+- **Odometry** from the wheels and gyro, every loop. Smooth and quick, but it drifts: every bit of wheel
+  slip adds up and is never taken back.
+- **Vision** from the cameras, whenever a solution comes in. Jumpier, but it never drifts, because each
+  picture is measured from the tags on the field and not from the last answer.
+
+```java
+for (TagSolutionData solution : ProxyServerThread.getInstance().getLatestTagSolutions()) {
+  if (!isNew(solution) || !isSensible(solution)) {
+    continue;
+  }
+  double tag_distance = nearestTagDistance(solution); // meters
+  double scale = tag_distance * tag_distance;
+  pose_estimator_.addVisionMeasurement(
+      solution.pose,
+      solution.timestamp.getSeconds(), // when the picture was TAKEN
+      VecBuilder.fill(
+          VISION_XY_STD_METERS * scale,       // x, meters
+          VISION_XY_STD_METERS * scale,       // y, meters
+          VISION_HEADING_STD_RADIANS * scale  // heading, radians
+      ));
+}
+```
+
+### The timestamp
+
+Always pass the solution's own timestamp, never the current time. By the time a solution arrives, the
+picture is already a few dozen milliseconds old and the robot has moved on. The pose estimator keeps a short
+history of where odometry thought the robot was, so it can apply the measurement at the moment the picture
+was taken and then replay the odometry since. This only works because the Jetson
+[syncs its clock with the roboRIO](./pipeline.mdx#4-sending-it-to-the-roborio) and stamps each solution in
+FPGA time.
+
+### Standard deviations: how much to trust the camera
+
+The last argument says how far off this measurement might be: x and y in meters, heading in radians. The
+**smaller** the numbers, the harder the estimator pulls toward the camera.
+
+- Cameras get less sure the farther away the tags are: a pixel of error is a bigger distance on a far tag.
+  That is why the example scales the standard deviations by the distance to the nearest tag, squared.
+- A solution made from several tags is steadier than one made from a single tag, so you can trust it more
+  (for example, divide by the number of tags in `detectedIds`).
+- Start from measured numbers, not guesses: park the robot at a measured spot, log the camera poses, and see
+  how much they spread.
+
+### Throwing out bad solutions
+
+A bad measurement with a small standard deviation can yank the pose across the field. Skip a solution when:
+
+- **It is off the field**, or farther from the current estimate than the robot could have moved (a sudden
+  jump of more than about a meter).
+- **The robot is spinning fast** (the Scriptum lesson's limit is π rad/s, half a turn per second). The picture blurs, and a small timing error turns into a big heading error.
+- **It was taken before the pose was reset.** Pictures that were already on their way when you reset the
+  pose (for example at the start of autonomous) show the old spot.
+
+## Checking the cameras
+
+`ProxyServerThread` watches every Jetson and every camera and puts an alert on the dashboard when one goes
+quiet:
+
+| Alert | Means |
+| --- | --- |
+| `Proxy Server: No clients connected` | No Jetson is talking to the roboRIO |
+| `Proxy Server: Lost connection to ...` | A Jetson stopped sending for 5 seconds |
+| `Proxy Server: Lost camera '...'` | One camera hasn't sent a solution for 2 seconds. Also normal when it can't see any tags |
+
+The same information is available in code: `isConnected()`, `getConnectedClientCount()`,
+`getConnectedCameraCount()`, `getCameraSerials()` and `isCameraConnected(serial)`.
+
+## Vision in simulation
+
+In simulation there is no Jetson, so MW-Lib can fake one. `MwVisionSim` uses PhotonVision's simulator to
+work out which tags each simulated camera would see from the robot's true position, and adds the resulting
+solutions to the proxy server's queue. The robot code reads them with `getLatestTagSolutions()` exactly as
+it would on the real robot.
+
+```java
+if (RobotBase.isSimulation()) {
+  MwVisionSim vision_sim = ProxyServerThread.getInstance()
+      .initializeVisionSimulation(AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField));
+  // A camera 0.3 m forward and 0.3 m up, tilted 0.35 rad (about 20°) down.
+  vision_sim.addCamera("camera-front", new Transform3d(
+      new Translation3d(0.3, 0.0, 0.3),
+      new Rotation3d(0.0, 0.35, 0.0)));
+}
+
+// Every loop in simulation, with the simulated robot's TRUE pose (not the estimate):
+ProxyServerThread.getInstance().updateVisionSimulation(true_pose);
+```
+
+`addDefaultCameras()` adds four cameras (front, left, right and back) if you don't want to place them
+yourself.
+
+:::note Which way is down?
+WPILib's `Rotation3d` and the Jetson's [camera page](./camera-setup.mdx#camera-pose) use the same
+convention: x forward, y left, z up, and angles follow the right-hand rule. That makes a **positive** pitch
+tilt the camera **down** and a positive yaw turn it to the left.
+:::
