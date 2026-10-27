@@ -121,8 +121,8 @@ report right there:
 <img src={SlackMunusReview} alt="A Slack DM from Mercury on a phone: an hour submission from a student with their claimed hours and report, and Approve, Edit hours, and Reject buttons" width="360" />
 </div>
 
-**Approve**, **Edit hours** (if the number needs correcting before you approve it), or
-**Reject** — all from the DM, no site visit needed. A submission you haven't acted on
+**Approve**, **Edit hours** (fix the number and approve it in one step; the student's
+DM says what you changed), or **Reject** — all from the DM, no site visit needed. A submission you haven't acted on
 gets re-sent to you every few days until you do. The same queue lives on the admin
 dashboard if you'd rather work from a browser, or are catching up on more than one:
 
