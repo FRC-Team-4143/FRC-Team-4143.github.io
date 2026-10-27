@@ -20,7 +20,7 @@ There are two pieces of software involved:
   receives what the Jetson sends and hands it to the robot code.
 
 ```mermaid
-flowchart LR
+flowchart TB
     cam["Camera<br/>(global shutter)"] --> driver["Camera driver<br/>image + calibration"]
     driver --> det["AprilTag detector<br/>(GPU)"]
     map["Field layout<br/>(tag poses)"] --> det
