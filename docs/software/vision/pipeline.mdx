@@ -54,8 +54,9 @@ The driver runs the camera with:
   is turned off so the picture doesn't change brightness in the middle of a match.
 - **A global shutter.** The whole picture is taken at one instant. A rolling shutter takes the picture one
   row at a time, so a fast-moving robot would see bent, smeared tags.
-- **A fixed frame rate** (30 frames per second unless the camera's settings say otherwise), and optional
-  **binning**, which combines neighboring pixels into one to make a smaller picture that is faster to process.
+- **A fixed frame rate** (30 frames per second unless the camera's settings say otherwise), and a chosen
+  **resolution**. The smaller resolutions use **binning**, which combines neighboring pixels into one to make a
+  smaller picture that is faster to process.
 
 ## 2. Finding the tags
 
