@@ -1,9 +1,11 @@
 ---
 title: Swerve
-description: MwSwerveSubsystem - the library swerve drive, its constants variants and the states teleop and autos request
+description: How swerve drive works (modules, chassis speeds, kinematics, odometry) and MwSwerveSubsystem - the library swerve drive, its constants variants and the states teleop and autos request
 hide_table_of_contents: false
 sidebar_position: 4
 ---
+
+import {LabLink} from '@site/src/components/LabLink';
 
 # Swerve
 The swerve drive is a **library subsystem**. All of the driving, path following, heading lock, crawl and brake logic
@@ -15,6 +17,129 @@ fix land in one place.
 `MwSwerveSubsystem`, `MwSwerveConstants` and `SwerveDriveConfig` are part of MWLib (`com.marswars.swerve_lib`).
 Under the hood they drive CTRE TalonFX modules through Phoenix 6.
 :::
+
+:::tip Try it in the Swerve Kinematics Lab
+Drive with two joysticks and watch chassis speeds turn into four module angles and speeds, field-centric or robot-centric. <LabLink slug="swerve-lab" />
+:::
+
+---
+
+## How Swerve Works
+A **swerve drive** can drive in any direction and turn at the same time: forward, sideways, diagonally, or spinning
+while it slides across the field. A tank drive can only drive forward, backward and turn. That freedom is why almost
+every FRC team, including ours, drives swerve.
+
+### Modules
+Each corner of the robot has a **swerve module**: one wheel with two motors.
+
+- The **drive motor** spins the wheel, so it sets how fast that wheel rolls (m/s).
+- The **steer motor** turns the whole wheel, so it sets which way that wheel points (an angle in radians).
+- An **absolute encoder** on the steering tells the module which way the wheel points, even right after the robot
+  powers on.
+
+The four modules are always listed in the same order, **front left, front right, back left, back right** (FL, FR,
+BL, BR). Each one has a position measured from the center of the robot. On the 2026 robot every module is 0.1905 m
+(7.5 in) from the center in both x and y, so front left is at (0.1905, 0.1905) and back right is at
+(−0.1905, −0.1905).
+
+```mermaid
+flowchart TD
+    S["Driver sticks or a path"] --> C["ChassisSpeeds: vx, vy, ω"]
+    C -->|"inverse kinematics"| M["Four module states: a speed and an angle each"]
+    M --> W["Drive and steer motors"]
+    W -->|"measured speeds and angles"| F["forward kinematics"]
+    F --> O["Odometry: where the robot is"]
+```
+
+### Chassis Speeds
+Everything that drives the robot, the driver's sticks, a Choreo path or rotation lock, first turns its request into
+one **`ChassisSpeeds`**: three numbers for the whole robot.
+
+| Field | Meaning | Units |
+|---|---|---|
+| `vxMetersPerSecond` | forward (+) or backward (−) | m/s |
+| `vyMetersPerSecond` | left (+) or right (−) | m/s |
+| `omegaRadiansPerSecond` | turning, counter-clockwise (+) or clockwise (−) | rad/s |
+
+These follow the WPILib convention: **+x is forward, +y is left, counter-clockwise is positive.** On the 2026 robot a
+full stick asks for 5.0 m/s (`SPEED_AT_12V_MPS`).
+
+### Field-centric and Robot-centric
+"Forward" can mean two different things:
+
+- **Robot-centric** (`ROBOT_CENTRIC`): forward is wherever the robot's front points. Pushing the stick forward drives
+  the robot's nose forward, even when the robot is turned around and coming toward the driver.
+- **Field-centric** (`FIELD_CENTRIC`): forward is always away from the driver station, whichever way the robot
+  faces. This is what drivers want almost all the time.
+
+Field-centric works by rotating the stick's request by the robot's heading before anything else happens
+(`ChassisSpeeds.fromFieldRelativeSpeeds(...)`). That is why the swerve needs the pose supplier from localization: a
+wrong heading means "forward" points the wrong way. The red alliance drives from the other end of the field, so the
+operator perspective (`setOperatorForwardDirection(...)`) turns "away from the driver" around for them.
+
+### From Chassis Speeds to Wheels
+The math that turns one `ChassisSpeeds` into four module states is called **inverse kinematics**. Every wheel's
+velocity is the sum of two parts:
+
+1. **Translation**: the same for every wheel, `(vx, vy)`.
+2. **Rotation**: spinning the robot moves each wheel sideways around the center. The wheel moves at right angles to
+   the line from the center to the wheel, at a speed of ω × (distance from the center).
+
+For a module at position `(x, y)`:
+
+$$
+v_{x,\text{wheel}} = v_x - \omega \cdot y \qquad v_{y,\text{wheel}} = v_y + \omega \cdot x
+$$
+
+The wheel's **speed** is the length of that vector, `Math.hypot(vx_wheel, vy_wheel)`, and its **angle** is
+`Math.atan2(vy_wheel, vx_wheel)`.
+
+:::info Worked example
+The 2026 robot drives forward at 1.0 m/s while turning left at 2.0 rad/s. Front left is at (0.1905, 0.1905):
+
+- v<sub>x</sub> = 1.0 − 2.0 × 0.1905 = 0.619 m/s, v<sub>y</sub> = 0 + 2.0 × 0.1905 = 0.381 m/s
+- speed = 0.727 m/s, angle = 0.552 rad (about 32°)
+
+Front right is at (0.1905, −0.1905), which gives 1.433 m/s at 0.269 rad (about 15°). The right-side wheels are
+going around the outside of the turn, so they have to roll almost twice as fast as the left-side wheels.
+:::
+
+WPILib does all of this for you with `SwerveDriveKinematics`, which MWLib builds from the module positions in
+`SwerveConstants`:
+
+```java
+ChassisSpeeds speeds = ChassisSpeeds.discretize(
+        ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, currentPose.getRotation()),
+        updatePeriod);
+SwerveModuleState[] states = kinematics.toSwerveModuleStates(speeds);   // FL, FR, BL, BR
+```
+
+### Keeping the Wheels Sensible
+A few fixes are applied before the states reach the motors:
+
+| Fix | What it does | In MWLib |
+|---|---|---|
+| **Discretize** | The robot moves in 20 ms steps. Driving and turning at once in one step would curve the robot off its line, so `ChassisSpeeds.discretize` corrects for it. | Yes, every drive request |
+| **Optimize** | A wheel never turns more than 90° (π/2 rad). If the new angle is further away, it turns the short way and spins backward instead. | Yes, `state.optimize(...)` in `Module.runSetpoint` |
+| **Cosine scaling** | While a wheel is still turning toward its new angle, it slows down so it does not push the robot sideways. | Yes, `state.cosineScale(...)` |
+| **Desaturate** | If any wheel is asked for more than its top speed, scale all four down by the same amount so the robot keeps its direction. | No: each wheel just tops out at full voltage, so the robot's path bends a little at full stick plus full spin |
+
+### Going Back: Odometry
+The same math also runs backward. **Forward kinematics** (`kinematics.toChassisSpeeds(...)`) takes the speeds and
+angles the modules *measure* and works out how the whole robot is really moving. Adding that up every step is
+**odometry**: where the robot thinks it is. MWLib reads the module and gyro sensors on a separate thread at 250 Hz
+on a CAN FD bus (100 Hz otherwise), which keeps odometry accurate during fast moves. It also compares the four wheels
+with each other to notice when one is skidding (`isSkidding()`).
+
+Wheel odometry slowly drifts, so the localization subsystem blends it with AprilTag readings from the cameras; try
+that in the [Pose Estimator Lab](../vision/april_tags.mdx#pose-estimator-lab).
+
+### Try It: Swerve Kinematics Lab {#swerve-lab}
+Drive with the two sticks (or W A S D and Q E) and watch each idea from this section: the `ChassisSpeeds` readout,
+the field-centric, robot-centric and rotation-lock buttons, the module arrows, and toggles for desaturation,
+optimization, cosine scaling and discretizing. The lab opens in guided steps that go through them in order.
+
+<LabLink slug="swerve-lab" button />
 
 ---
 
@@ -166,6 +291,7 @@ Useful helpers on the subsystem: `setTeleOpVelocityScalar(...)` (slow the driver
 `isChassisStationary()`, `isAtChoreoSetpoint()`, `isAtDesiredRotation()`, `setOperatorForwardDirection(...)`
 (alliance perspective, called from `disabledPeriodic` when the alliance changes), `zeroGyroYaw()` and
 `setModuleOffsets()` (dashboard calibration commands).
+
 
 ---
 

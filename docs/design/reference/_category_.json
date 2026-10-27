@@ -1,0 +1,9 @@
+{
+  "label": "🔎 Design Reference",
+  "position": 2.5,
+  "link": {
+    "type": "doc",
+    "id": "design/reference/index"
+  },
+  "collapsed": true
+}

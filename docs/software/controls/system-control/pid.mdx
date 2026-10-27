@@ -5,6 +5,8 @@ hide_table_of_contents: false
 sidebar_position: 4
 ---
 
+import {LabLink} from '@site/src/components/LabLink';
+
 # PID Controllers
 The Proportional-Integral-Derivative (PID) controller is a widely used control loop mechanism in engineering and robotics. It combines three control strategies to provide accurate and stable control of dynamic systems. It is the most commonly used control algorithm in FRC robotics due to its effectiveness in a variety of applications. A PID controller is closed loop meaning it uses feedback from the system to adjust its output.
 ```mermaid
@@ -27,6 +29,10 @@ stateDiagram-v2
         Error
     }
 ```
+
+:::tip Try it in the PID Tuning Lab
+Tune kP, kI and kD on a simulated arm, elevator and flywheel, and see each gain change the response. <LabLink slug="pid-tuning-lab" />
+:::
 
 ---
 
@@ -122,4 +128,9 @@ Be very careful when tuning a PID controller on a live system. Aggressive tuning
 :::note I Term is Very Rarely Needed
 In most FRC applications, the integral term is not necessary and can often be left at zero. The P and D terms are usually sufficient to achieve good control performance. Only consider adding Ki if you notice a persistent steady-state error that cannot be corrected with P and D alone.
 :::
+
+### Try It: PID Tuning Lab {#pid-tuning-lab}
+Try those steps on a simulated arm, elevator and flywheel. Set up feedforward first, walk kP up, and add kD only if it rings; the lab's guided steps take you through it.
+
+<LabLink slug="pid-tuning-lab" button />
 

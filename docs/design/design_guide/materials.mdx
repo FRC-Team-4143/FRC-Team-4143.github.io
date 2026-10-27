@@ -1,0 +1,117 @@
+---
+title: Materials
+sidebar_position: 1
+description: Stock materials and hardware we use, and where each is appropriate.
+---
+
+import onshape_bolt from '@site/static/img/mechanical/design/onshape_bolts.png';
+
+:::info Work in progress
+This page is still being written. Some tables are incomplete.
+:::
+
+Common stock materials and hardware used on our robots, with guidance on where each is appropriate.
+
+## Manufacturing Processes
+
+Our preferred processes are **CNC aluminum**, **polycarbonate**, and **3D printed nylon**. Design around these
+whenever you can.
+
+- CNC end mill sizes: 0.25" diameter ball or flat end, 0.125" diameter flat, and an engraving bit.
+- Max CNC travel is **18"**. Longer parts can be repositioned, but will lose accuracy.
+- See [3D Printing](../mechanical/3d_printing.mdx) and [Tools & Offsets](../mechanical/cam/tools.mdx) for details on
+  each process.
+
+## Stock Materials
+
+### Polycarbonate Sheet
+
+| Thickness | Usage |
+|---|---|
+| 1/8" | Low stress, non-structural areas where direct impact is unlikely. |
+| 1/4" | Medium stress areas with some structural use where direct impact is possible. |
+
+Polycarbonate is strong, but flexes much more than aluminum without breaking, and it can be bent. Its density is about
+half of aluminum's. Typical uses:
+
+- **1/8":** indexer and feeder sides, shooter sides, guards.
+- **1/4":** intakes and elevator supports.
+
+### Aluminum Sheet
+
+Plates up to **8" wide** fit in the CNC mill.
+
+| Thickness | Usage |
+|---|---|
+| 1/8" | Gussets, motor mounts, shooter sides. |
+| 1/4" | High load parts (elevator mounts, gearbox sides, climber parts). Pocket to save weight. |
+
+### Aluminum Rectangular Tubing
+
+⭐ marks our preferred sizes, which are typically in stock. Other sizes may be available as small pieces, but
+usually need to be ordered. All tubing is 6061 aluminum.
+
+| Dimensions | Wall Thickness | Usage |
+|---|---|---|
+| 1" x 2" ⭐ | 1/16" | Most structural parts. |
+| 1" x 1" ⭐ | 1/16" | Most structural parts. |
+| 1" x 2" or 1" x 3" | 1/8" | Frame rails. |
+| 2" x 3" | 1/8" | Higher load-bearing structures, chassis components. |
+| 1.5" x 1.5", 2" x 2" square | | Telescoping mechanisms. |
+
+1/8" wall aluminum angle is also available.
+
+## Fasteners
+
+### Bolts
+
+⭐ marks our most commonly used size. If possible, design for **10-32** (32 threads per inch) button head or socket
+head cap screws. We stock various lengths. Some COTS components require other bolt sizes.
+
+When modeling, think through assembly: can the bolt actually be installed, and is there clearance for wrenches?
+
+| Bolt | Lengths | Through Hole | Tap Hole |
+|---|---|---|---|
+| #10-32 ⭐ | TBD | 0.196" | 0.159" |
+| 1/4-20 | TBD | 0.25" | 0.196" |
+
+<img src={onshape_bolt} width="400" alt="Bolt hole settings in Onshape"/>
+
+### Rivets
+
+| Rivet | Lengths | Through Hole |
+|---|---|---|
+| 3/16" | TBD | 0.196" |
+
+## Bearings and Shafts
+
+Bearings support spinning parts. They need to be installed in material that is at least **0.125" thick**.
+
+| Bearing | OD | ID / Shaft |
+|---|---|---|
+| FR8 or R8 | 1.125" | 0.5" round |
+| 1/2" hex flange | 1.125" | 1/2" hex |
+| 1/2" ThunderHex flange | 1.125" | 1/2" ThunderHex |
+| FR6 or R6 | 0.875" | 0.375" round |
+| 3/8" ThunderHex flange | 0.875" | 3/8" ThunderHex |
+
+{/* TODO: confirm the ThunderHex bearing bore note from the seminar ("ThunderHex bearing 0.541 diameter") */}
+
+## Motors and Gearboxes
+
+### Motors
+
+| Motor | Notes |
+|---|---|
+| Kraken X60 and X44 | Preferred, especially for the varsity robot. |
+| NEO, NEO Vortex, Falcon | Also used. |
+
+### Gearboxes
+
+| Gearbox | Stages | Notes |
+|---|---|---|
+| MAXPlanetary (REV) | 3:1, 4:1, 5:1 | Preferred. A 90 degree adapter is available. |
+| Custom gearbox | | We have a large selection of gears. |
+| VersaPlanetary (VEX) | 3:1, 4:1, 5:1, 7:1 | Available, but use only if necessary. |
+
+{/* TODO: add sections for gears and pulleys */}

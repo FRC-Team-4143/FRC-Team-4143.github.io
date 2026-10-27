@@ -5,9 +5,15 @@ hide_table_of_contents: true
 sidebar_position: 5
 ---
 
+import {LabLink} from '@site/src/components/LabLink';
+
 # State Machines
 
 State machines are one of the most fundamental and powerful concepts in robotics programming. They help us organize complex robot behaviors by breaking them down into simple, manageable pieces called **states**. Think of a state machine like a flowchart that describes how something behaves. It's a way to model systems that can be in different "modes" or "states" at any given time, and can transition between these states based on certain conditions. They are very useful for controlling robots because they allow us to define clear behaviors and transitions.
+
+:::tip Try it in the State Machine Lab
+Click through states and transitions on a live state diagram, then step the loop to watch `handleStateTransition` and `updateLogic` work. <LabLink slug="state-machine-lab" />
+:::
 
 ---
 
@@ -37,7 +43,7 @@ public enum TrafficLightState {
     GREEN
 }
 ```
-See the documentation on [Variables and Data Types](../java/vars-dt/#enums) for more information on enums.
+See the documentation on [Variables and Data Types](../java/basics/vars-dt.mdx#enums) for more information on enums.
 :::
 
 Transitions are the rules or conditions that determine when and how the system moves from one state to another. These transitions are often triggered by events or conditions, such as a button press, a sensor reading, or a timer expiring.
@@ -186,3 +192,8 @@ protected void updateLogic(double timestamp) {
 
 The subsystem version of the same table, with the `switch (system_state_)` then `switch (wanted)` shape, is on the
 [Subsystems](../robot_dev/subsystems.mdx#implement-state-transitions) page.
+
+#### Try It: State Machine Lab {#state-machine-lab}
+Everything on this page on one live state diagram: states and transitions, asking for a state versus being in it, the loop of `handleStateTransition` then `updateLogic`, and splitting a state instead of adding an `if`. Then build a transition table yourself and test it.
+
+<LabLink slug="state-machine-lab" button />

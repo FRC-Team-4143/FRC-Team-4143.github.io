@@ -1,0 +1,6 @@
+/* Dimensioned drawings use gray labels on a transparent background, so give them a light plate in dark mode. */
+[data-theme='dark'] img.drawing {
+  background: #f4f5f2;
+  border-radius: 6px;
+  padding: 6px;
+}

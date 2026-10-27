@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><!-- the site defaults to dark (docusaurus.config.js colorMode) -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>State Machine Lab</title>
+<link rel="stylesheet" href="lab-base.css">
+<script src="lab-theme.js"></script>
+<style>
+/* State Machine Lab: the ideas behind our state machines, on a live state diagram. No robot, no physics:
+   the inputs are plain switches. */
+.explore { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.explore[hidden] { display: none; }
+@media (min-width: 1000px) {
+  .explore:has(#loop-panel:not(.not-yet):not([hidden])) { grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); }
+}
+#diagram { width: 100%; height: auto; display: block; max-height: 50vh; max-width: 900px; margin: 0 auto; touch-action: manipulation; }
+.inputs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.inputs button { min-width: 0; }
+.inputs button b { font-family: var(--f-mono); font-weight: 700; }
+kbd { font-family: var(--f-mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--bg); color: var(--ink); }
+button[aria-pressed="true"] kbd { color: var(--ink); }
+.statusline { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 14px; }
+.callline { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; margin: 0; }
+.waiting { font-weight: 600; color: var(--running); }
+
+/* Diagram */
+#diagram .edge { fill: none; stroke: var(--muted); stroke-width: 1.8; marker-end: url(#arr); }
+#diagram .edge.on-kind { stroke: var(--success); } #diagram .edge.off-kind { stroke: var(--failure); }
+/* The arrow that just fired: the text colour, so it never reads as an "off" (red) or "on" (green) arrow. */
+#diagram .edge.lit { stroke: var(--ink); stroke-width: 4.5; marker-end: url(#arr-fired); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ink) 55%, transparent)); }
+#diagram .edge.pulse { animation: pulse 0.9s ease-out; }
+@keyframes pulse { 0% { stroke-width: 10; } 100% { stroke-width: 4.5; } }
+#diagram .lbl rect { fill: var(--bg); stroke: var(--line); stroke-width: 1.2; }
+#diagram .lbl.on-kind rect { stroke: var(--success); } #diagram .lbl.off-kind rect { stroke: var(--failure); }
+#diagram .lbl text { fill: var(--ink); font-family: var(--f-mono); text-anchor: middle; dominant-baseline: central; }
+#diagram .lbl.lit rect { fill: color-mix(in srgb, var(--ink) 16%, var(--bg)); stroke: var(--ink); stroke-width: 2.5; }
+#diagram .lbl.lit text { font-weight: 700; }
+#diagram .lbl.link-lbl rect { stroke: var(--brand); stroke-dasharray: 4 3; }
+#diagram .link { fill: none; stroke: var(--brand); stroke-width: 2; stroke-dasharray: 6 4; marker-end: url(#arr-lit); }
+#diagram .node rect.body { fill: var(--panel); stroke: var(--sc); stroke-width: 1.8; }
+#diagram .node text { fill: var(--ink); font-family: var(--f-mono); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+#diagram .node.on rect.body { fill: color-mix(in srgb, var(--sc) 34%, var(--panel)); stroke-width: 4; filter: drop-shadow(0 0 7px var(--sc)); }
+#diagram .node.on text { font-weight: 700; }
+#diagram .node .want { fill: none; stroke: var(--brand); stroke-width: 2.2; stroke-dasharray: 6 4; display: none; }
+#diagram .node.wanted .want { display: block; }
+#diagram .node.click { cursor: pointer; }
+#diagram .node.click:focus-visible { outline: none; }
+#diagram .node.click:focus-visible rect.body { stroke: var(--accent); stroke-width: 4; }
+#diagram .box { fill: none; stroke: var(--line); stroke-width: 1.5; }
+#diagram .box.group { stroke-dasharray: 6 4; stroke: var(--muted); }
+#diagram .boxlbl { fill: var(--muted); font-family: var(--f-mono); font-weight: 700; }
+#diagram .lamp { stroke: var(--line); stroke-width: 2; }
+#diagram .lamplbl { fill: var(--muted); font-family: var(--f-body); text-anchor: middle; }
+@media (prefers-reduced-motion: reduce) { #diagram .edge.pulse { animation: none; } }
+
+/* Loop panel */
+.loopgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.box2 { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+h3.sub { font-size: 15px; font-weight: 600; margin: 0; line-height: 1.5; }
+h3.sub code { font-size: 14px; }
+.num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 99px; background: var(--brand); color: var(--on-brand); font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: 1px; line-height: 1; }
+pre.code { margin: 0; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 0; overflow-x: auto; color: var(--ink); }
+.box2 pre.code { background: var(--panel); }
+pre.code .ln { display: block; padding: 0 12px; white-space: pre; border-left: 3px solid transparent; }
+pre.code .ln.on { background: color-mix(in srgb, var(--ink) 12%, transparent); border-left-color: var(--ink); }
+pre.code .ln.bad { background: color-mix(in srgb, var(--warn) 18%, transparent); }
+pre.code .c { color: var(--muted); }
+pre.code .kw { color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-mono); font-size: 12.5px; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); overflow-wrap: anywhere; }
+.chip.t { color: var(--success); border-color: var(--success); }
+.chip.f { color: var(--muted); }
+.state { font-family: var(--f-mono); font-weight: 700; font-size: 13px; padding: 1px 8px; border-radius: var(--radius); border: 2px solid var(--sc, var(--line)); background: color-mix(in srgb, var(--sc, var(--line)) 16%, var(--bg)); white-space: nowrap; }
+.state.ghost { border-style: dashed; border-color: var(--brand); background: transparent; }
+.lock { font-size: 12px; font-weight: 600; color: var(--volt); border: 1px solid var(--volt); border-radius: 99px; padding: 0 8px; white-space: nowrap; }
+.lock.bad { color: var(--warn); border-color: var(--warn); }
+.tt { width: 100%; border-collapse: collapse; font-size: 12.5px; font-family: var(--f-mono); }
+.tt th { text-align: left; font-weight: 600; font-size: 11.5px; color: var(--muted); padding: 3px 6px; font-family: var(--f-body); }
+.tt th code { font-size: 11.5px; }
+.tt td { padding: 4px 6px; border-top: 1px solid var(--grid); vertical-align: top; }
+.tt td.on { background: color-mix(in srgb, var(--ink) 14%, transparent); box-shadow: inset 0 0 0 2px var(--ink); font-weight: 700; }
+.tt td.row { color: var(--muted); white-space: nowrap; }
+.tt td.row.cur { color: var(--ink); font-weight: 700; }
+.ttwrap { overflow-x: auto; }
+.loopctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Exercise */
+.ex-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 1000px) { .ex-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } }
+.cells { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+@media (min-width: 600px) { .cells { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.box { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+.cellrow { display: grid; gap: 4px; }
+.cellrow label { font-size: 12px; color: var(--muted); }
+.cellrow label code { color: var(--ink); }
+.cellrow select.bad { outline: 2px solid var(--warn); outline-offset: 1px; }
+.results { display: grid; gap: 10px; align-content: start; }
+.res { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 8px 12px; display: grid; gap: 6px; }
+.res.pass { border-color: var(--success); }
+.res.fail { border-color: var(--warn); }
+.res h4 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.res .verdict { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.res.pass .verdict { color: var(--success); } .res.fail .verdict { color: var(--warn); }
+.res p { margin: 0; font-size: 13.5px; }
+.res svg { width: 100%; height: auto; display: block; }
+.res svg text { font-family: var(--f-mono); font-size: 10px; fill: var(--muted); }
+.ex-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.legend .sq { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; border: 1px solid var(--line); }
+.deeper ul { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Software · Controls</p>
+      <h1>State Machine Lab</h1>
+      <p class="lede short">Flip switches and step through loops to see how our state machines pick their state.</p>
+    </div>
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Mode">
+        <button id="mode-explore" aria-pressed="true">Explore</button>
+        <button id="mode-build" aria-pressed="false">Build the table</button>
+      </div>
+      <button id="reset">Reset</button>
+    </div>
+  </header>
+
+  <section class="guide" id="guide" aria-live="polite">
+    <span class="guide-count" id="g-count">Step 1 of 7</span>
+    <h2 id="g-title"></h2>
+    <p id="g-body"></p>
+    <details class="why" id="g-why-wrap"><summary>Why?</summary><p id="g-why"></p></details>
+    <div class="guide-nav">
+      <button id="g-action" hidden></button>
+      <button id="g-back">Back</button>
+      <button id="g-next">Next</button>
+      <button id="g-free" aria-pressed="false">Free play</button>
+    </div>
+  </section>
+
+  <div class="explore" id="explore">
+    <section class="panel" id="hero">
+      <div class="panel-head">
+        <h2 id="m-title">Dimmer switch</h2>
+        <span class="hint" id="want-hint" data-step-from="3">dashed red = wanted</span>
+        <span class="seg small" role="group" aria-label="Which state machine" data-step-from="8">
+          <button data-machine="dimmer" aria-pressed="true">Dimmer</button>
+          <button data-machine="shooter" aria-pressed="false">Shooter</button>
+          <button data-machine="split" aria-pressed="false">Split states</button>
+          <button data-machine="super" aria-pressed="false">Robot</button>
+        </span>
+      </div>
+      <svg id="diagram" viewBox="0 0 600 330" role="img" aria-label="State diagram"></svg>
+      <div class="statusline" id="statusline"></div>
+      <div class="inputs" id="inputs">
+        <button id="in-on" data-machines="dimmer" data-step-from="2">On button</button>
+        <button id="in-off" data-machines="dimmer" data-step-from="2">Off button</button>
+        <button id="in-shoot" data-machines="shooter split super" data-step-from="3" aria-pressed="false">Shoot button: <b>not held</b> <kbd>S</kbd></button>
+        <button id="in-speed" data-machines="shooter split super" data-step-from="3" aria-pressed="false">At speed: <b>no</b> <kbd>A</kbd></button>
+        <button id="in-move" data-machines="shooter split" data-step-from="5" aria-pressed="true">Robot moving: <b>yes</b> <kbd>M</kbd></button>
+      </div>
+      <p class="callline" id="callline"></p>
+    </section>
+
+    <section class="panel" id="loop-panel" data-step-from="4">
+      <div class="panel-head">
+        <h2>Inside one loop</h2>
+        <div class="loopctl">
+          <span class="k" id="ro-loop">Loop 0</span>
+          <span class="seg small" role="group" aria-label="Loop speed">
+            <button data-speed="run" aria-pressed="true">Run</button>
+            <button data-speed="slow" aria-pressed="false">Slow</button>
+            <button data-speed="pause" aria-pressed="false">Pause</button>
+          </span>
+          <button id="step" title="Run one 20 ms loop (key N)">Step one loop</button>
+        </div>
+      </div>
+      <span class="seg small" role="group" aria-label="Where the decision lives" data-step-from="5" data-machines="shooter split">
+        <button data-variant="if" aria-pressed="true">With an if</button>
+        <button data-variant="split" aria-pressed="false">Split states</button>
+      </span>
+      <div class="loopgrid">
+        <div class="box2" id="tt-box">
+          <h3 class="sub"><span class="num">1</span><code>handleStateTransition</code> picks the next state</h3>
+          <div class="chips" id="conds"></div>
+          <div class="ttwrap"><table class="tt" id="tt"></table></div>
+        </div>
+        <div class="box2">
+          <div class="panel-head" style="align-items:center"><h3 class="sub"><span class="num">2</span><code>updateLogic</code> runs that state</h3><span class="lock" id="ul-lock">no <code>if</code></span></div>
+          <pre class="code" id="ul-code"></pre>
+          <div class="chips" id="outputs"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel" id="exercise" hidden aria-labelledby="ex-title">
+    <div class="panel-head"><h2 id="ex-title">Build the shooter's transition table</h2></div>
+    <p class="note" style="font-size:15px;color:var(--ink)">Pick what each cell does, then press <b>Test</b>. The button only asks for <code>SHOOTING</code> or <code>IDLE</code>.</p>
+    <div class="ex-grid">
+      <div style="display:grid;gap:12px;min-width:0;align-content:start">
+        <div class="cells" id="cells"></div>
+        <div class="ex-actions">
+          <button class="primary" id="ex-test">Test</button>
+          <button id="ex-reset">Start over</button>
+          <span class="status" id="ex-score" style="visibility:hidden">&nbsp;</span>
+        </div>
+        <details class="why"><summary>Why does it start like this?</summary>
+          <p class="note">Every cell starts as <code>system_state_ = wanted</code>, the default when you don't write a table: every request is honoured at once. <code>isAtShootingSpeed()</code> is true within 10 rad/s of 250 rad/s, and each ball slows the flywheel by 40 rad/s.</p>
+        </details>
+        <details class="more"><summary>Your table as Java</summary><pre class="code" id="ex-code"></pre></details>
+        <details class="more"><summary>updateLogic (locked: no <code>if</code>)</summary><pre class="code" id="ex-ul"></pre></details>
+      </div>
+      <div class="results" id="ex-results" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="deeper" id="deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>The rules we follow</summary>
+      <ul>
+        <li>Buttons and autos only call <code>setWantedState(...)</code>. The wanted state is sticky: it stays until something asks for another.</li>
+        <li><b>Every condition lives in <code>handleStateTransition</code>.</b> Write it as a table: switch on <code>system_state_</code>, then on <code>wanted</code>. A request with no arm is ignored.</li>
+        <li><b><code>updateLogic</code> has no <code>if</code>.</b> It is a <code>switch (system_state_)</code> where each arm commands its mechanisms.</li>
+        <li>If a state would behave differently on a condition, split it into step states and let the table pick.</li>
+        <li>No enter or exit actions: each state commands everything every loop, so nothing needs undoing.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>The shooter's Java</summary>
+      <pre class="code" id="java-shooter"></pre>
+    </details>
+    <details>
+      <summary>The robot's super state machine</summary>
+      <p class="note">On our robot, <code>RobotContainer extends MwSuperStateMachine</code>. Every loop it runs its own <code>handleStateTransition</code> and <code>updateLogic</code> first, then every subsystem's, so a subsystem sees the robot's request in the same loop. The 2026 robot's <code>SHOOT</code> is asked for but never entered: the table picks <code>SHOOT_WAIT</code>, <code>SHOOT_FEED</code>, <code>SHOOT_FEED_BRAKED</code> or <code>SHOOT_PASS_INTAKE</code> from whether the shooter is ready and the robot is moving.</p>
+    </details>
+    <details>
+      <summary>Read more</summary>
+      <p class="note"><a href="/docs/software/controls/state-machines" target="_top">State Machines</a>, <a href="/docs/software/robot_dev/subsystems" target="_top">Subsystems</a> (a subsystem's transition table) and the <a href="/docs/software/training/state-machines" target="_top">State Machines lesson</a>.</p>
+    </details>
+  </section>
+
+  <footer class="foot">MARS/WARS · FRC Team 4143</footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const DT = 0.02;
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // Colour token per state name
+  const SC = {
+    OFF: "--idle", DIMMED: "--pin3", NORMAL: "--actual", BRIGHT: "--goal",
+    IDLE: "--idle", SPIN_UP: "--running", SHOOTING: "--success", SHOOTING_MOVING: "--success", SHOOTING_STOPPED: "--actual",
+    DRIVE: "--idle", SHOOT: "--success", FIELD_CENTRIC: "--idle", ROTATION_LOCK: "--setp",
+  };
+
+  // ---------------------------------------------------------------------------------------------
+  // Inputs: plain switches, not a simulation
+  // ---------------------------------------------------------------------------------------------
+  const inp = { shoot: false, atSpeed: false, moving: true };
+
+  // ---------------------------------------------------------------------------------------------
+  // The shooter's table (handleStateTransition). Returns the next state, the table cell that fired and why.
+  // split = SHOOTING is split into SHOOTING_MOVING and SHOOTING_STOPPED, picked here.
+  // ---------------------------------------------------------------------------------------------
+  function shooterTable(p, split) {
+    const w = p.wanted, s = p.state, at = inp.atSpeed, mv = inp.moving;
+    const shootStep = split ? (mv ? "SHOOTING_MOVING" : "SHOOTING_STOPPED") : "SHOOTING";
+    if (w === "IDLE") return { next: "IDLE", cell: `${s}|IDLE`, why: "wanted IDLE" };
+    if (s === "IDLE") return { next: "SPIN_UP", cell: "IDLE|SHOOTING", why: "wanted SHOOTING" };
+    if (s === "SPIN_UP") return at
+      ? { next: shootStep, cell: "SPIN_UP|SHOOTING", why: split ? `at speed && ${mv ? "moving" : "!moving"}` : "wanted SHOOTING && at speed" }
+      : { next: "SPIN_UP", cell: "SPIN_UP|SHOOTING", why: "not at speed yet" };
+    if (!at) return { next: "SPIN_UP", cell: `${s}|SHOOTING`, why: "!at speed" };
+    return { next: shootStep, cell: `${s}|SHOOTING`, why: mv ? "moving" : "!moving" };
+  }
+  const outputsFor = (state, ifVersion) => {
+    const fly = state === "IDLE" ? "0.0" : "SHOOTING_SPEED";
+    let idx = "0.0";
+    if (state === "SHOOTING") idx = ifVersion && inp.moving ? "0.5" : "1.0";
+    if (state === "SHOOTING_MOVING") idx = "0.5";
+    if (state === "SHOOTING_STOPPED") idx = "1.0";
+    return [`flywheel_ → ${fly}`, `indexer_ → ${idx}`];
+  };
+
+  // updateLogic code: [state or null, html]
+  const K = (s) => `<span class="kw">${s}</span>`;
+  const UL_HEAD = [[null, `${K("switch")} (system_state_) {`]];
+  const UL_TAIL = [[null, `}`]];
+  const arm = (st, fly, idx, comment) => [
+    [st, `    ${K("case")} ${st} -&gt; {${comment ? `  <span class="c">// ${comment}</span>` : ""}`],
+    [st, `        flywheel_.setTargetVelocity(${fly});`],
+    [st, `        indexer_.setTargetDutyCycle(${idx});`],
+    [st, `    }`],
+  ];
+  const UL_SHOOTER = [...UL_HEAD, ...arm("IDLE", "0.0", "0.0"), ...arm("SPIN_UP", "SHOOTING_SPEED", "0.0"), ...arm("SHOOTING", "SHOOTING_SPEED", "1.0"), ...UL_TAIL];
+  const UL_IF = [...UL_HEAD, ...arm("IDLE", "0.0", "0.0"), ...arm("SPIN_UP", "SHOOTING_SPEED", "0.0"),
+    ["SHOOTING", `    ${K("case")} SHOOTING -&gt; {`],
+    ["SHOOTING", `        flywheel_.setTargetVelocity(SHOOTING_SPEED);`],
+    ["SHOOTING!", `        ${K("if")} (isMoving()) indexer_.setTargetDutyCycle(0.5);  <span class="c">// a decision!</span>`],
+    ["SHOOTING!", `        ${K("else")} indexer_.setTargetDutyCycle(1.0);`],
+    ["SHOOTING", `    }`], ...UL_TAIL];
+  const UL_SPLIT = [...UL_HEAD, ...arm("IDLE", "0.0", "0.0"), ...arm("SPIN_UP", "SHOOTING_SPEED", "0.0"),
+    ...arm("SHOOTING_MOVING", "SHOOTING_SPEED", "0.5", "feed gently"), ...arm("SHOOTING_STOPPED", "SHOOTING_SPEED", "1.0", "feed fast"), ...UL_TAIL];
+  const UL_ROBOT = [...UL_HEAD,
+    ["DRIVE", `    ${K("case")} DRIVE -&gt; {`],
+    ["DRIVE", `        drive_.setWantedState(DriveStates.FIELD_CENTRIC);`],
+    ["DRIVE", `        shooter_.setWantedState(ShooterStates.IDLE);`],
+    ["DRIVE", `    }`],
+    ["SHOOT", `    ${K("case")} SHOOT -&gt; {`],
+    ["SHOOT", `        drive_.setWantedState(DriveStates.ROTATION_LOCK);`],
+    ["SHOOT", `        shooter_.setWantedState(ShooterStates.SHOOTING);`],
+    ["SHOOT", `    }`], ...UL_TAIL];
+
+  const SHOOTER_CELLS = {
+    "IDLE|IDLE": "stay", "IDLE|SHOOTING": "→ SPIN_UP",
+    "SPIN_UP|IDLE": "→ IDLE", "SPIN_UP|SHOOTING": "→ SHOOTING if at speed",
+    "SHOOTING|IDLE": "→ IDLE", "SHOOTING|SHOOTING": "→ SPIN_UP if !at speed",
+  };
+  const SPLIT_CELLS = {
+    "IDLE|IDLE": "stay", "IDLE|SHOOTING": "→ SPIN_UP",
+    "SPIN_UP|IDLE": "→ IDLE", "SPIN_UP|SHOOTING": "if at speed: → _MOVING or _STOPPED",
+    "SHOOTING_MOVING|IDLE": "→ IDLE", "SHOOTING_MOVING|SHOOTING": "→ SPIN_UP if !at speed, → _STOPPED if !moving",
+    "SHOOTING_STOPPED|IDLE": "→ IDLE", "SHOOTING_STOPPED|SHOOTING": "→ SPIN_UP if !at speed, → _MOVING if moving",
+  };
+
+  // ---------------------------------------------------------------------------------------------
+  // The machines. Every diagram is laid out by hand, once for a wide panel and once stacked for a phone.
+  // Edge: { f, t, label, bend (sideways offset of the curve) or c: [x, y] (control point), lt (where along the
+  // curve the label sits, 0..1), side (-1 puts the label on the inside of the curve), kind ("on" / "off") }.
+  // A group ("G") is a box around step states; arrows to or from it stand for any state inside it.
+  // ---------------------------------------------------------------------------------------------
+  const E = (f, t, label, curve, o = {}) => Object.assign({ f, t, label, bend: typeof curve === "number" ? curve : 0, c: Array.isArray(curve) ? curve : null }, o);
+  const MACHINES = {
+    dimmer: {
+      title: "Dimmer switch", parts: { main: "OFF" }, clickable: true,
+      wide: {
+        view: "0 25 600 265", fs: 13, lamp: [505, 225],
+        nodes: { DIMMED: [130, 70], NORMAL: [300, 70], BRIGHT: [470, 70], OFF: [300, 250] },
+        edges: [
+          E("OFF", "DIMMED", "on", 26, { kind: "on" }), E("DIMMED", "OFF", "off", 26, { kind: "off" }),
+          E("DIMMED", "NORMAL", "on", 0, { kind: "on", side: -1 }), E("NORMAL", "BRIGHT", "on", 0, { kind: "on", side: -1 }),
+          E("NORMAL", "OFF", "off", 0, { kind: "off", side: -1 }), E("BRIGHT", "OFF", "off", -26, { kind: "off" }),
+        ],
+      },
+      tall: {
+        view: "0 10 360 375", fs: 14, lamp: [92, 325],
+        nodes: { OFF: [75, 190], DIMMED: [265, 50], NORMAL: [265, 190], BRIGHT: [265, 330] },
+        edges: [
+          E("OFF", "DIMMED", "on", 22, { kind: "on" }), E("DIMMED", "OFF", "off", 22, { kind: "off" }),
+          E("DIMMED", "NORMAL", "on", 0, { kind: "on", side: -1 }), E("NORMAL", "BRIGHT", "on", 0, { kind: "on", side: -1 }),
+          E("NORMAL", "OFF", "off", 0, { kind: "off", side: -1 }), E("BRIGHT", "OFF", "off", -20, { kind: "off" }),
+        ],
+      },
+    },
+    shooter: {
+      title: "Shooter", parts: { main: "IDLE" }, wants: true, table: SHOOTER_CELLS, rows: ["IDLE", "SPIN_UP", "SHOOTING"], ul: UL_SHOOTER,
+      wide: {
+        view: "0 80 600 240", fs: 13,
+        nodes: { IDLE: [70, 150], SPIN_UP: [300, 150], SHOOTING: [530, 150] },
+        edges: [
+          E("IDLE", "SPIN_UP", "Shoot on", -40), E("SPIN_UP", "IDLE", "Shoot off", -40),
+          E("SPIN_UP", "SHOOTING", "at speed", -40), E("SHOOTING", "SPIN_UP", "not at speed", -40),
+          E("SHOOTING", "IDLE", "Shoot off", -250),
+        ],
+      },
+      tall: {
+        view: "-12 -8 374 305", fs: 14,
+        nodes: { IDLE: [60, 60], SPIN_UP: [240, 60], SHOOTING: [240, 270] },
+        edges: [
+          E("IDLE", "SPIN_UP", "Shoot on", -35), E("SPIN_UP", "IDLE", "Shoot off", -35),
+          E("SPIN_UP", "SHOOTING", "at speed", -35), E("SHOOTING", "SPIN_UP", "not at speed", -35),
+          E("SHOOTING", "IDLE", "Shoot off", [30, 300]),
+        ],
+      },
+    },
+    split: {
+      title: "Shooter, with SHOOTING split", parts: { main: "IDLE" }, wants: true, split: true,
+      table: SPLIT_CELLS, rows: ["IDLE", "SPIN_UP", "SHOOTING_MOVING", "SHOOTING_STOPPED"], ul: UL_SPLIT,
+      wide: {
+        view: "0 52 600 298", fs: 13,
+        nodes: { IDLE: [60, 150], SPIN_UP: [220, 150], SHOOTING_MOVING: [495, 108], SHOOTING_STOPPED: [495, 197] },
+        groups: { G: { x: 400, y: 60, w: 190, h: 180, label: "SHOOTING, split", members: ["SHOOTING_MOVING", "SHOOTING_STOPPED"] } },
+        edges: [
+          E("IDLE", "SPIN_UP", "Shoot on", -40), E("SPIN_UP", "IDLE", "Shoot off", -40),
+          E("SPIN_UP", "G", "at speed", -40), E("G", "SPIN_UP", "not at speed", -40),
+          E("SHOOTING_MOVING", "SHOOTING_STOPPED", "stopped", -24), E("SHOOTING_STOPPED", "SHOOTING_MOVING", "moving", -24),
+          E("G", "IDLE", "Shoot off", [200, 360], { a: [480, 244], b: [60, 172] }),
+        ],
+      },
+      tall: {
+        view: "0 5 362 465", fs: 14,
+        nodes: { IDLE: [180, 40], SPIN_UP: [180, 180], SHOOTING_MOVING: [180, 340], SHOOTING_STOPPED: [180, 420] },
+        groups: { G: { x: 80, y: 285, w: 200, h: 175, label: "SHOOTING, split", members: ["SHOOTING_MOVING", "SHOOTING_STOPPED"] } },
+        edges: [
+          E("IDLE", "SPIN_UP", "Shoot on", -25), E("SPIN_UP", "IDLE", "Shoot off", -25),
+          E("SPIN_UP", "G", "at speed", -25), E("G", "SPIN_UP", "not at speed", -25),
+          E("SHOOTING_MOVING", "SHOOTING_STOPPED", "stopped", -24), E("SHOOTING_STOPPED", "SHOOTING_MOVING", "moving", -24),
+          E("G", "IDLE", "Shoot off", [390, 150], { a: [284, 372], b: [228, 40], side: -1 }),
+        ],
+      },
+    },
+    super: {
+      title: "The robot: a state machine of state machines", parts: { R: "DRIVE", S: "IDLE", D: "FIELD_CENTRIC" }, wants: true, ul: UL_ROBOT,
+      wide: {
+        view: "0 5 600 372", fs: 13,
+        nodes: {
+          "R.DRIVE": [235, 88], "R.SHOOT": [395, 88],
+          "S.IDLE": [70, 312], "S.SPIN_UP": [205, 312], "S.SHOOTING": [340, 312],
+          "D.FIELD_CENTRIC": [505, 292], "D.ROTATION_LOCK": [505, 344],
+        },
+        boxes: [[140, 12, 340, 155, "RobotContainer"], [8, 242, 400, 128, "shooter_"], [418, 242, 174, 128, "drive_"]],
+        links: [{ id: "S", d: "M245,167 Q215,205 205,240", lx: 120, ly: 204 }, { id: "D", d: "M395,167 Q470,205 505,240", lx: 530, ly: 204 }],
+        edges: [
+          E("R.DRIVE", "R.SHOOT", "Shoot on", -40), E("R.SHOOT", "R.DRIVE", "Shoot off", -40),
+          E("S.IDLE", "S.SPIN_UP", "", -16), E("S.SPIN_UP", "S.IDLE", "", -16),
+          E("S.SPIN_UP", "S.SHOOTING", "", -16), E("S.SHOOTING", "S.SPIN_UP", "", -16), E("S.SHOOTING", "S.IDLE", "", -64),
+          E("D.FIELD_CENTRIC", "D.ROTATION_LOCK", "", -14), E("D.ROTATION_LOCK", "D.FIELD_CENTRIC", "", -14),
+        ],
+      },
+      tall: {
+        view: "0 0 375 485", fs: 14,
+        nodes: {
+          "R.DRIVE": [130, 88], "R.SHOOT": [270, 88],
+          "S.IDLE": [60, 276], "S.SPIN_UP": [180, 276], "S.SHOOTING": [300, 276],
+          "D.FIELD_CENTRIC": [100, 435], "D.ROTATION_LOCK": [265, 435],
+        },
+        boxes: [[10, 8, 340, 155, "RobotContainer"], [10, 214, 340, 112, "shooter_"], [10, 376, 340, 100, "drive_"]],
+        links: [{ id: "S", d: "M130,163 L130,212", lx: 225, ly: 188 }, { id: "D", d: "M350,120 C378,180 378,335 320,374", lx: 190, ly: 351 }],
+        edges: [
+          E("R.DRIVE", "R.SHOOT", "Shoot on", -35), E("R.SHOOT", "R.DRIVE", "Shoot off", -35),
+          E("S.IDLE", "S.SPIN_UP", "", -14), E("S.SPIN_UP", "S.IDLE", "", -14),
+          E("S.SPIN_UP", "S.SHOOTING", "", -14), E("S.SHOOTING", "S.SPIN_UP", "", -14), E("S.SHOOTING", "S.IDLE", "", -66),
+          E("D.FIELD_CENTRIC", "D.ROTATION_LOCK", "", -14), E("D.ROTATION_LOCK", "D.FIELD_CENTRIC", "", -14),
+        ],
+      },
+    },
+  };
+  const DIMMER_ON = { OFF: "DIMMED", DIMMED: "NORMAL", NORMAL: "BRIGHT" };
+  // "With an if" uses the plain shooter machine with the tempting updateLogic
+  // variant: "plain" (the clean shooter), "if" (the tempting version) or "split" (SHOOTING split in two)
+  const machineKey = () => (cur === "shooter" ? (variant === "split" ? "split" : "shooter") : cur);
+  let cur = "dimmer", variant = "plain";
+
+  // ---------------------------------------------------------------------------------------------
+  // Runtime
+  // ---------------------------------------------------------------------------------------------
+  let sim;
+  function resetSim() {
+    const M = MACHINES[machineKey()];
+    sim = { loop: 0, parts: {}, lit: {}, cell: null, lastText: "", stepChanged: false };
+    for (const [p, st] of Object.entries(M.parts)) sim.parts[p] = { state: st, wanted: st };
+    applyShootWanted(false);
+    buildDiagram();
+    render();
+  }
+  function setState(part, next, why) {
+    const p = sim.parts[part];
+    if (p.state !== next) {
+      sim.lit[part] = { from: p.state, to: next, n: (sim.lit[part] ? sim.lit[part].n : 0) + 1 };
+      sim.lastText = `Loop ${sim.loop}: ${p.state} → ${next}${why ? ` (${why})` : ""}`;
+      if (part === "main" || part === "S") sim.changed = true;
+      p.state = next;
+      seen.add(`${part}.${next}`);
+    }
+  }
+  // A button only asks: setWantedState
+  function applyShootWanted(log = true) {
+    const k = machineKey();
+    if (k === "dimmer") return;
+    if (k === "super") {
+      sim.parts.R.wanted = inp.shoot ? "SHOOT" : "DRIVE";
+      if (log) callText = `robot.setWantedState(RobotStates.${sim.parts.R.wanted})`;
+    } else {
+      sim.parts.main.wanted = inp.shoot ? "SHOOTING" : "IDLE";
+      if (log) callText = `shooter.setWantedState(ShooterStates.${sim.parts.main.wanted})`;
+    }
+  }
+  let callText = "";
+
+  // One 20 ms loop
+  function loop() {
+    const k = machineKey();
+    sim.loop++;
+    sim.changed = false;
+    if (k === "shooter" || k === "split") {
+      const r = shooterTable(sim.parts.main, k === "split");
+      sim.cell = r.cell; sim.why = r.why;
+      setState("main", r.next, r.why);
+    } else if (k === "super") {
+      // RobotContainer first: its table here is just system_state_ = wanted ...
+      const R = sim.parts.R;
+      setState("R", R.wanted, `wanted ${R.wanted}`);
+      // ... then its updateLogic asks each subsystem ...
+      sim.parts.S.wanted = R.state === "SHOOT" ? "SHOOTING" : "IDLE";
+      sim.parts.D.wanted = R.state === "SHOOT" ? "ROTATION_LOCK" : "FIELD_CENTRIC";
+      // ... then each subsystem runs its own table
+      const r = shooterTable(sim.parts.S, false);
+      sim.cell = r.cell;
+      setState("S", r.next, `shooter_: ${r.why}`);
+      setState("D", sim.parts.D.wanted, "");
+    }
+    if (paused) { pausedSteps++; if (sim.changed) pausedChange = true; }
+    dirty = true;
+  }
+
+  // Dimmer: buttons fire the arrow from the current state, if there is one
+  function dimmerPress(kind) {
+    const s = sim.parts.main.state;
+    const next = kind === "on" ? DIMMER_ON[s] : s === "OFF" ? null : "OFF";
+    sim.loop++;
+    if (next) { setState("main", next, `${kind} pressed`); presses.push(`${kind}:${next}`); }
+    else sim.lastText = `${kind} pressed in ${s}: no arrow for that, so it stays in ${s}`;
+    callText = "";
+    render();
+  }
+  let presses = [];
+  const clicked = new Set();
+  function clickNode(key) {
+    if (machineKey() !== "dimmer") return;
+    const st = ["OFF", "DIMMED", "NORMAL", "BRIGHT"].includes(key) ? key : null;
+    if (!st) return;
+    sim.loop++;
+    sim.lit.main = null;
+    sim.parts.main.state = st;
+    sim.lastText = `You put it in ${st}. Only ${st} is lit: one state at a time.`;
+    clicked.add(st);
+    render();
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // Diagram. Draw order: boxes, arrows, label pills, then nodes on top. Arrowheads stop at the node border.
+  // ---------------------------------------------------------------------------------------------
+  const NH = 36;
+  const narrowMQ = window.matchMedia("(max-width: 599px)");
+  let L = null; // the layout in use
+  const charW = () => L.fs * 0.6;
+  const NW = (label) => Math.max(88, label.length * charW() + 24);
+  function nodeInfo(key) {
+    if (L.groups && L.groups[key]) { const g = L.groups[key]; return { x: g.x + g.w / 2, y: g.y + g.h / 2, hw: g.w / 2, hh: g.h / 2, part: "main", group: g }; }
+    const [x, y] = L.nodes[key];
+    const dot = key.indexOf(".");
+    const part = dot > 0 ? key.slice(0, dot) : "main", state = dot > 0 ? key.slice(dot + 1) : key;
+    return { x, y, hw: NW(state) / 2, hh: NH / 2, part, state };
+  }
+  function clip(key, toward) {
+    const n = nodeInfo(key), dx = toward[0] - n.x, dy = toward[1] - n.y;
+    const k = 1 / Math.max(Math.abs(dx) / (n.hw + 4), Math.abs(dy) / (n.hh + 4), 1e-6);
+    return [n.x + dx * k, n.y + dy * k];
+  }
+  // Size of a label pill: monospace text, so width is characters × 0.6 em
+  const pillSize = (lines) => ({ w: Math.max(...lines.map((l) => l.length)) * charW() + 14, h: lines.length * L.fs * 1.25 + 8 });
+  function edgeGeom(e) {
+    const a = nodeInfo(e.f), b = nodeInfo(e.t);
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+    const c = e.c || [(a.x + b.x) / 2 + (-dy / len) * e.bend, (a.y + b.y) / 2 + (dx / len) * e.bend];
+    const p = e.a || clip(e.f, c), q = e.b || clip(e.t, c); // a / b: hand-placed ends on a box border
+    // point and normal at t along the quadratic curve
+    const t = e.lt == null ? 0.5 : e.lt, u = 1 - t;
+    const mx = u * u * p[0] + 2 * u * t * c[0] + t * t * q[0], my = u * u * p[1] + 2 * u * t * c[1] + t * t * q[1];
+    const tx = 2 * u * (c[0] - p[0]) + 2 * t * (q[0] - c[0]), ty = 2 * u * (c[1] - p[1]) + 2 * t * (q[1] - c[1]);
+    const tl = Math.hypot(tx, ty) || 1;
+    let nx = -ty / tl, ny = tx / tl;
+    // put the label on the outside of the bend (the side the control point is on), or inside with side: -1
+    const ch = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    const cs = (mx - ch[0]) * nx + (my - ch[1]) * ny; // the curve bulges away from its chord: that side is "outside"
+    let s = Math.abs(cs) < 0.5 ? 1 : Math.sign(cs);
+    if (e.side === -1) s = -s;
+    return { d: `M${p[0].toFixed(1)},${p[1].toFixed(1)} Q${c[0].toFixed(1)},${c[1].toFixed(1)} ${q[0].toFixed(1)},${q[1].toFixed(1)}`, mx, my, nx: nx * s, ny: ny * s, chord: [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2] };
+  }
+  function pillAt(lines, cx, cy, cls, id) {
+    const { w, h } = pillSize(lines);
+    const lh = L.fs * 1.25, y0 = cy - ((lines.length - 1) * lh) / 2;
+    return `<g class="lbl ${cls || ""}" ${id ? `id="${id}"` : ""}><rect x="${(cx - w / 2).toFixed(1)}" y="${(cy - h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(h / 2).toFixed(1)}"/>` +
+      `<text style="font-size:${L.fs}px">${lines.map((l, j) => `<tspan x="${cx.toFixed(1)}" y="${(y0 + j * lh).toFixed(1)}">${esc(l)}</tspan>`).join("")}</text></g>`;
+  }
+  function buildDiagram() {
+    const M = MACHINES[machineKey()];
+    L = narrowMQ.matches ? M.tall : M.wide;
+    $("m-title").textContent = M.title;
+    $("diagram").setAttribute("viewBox", L.view);
+    let back = `<defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+      <marker id="arr-lit" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--brand)"/></marker>
+      <marker id="arr-fired" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>`;
+    const boxLbl = (x, y, text) => `<text class="boxlbl" x="${x}" y="${y}" style="font-size:${L.fs}px">${esc(text)}</text>`;
+    for (const b of L.boxes || []) back += `<rect class="box" x="${b[0]}" y="${b[1]}" width="${b[2]}" height="${b[3]}" rx="10"/>${boxLbl(b[0] + 10, b[1] + L.fs + 6, b[4])}`;
+    for (const g of Object.values(L.groups || {})) back += `<rect class="box group" x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="10"/>${boxLbl(g.x + 10, g.y + L.fs + 6, g.label)}`;
+    let arrows = "", pills = "", nodes = "";
+    for (const ln of L.links || []) {
+      arrows += `<path class="link" id="lk-${ln.id}" d="${ln.d}"/>`;
+      pills += pillAt(["setWantedState(", ln.id === "D" ? "FIELD_CENTRIC)" : "SHOOTING)"], ln.lx, ln.ly, "link-lbl", "link-" + ln.id);
+    }
+    L.edges.forEach((e, i) => {
+      const g = edgeGeom(e);
+      arrows += `<path class="edge ${e.kind ? e.kind + "-kind" : ""}" id="e-${i}" data-f="${e.f}" data-t="${e.t}" d="${g.d}"/>`;
+      if (!e.label) return;
+      const lines = Array.isArray(e.label) ? e.label : [e.label];
+      const { w, h } = pillSize(lines);
+      const off = Math.abs(g.nx) * (w / 2) + Math.abs(g.ny) * (h / 2) + 5;
+      pills += pillAt(lines, g.mx + g.nx * off, g.my + g.ny * off, e.kind ? e.kind + "-kind" : "", "l-" + i);
+    });
+    if (L.lamp) nodes += `<g class="lampg"><circle class="lamp" id="lamp" cx="${L.lamp[0]}" cy="${L.lamp[1]}" r="26"/><text class="lamplbl" x="${L.lamp[0]}" y="${L.lamp[1] + 44}" style="font-size:${L.fs}px">the light</text></g>`;
+    for (const key of Object.keys(L.nodes)) {
+      const n = nodeInfo(key), w = n.hw * 2;
+      const click = M.clickable ? ` class="node click" tabindex="0" role="button" aria-label="Put the light in ${n.state}"` : ` class="node"`;
+      nodes += `<g${click} id="n-${key.replace(".", "_")}" data-key="${key}" style="--sc:var(${SC[n.state] || "--line"})">
+        <rect class="want" x="${n.x - w / 2 - 6}" y="${n.y - NH / 2 - 6}" width="${w + 12}" height="${NH + 12}" rx="10"/>
+        <rect class="body" x="${n.x - w / 2}" y="${n.y - NH / 2}" width="${w}" height="${NH}" rx="7"/>
+        <text x="${n.x}" y="${n.y}" style="font-size:${L.fs}px">${n.state}</text></g>`;
+    }
+    $("diagram").innerHTML = back + arrows + pills + nodes;
+    for (const g of $("diagram").querySelectorAll(".node.click")) {
+      g.addEventListener("click", () => clickNode(g.dataset.key));
+      g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); clickNode(g.dataset.key); } });
+    }
+    litDrawn = {};
+  }
+  let litDrawn = {};
+  const onNarrow = () => { if (sim) { buildDiagram(); render(); } };
+  if (narrowMQ.addEventListener) narrowMQ.addEventListener("change", onNarrow); else narrowMQ.addListener(onNarrow);
+  // does edge end `key` stand for `state`? (a group stands for each state inside it)
+  const endIs = (key, part, state) => { const n = nodeInfo(key); return n.part === part && (n.group ? n.group.members.includes(state) : n.state === state); };
+  function renderDiagram() {
+    const M = MACHINES[machineKey()];
+    for (const key of Object.keys(L.nodes)) {
+      const n = nodeInfo(key), p = sim.parts[n.part], g = $("n-" + key.replace(".", "_"));
+      g.classList.toggle("on", p.state === n.state);
+      const wantedHere = p.wanted === n.state || (n.state.startsWith("SHOOTING_") && p.wanted === "SHOOTING");
+      g.classList.toggle("wanted", !!M.wants && wantedHere && p.wanted !== p.state && !(p.state.startsWith("SHOOTING_") && p.wanted === "SHOOTING"));
+    }
+    // the arrow that fired last, per part
+    L.edges.forEach((e, i) => {
+      const part = nodeInfo(e.f).part, l = sim.lit[part];
+      let on = !!l && endIs(e.f, part, l.from) && endIs(e.t, part, l.to);
+      // a move inside a group uses the inner arrow, not the group's
+      if (on && L.groups && (e.f === "G" || e.t === "G") && L.groups.G.members.includes(l.from) && L.groups.G.members.includes(l.to)) on = false;
+      const path = $("e-" + i), pill = $("l-" + i);
+      path.classList.toggle("lit", on);
+      if (pill) pill.classList.toggle("lit", on);
+      if (on && litDrawn[part] !== l.n && !reduceMotion) { path.classList.remove("pulse"); void path.getBBox(); path.classList.add("pulse"); }
+      if (on) litDrawn[part] = l.n;
+    });
+    if (L.lamp) {
+      const b = { OFF: 0, DIMMED: 0.3, NORMAL: 0.65, BRIGHT: 1 }[sim.parts.main.state];
+      $("lamp").setAttribute("style", `fill: color-mix(in srgb, var(--goal) ${Math.round(b * 100)}%, var(--bg))`);
+    }
+    for (const ln of L.links || []) {
+      const t = $("link-" + ln.id).querySelectorAll("tspan")[1];
+      if (t) t.textContent = `${sim.parts[ln.id].wanted})`;
+    }
+  }
+  // ---------------------------------------------------------------------------------------------
+  // Panels
+  // ---------------------------------------------------------------------------------------------
+  const badge = (name, ghost) => `<span class="state${ghost ? " ghost" : ""}" style="--sc:var(${SC[name] || "--line"})">${name}</span>`;
+  function render() {
+    dirty = false;
+    const k = machineKey(), M = MACHINES[k];
+    renderDiagram();
+    // status line
+    const main = k === "super" ? sim.parts.S : sim.parts.main;
+    let st = "";
+    if (k === "super") st = `<span><code>robot</code> ${badge(sim.parts.R.state)}</span><span><code>shooter_</code> wanted ${badge(sim.parts.S.wanted, true)} now ${badge(sim.parts.S.state)}</span>`;
+    else if (M.wants) st = `<span>wanted ${badge(main.wanted, true)}</span><span><code>system_state_</code> ${badge(main.state)}</span>`;
+    else st = `<span><code>system_state_</code> ${badge(main.state)}</span>`;
+    if (M.wants && main.wanted === "SHOOTING" && (main.state === "SPIN_UP" || main.state === "IDLE")) st += `<span class="waiting">Asked for SHOOTING, still in ${main.state}</span>`;
+    $("statusline").innerHTML = st;
+    $("callline").textContent = [callText && `Button called ${callText}`, sim.lastText].filter(Boolean).join("  ·  ");
+    // inputs
+    const sw = (id, on, a, b) => { const el = $(id); el.setAttribute("aria-pressed", String(on)); el.querySelector("b").textContent = on ? a : b; };
+    sw("in-shoot", inp.shoot, "held", "not held");
+    sw("in-speed", inp.atSpeed, "yes", "no");
+    sw("in-move", inp.moving, "yes", "no");
+    for (const el of document.querySelectorAll("[data-machines]")) el.hidden = !el.dataset.machines.split(" ").includes(k);
+    $("in-move").hidden = !(k === "split" || (k === "shooter" && variant === "if"));
+    $("loop-panel").hidden = k === "dimmer";
+    for (const b of document.querySelectorAll("[data-machine]")) b.setAttribute("aria-pressed", String(b.dataset.machine === k));
+    for (const b of document.querySelectorAll("[data-variant]")) b.setAttribute("aria-pressed", String(b.dataset.variant === variant));
+    if (k !== "dimmer") renderLoop(k, M);
+    updateGuide();
+  }
+  function renderLoop(k, M) {
+    $("ro-loop").textContent = `Loop ${sim.loop}`;
+    const chip = (t, v) => `<span class="chip ${v ? "t" : "f"}">${t} = ${v}</span>`;
+    const part = k === "super" ? sim.parts.S : sim.parts.main;
+    $("conds").innerHTML = (k === "super" ? `<span class="chip">this table is shooter_'s</span>` : "") +
+      `<span class="chip">wanted = ${part.wanted}</span>` + chip("at speed", inp.atSpeed) + (k === "split" || (k === "shooter" && variant === "if") ? chip("moving", inp.moving) : "");
+    const cells = k === "split" ? SPLIT_CELLS : SHOOTER_CELLS, rows = k === "split" ? M.rows : MACHINES.shooter.rows;
+    let t = `<tr><th>in <code>system_state_</code></th><th>wanted <code>IDLE</code></th><th>wanted <code>SHOOTING</code></th></tr>`;
+    for (const r of rows) {
+      t += `<tr><td class="row ${part.state === r || (sim.cell && sim.cell.startsWith(r + "|")) ? "cur" : ""}">${r}</td>`;
+      for (const w of ["IDLE", "SHOOTING"]) t += `<td class="${sim.cell === `${r}|${w}` ? "on" : ""}">${esc(cells[`${r}|${w}`])}</td>`;
+      t += `</tr>`;
+    }
+    $("tt").innerHTML = t;
+    // updateLogic: the running arm lit
+    const ifv = k === "shooter" && variant === "if";
+    const lines = k === "super" ? UL_ROBOT : k === "split" ? UL_SPLIT : ifv ? UL_IF : UL_SHOOTER;
+    const runState = k === "super" ? sim.parts.R.state : part.state;
+    $("ul-code").innerHTML = lines.map(([s, html]) => {
+      const base = s && s.replace("!", "");
+      const on = base === runState;
+      return `<span class="ln ${on ? "on" : ""} ${s && s.endsWith("!") ? "bad" : ""}">${html}</span>`;
+    }).join("");
+    const lock = $("ul-lock");
+    lock.classList.toggle("bad", ifv);
+    lock.innerHTML = ifv ? "<code>if</code> in updateLogic ✗" : "no <code>if</code>";
+    $("outputs").innerHTML = k === "super"
+      ? [`drive_.setWantedState(${sim.parts.D.wanted})`, `shooter_.setWantedState(${sim.parts.S.wanted})`].map((x) => `<span class="chip">${x}</span>`).join("")
+      : outputsFor(part.state, ifv).map((x) => `<span class="chip">${x}</span>`).join("");
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // Controls
+  // ---------------------------------------------------------------------------------------------
+  function setInput(key, v) {
+    inp[key] = v;
+    if (key === "shoot") applyShootWanted();
+    render();
+  }
+  $("in-shoot").addEventListener("click", () => setInput("shoot", !inp.shoot));
+  $("in-speed").addEventListener("click", () => setInput("atSpeed", !inp.atSpeed));
+  $("in-move").addEventListener("click", () => setInput("moving", !inp.moving));
+  $("in-on").addEventListener("click", () => dimmerPress("on"));
+  $("in-off").addEventListener("click", () => dimmerPress("off"));
+  function setMachine(m, v) {
+    const before = machineKey();
+    if (m === "split") { cur = "shooter"; variant = "split"; }
+    else { cur = m; if (m === "shooter") variant = v || "plain"; }
+    if (machineKey() !== before || !sim) resetSim(); else render();
+  }
+  for (const b of document.querySelectorAll("[data-machine]")) b.addEventListener("click", () => setMachine(b.dataset.machine));
+  for (const b of document.querySelectorAll("[data-variant]")) b.addEventListener("click", () => setMachine("shooter", b.dataset.variant));
+  $("reset").addEventListener("click", () => { inp.shoot = false; callText = ""; resetSim(); });
+
+  let speed = "run", paused = false, pausedSteps = 0, pausedChange = false;
+  function setSpeed(s) {
+    speed = s;
+    paused = s === "pause";
+    for (const b of document.querySelectorAll("[data-speed]")) b.setAttribute("aria-pressed", String(b.dataset.speed === s));
+    render();
+  }
+  for (const b of document.querySelectorAll("[data-speed]")) b.addEventListener("click", () => setSpeed(b.dataset.speed));
+  function stepOnce() { if (machineKey() === "dimmer") return; if (!paused) setSpeed("pause"); loop(); render(); }
+  $("step").addEventListener("click", stepOnce);
+  document.addEventListener("keydown", (e) => {
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+    const k = e.key.toLowerCase();
+    const vis = (id) => $(id).offsetParent !== null;
+    if (k === "s" && vis("in-shoot")) $("in-shoot").click();
+    else if (k === "a" && vis("in-speed")) $("in-speed").click();
+    else if (k === "m" && vis("in-move")) $("in-move").click();
+    else if (k === "n" && vis("step")) { e.preventDefault(); stepOnce(); }
+  });
+
+  let acc = 0, lastT = null, dirty = false;
+  function frame(now) {
+    if (lastT === null) lastT = now;
+    const dt = Math.min(0.1, (now - lastT) / 1000);
+    lastT = now;
+    if (!paused && machineKey() !== "dimmer") {
+      const period = speed === "slow" ? 0.4 : DT;
+      acc += dt;
+      let n = 0;
+      while (acc >= period && n < 8) { loop(); acc -= period; n++; }
+    }
+    if (dirty) render();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // Guided steps (default) and free play
+  // ---------------------------------------------------------------------------------------------
+  const seen = new Set();
+  const MODE_KEY = "lab-state-machine-mode";
+  const WT = { guided: true, i: 0, flag: false };
+  try { if (localStorage.getItem(MODE_KEY) === "free") WT.guided = false; } catch (e) {}
+  const STEPS = [
+    {
+      title: "Click each state of the dimmer",
+      body: "A state machine is always in exactly one state. Click three of them.",
+      why: "A state is a mode the system can be in, like OFF or BRIGHT. In code the states are an enum, and the current one is stored in system_state_.",
+      enter: () => { setMode("explore"); setMachine("dimmer"); clicked.clear(); },
+      check: () => clicked.size >= 3,
+      progress: () => `${clicked.size} of 3`,
+    },
+    {
+      title: "Press On until it's BRIGHT, then press Off",
+      body: "Each arrow is a transition with a condition. Only an arrow out of the current state whose condition is true fires.",
+      why: "In BRIGHT there is no 'on' arrow, so pressing On does nothing. Off has an arrow from every lit state back to OFF.",
+      enter: () => { setMode("explore"); setMachine("dimmer"); presses = []; sim.parts.main.state = "OFF"; sim.lit = {}; render(); },
+      check: () => { const i = presses.indexOf("on:BRIGHT"); return i >= 0 && presses.slice(i).includes("off:OFF"); },
+    },
+    {
+      title: "Switch Shoot on, then switch At speed to yes",
+      body: "The button only asks for SHOOTING. The machine waits in SPIN_UP until the flywheel is at speed.",
+      why: "Pressing the button calls setWantedState(SHOOTING). The wanted state is just a request. The machine moves toward it, and its own conditions decide when it gets there.",
+      enter: () => { setMode("explore"); inp.shoot = false; inp.atSpeed = false; callText = ""; setSpeed("run"); setMachine("shooter"); WT.flag = false; },
+      check: () => { const p = sim.parts.main; if (p.wanted === "SHOOTING" && p.state === "SPIN_UP") WT.flag = true; return WT.flag && p.state === "SHOOTING"; },
+      progress: () => (WT.flag ? "now switch At speed to yes" : ""),
+    },
+    {
+      title: "Pause, then press Step one loop until the state changes",
+      body: "Every 20 ms, handleStateTransition picks the next state (lit cell). Then updateLogic runs that state's case (lit arm).",
+      why: "All the decisions are in the table. updateLogic only does what the state says, so it has no if. Flip Shoot or At speed between steps to make the state change.",
+      enter: () => { setMode("explore"); setMachine("shooter"); pausedSteps = 0; pausedChange = false; },
+      action: ["Pause", () => setSpeed("pause")],
+      check: () => paused && pausedSteps >= 3 && pausedChange,
+      progress: () => (!paused ? "" : `${pausedSteps} loops stepped${pausedChange ? "" : ", no change yet"}`),
+    },
+    {
+      title: "Flip Robot moving, then pick Split states and flip it again",
+      body: "With an if, the state says SHOOTING either way. Split into two states and the table picks one.",
+      why: "Shooting while moving feeds gently; stopped, it feeds fast. Hiding that in an if inside updateLogic means the state, the logs and the table can't see it. Two step states keep every decision in the table.",
+      enter: () => { setMode("explore"); setSpeed("run"); inp.shoot = true; inp.atSpeed = true; setMachine("shooter", "if"); applyShootWanted(); seen.clear(); render(); },
+      check: () => variant === "split" && seen.has("main.SHOOTING_MOVING") && seen.has("main.SHOOTING_STOPPED"),
+    },
+    {
+      title: "Build the shooter's table",
+      body: "Fill each cell, then press Test until all four scenarios pass.",
+      why: "Same pattern as the shooter above: switch on system_state_, then on wanted. The only condition, isAtShootingSpeed(), lives in the table.",
+      enter: () => setMode("build"),
+      action: ["Open Build the table", () => setMode("build")],
+      check: () => exAllPass,
+    },
+    {
+      title: "Switch Shoot on, then At speed",
+      body: "The button asks the robot. The robot's updateLogic asks each subsystem, and each one still decides when it gets there.",
+      why: "RobotContainer is the super state machine. Buttons and autos call robot.setWantedState(SHOOT). In SHOOT, its updateLogic calls shooter_.setWantedState(SHOOTING) and drive_.setWantedState(ROTATION_LOCK). The shooter still waits in SPIN_UP until it is at speed.",
+      enter: () => { setMode("explore"); setSpeed("run"); inp.shoot = false; inp.atSpeed = false; callText = ""; setMachine("super"); },
+      check: () => sim.parts.R && sim.parts.R.state === "SHOOT" && sim.parts.S.state === "SHOOTING",
+      doneText: "You've got it. Try Free play to explore every machine.",
+    },
+  ];
+  function applySteps() {
+    const n = WT.guided ? WT.i + 1 : Infinity;
+    for (const el of document.querySelectorAll("[data-step-from]")) el.classList.toggle("not-yet", +el.dataset.stepFrom > n);
+  }
+  let lastGuide = "";
+  function renderGuide() {
+    const free = !WT.guided;
+    $("g-free").setAttribute("aria-pressed", String(free));
+    $("g-free").textContent = free ? "Back to steps" : "Free play";
+    $("g-back").hidden = $("g-next").hidden = free;
+    lastGuide = "";
+    if (free) {
+      $("g-count").textContent = "Free play";
+      $("g-title").textContent = "Pick any machine and try it";
+      $("g-body").textContent = "Switch machines with the tabs, flip any switch, or build the table.";
+      $("g-why-wrap").hidden = true;
+      $("g-action").hidden = true;
+      return;
+    }
+    const st = STEPS[WT.i];
+    $("g-count").textContent = `Step ${WT.i + 1} of ${STEPS.length}`;
+    $("g-why-wrap").hidden = !st.why;
+    $("g-why").textContent = st.why || "";
+    $("g-action").textContent = st.action ? st.action[0] : "";
+    $("g-back").disabled = WT.i === 0;
+    $("g-next").disabled = WT.i === STEPS.length - 1;
+    updateGuide();
+  }
+  function updateGuide() {
+    if (!WT.guided) return;
+    const st = STEPS[WT.i];
+    if (!st.passed && st.check()) st.passed = true;
+    $("g-action").hidden = !st.action || (WT.i === 5 && mode === "build") || (WT.i === 3 && paused);
+    const prog = st.progress && !st.passed ? st.progress() : "";
+    const key = `${WT.i}|${st.passed}|${prog}`;
+    if (key === lastGuide) return;
+    lastGuide = key;
+    $("g-title").innerHTML = esc(st.title) + (st.passed ? ` <span class="done-mark" aria-label="done">✓</span>` : "");
+    $("g-body").textContent = st.passed && st.doneText ? st.doneText : st.body + (prog ? ` (${prog})` : "");
+    $("g-next").classList.toggle("primary", !!st.passed && WT.i < STEPS.length - 1);
+  }
+  function goStep(i) {
+    WT.i = i;
+    STEPS[i].passed = false;
+    $("g-why-wrap").open = false;
+    applySteps();
+    if (STEPS[i].enter) STEPS[i].enter();
+    renderGuide();
+    render();
+  }
+  function setGuided(g) {
+    WT.guided = g;
+    try { localStorage.setItem(MODE_KEY, g ? "guided" : "free"); } catch (e) {}
+    if (g) goStep(WT.i); else { applySteps(); renderGuide(); render(); }
+  }
+  $("g-free").addEventListener("click", () => setGuided(!WT.guided));
+  $("g-back").addEventListener("click", () => goStep(Math.max(0, WT.i - 1)));
+  $("g-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, WT.i + 1)));
+  $("g-action").addEventListener("click", () => { const a = STEPS[WT.i].action; if (a) a[1](); render(); });
+  const updateWalkthrough = () => updateGuide(); // called by the exercise after a test
+
+  // Explore | Build the table
+  let mode = "explore";
+  function setMode(m) {
+    mode = m;
+    $("explore").hidden = m !== "explore";
+    $("exercise").hidden = m !== "build";
+    $("mode-explore").setAttribute("aria-pressed", String(m === "explore"));
+    $("mode-build").setAttribute("aria-pressed", String(m === "build"));
+    placeGuide();
+    if (sim) updateGuide();
+  }
+  $("mode-explore").addEventListener("click", () => setMode("explore"));
+  $("mode-build").addEventListener("click", () => setMode("build"));
+  // Wide: the step card sits above the diagram. Phone: right under the diagram, above the switches.
+  const wideMQ = window.matchMedia("(min-width: 1000px)");
+  function placeGuide() {
+    const g = $("guide");
+    if (mode === "explore" && !wideMQ.matches) $("statusline").after(g);
+    else (mode === "explore" ? $("explore") : $("exercise")).before(g);
+  }
+  if (wideMQ.addEventListener) wideMQ.addEventListener("change", placeGuide); else wideMQ.addListener(placeGuide);
+
+  // Go deeper: the shooter's Java, in the shape the docs use
+  $("java-shooter").innerHTML = [
+    `<span class="c">@Override</span>`,
+    `${K("protected void")} handleStateTransition(ShooterStates wanted) {`,
+    `    ${K("switch")} (system_state_) {`,
+    `        ${K("case")} IDLE -&gt; {`,
+    `            ${K("switch")} (wanted) {`,
+    `                ${K("case")} SHOOTING -&gt; system_state_ = ShooterStates.SPIN_UP;`,
+    `                ${K("default")} -&gt; {}`,
+    `            }`,
+    `        }`,
+    `        ${K("case")} SPIN_UP -&gt; {`,
+    `            ${K("switch")} (wanted) {`,
+    `                ${K("case")} SHOOTING -&gt; { ${K("if")} (isAtShootingSpeed()) system_state_ = ShooterStates.SHOOTING; }`,
+    `                ${K("case")} IDLE -&gt; system_state_ = ShooterStates.IDLE;`,
+    `                ${K("default")} -&gt; {}`,
+    `            }`,
+    `        }`,
+    `        ${K("case")} SHOOTING -&gt; {`,
+    `            ${K("switch")} (wanted) {`,
+    `                ${K("case")} SHOOTING -&gt; { ${K("if")} (!isAtShootingSpeed()) system_state_ = ShooterStates.SPIN_UP; }`,
+    `                ${K("case")} IDLE -&gt; system_state_ = ShooterStates.IDLE;`,
+    `                ${K("default")} -&gt; {}`,
+    `            }`,
+    `        }`,
+    `    }`,
+    `}`,
+    ``,
+    `<span class="c">@Override</span>`,
+    `${K("public void")} updateLogic(${K("double")} timestamp) {`,
+    ...UL_SHOOTER.map(([, h]) => "    " + h),
+    `}`,
+  ].map((l) => `<span class="ln">${l || " "}</span>`).join("");
+
+  // ---------------------------------------------------------------------------------------------
+  // Exercise: build the shooter's transition table
+  // ---------------------------------------------------------------------------------------------
+  const EX_STATES = ["IDLE", "SPIN_UP", "SHOOTING"];
+  const EX = { SPEED: 250, TOL: 10, TAU: 0.4, FEED: 0.3, DROP: 40 };
+  const OPTS = [
+    { v: "ignore", label: "ignore (stay)" },
+    { v: "IDLE", label: "→ IDLE" },
+    { v: "SPIN_UP", label: "→ SPIN_UP" },
+    { v: "SHOOTING", label: "→ SHOOTING" },
+    { v: "SHOOT_IF", label: "→ SHOOTING if isAtShootingSpeed()" },
+    { v: "SPIN_IF_NOT", label: "→ SPIN_UP if !isAtShootingSpeed()" },
+  ];
+  const optLabel = (v) => OPTS.find((o) => o.v === v).label;
+  const defaultGrid = () => Object.fromEntries(EX_STATES.map((s) => [s, Object.fromEntries(EX_STATES.map((w) => [w, w]))]));
+  let grid = defaultGrid(), exAllPass = false, badCell = null;
+
+  function buildCells() {
+    $("cells").innerHTML = EX_STATES.map((s) => `<div class="box"><h3 class="sub">case ${s} -&gt;</h3>${EX_STATES.map((w) => {
+      const id = `cell-${s}-${w}`;
+      return `<div class="cellrow"><label for="${id}">wanted <code>${w}</code></label><select id="${id}" data-s="${s}" data-w="${w}">${
+        OPTS.map((o) => `<option value="${o.v}">${o.label}</option>`).join("")}</select></div>`;
+    }).join("")}</div>`).join("");
+    for (const sel of $("cells").querySelectorAll("select")) {
+      sel.value = grid[sel.dataset.s][sel.dataset.w];
+      sel.addEventListener("change", () => { grid[sel.dataset.s][sel.dataset.w] = sel.value; exAllPass = false; renderEx(); });
+    }
+  }
+  function cellJava(v) {
+    switch (v) {
+      case "ignore": return null;
+      case "SHOOT_IF": return `{ <span class="kw">if</span> (isAtShootingSpeed()) system_state_ = ShooterStates.SHOOTING; }`;
+      case "SPIN_IF_NOT": return `{ <span class="kw">if</span> (!isAtShootingSpeed()) system_state_ = ShooterStates.SPIN_UP; }`;
+      default: return `system_state_ = ShooterStates.${v};`;
+    }
+  }
+  function renderEx() {
+    const L = [];
+    const ln = (h, cls = "") => L.push(`<span class="ln ${cls}">${h}</span>`);
+    ln(`<span class="c">@Override</span>`);
+    ln(`<span class="kw">protected void</span> handleStateTransition(ShooterStates wanted) {`);
+    ln(`    <span class="kw">switch</span> (system_state_) {`);
+    for (const s of EX_STATES) {
+      ln(`        <span class="kw">case</span> ${s} -&gt; {`);
+      ln(`            <span class="kw">switch</span> (wanted) {`);
+      for (const w of EX_STATES) {
+        const j = cellJava(grid[s][w]);
+        if (j) ln(`                <span class="kw">case</span> ${w} -&gt; ${j}`, badCell && badCell[0] === s && badCell[1] === w ? "on" : "");
+      }
+      ln(`                <span class="kw">default</span> -&gt; {}  <span class="c">// ignored</span>`);
+      ln(`            }`);
+      ln(`        }`);
+    }
+    ln(`    }`);
+    ln(`}`);
+    $("ex-code").innerHTML = L.join("");
+    $("ex-ul").innerHTML = [
+      `<span class="c">@Override</span>`,
+      `<span class="kw">public void</span> updateLogic(<span class="kw">double</span> timestamp) {`,
+      `    <span class="kw">switch</span> (system_state_) {`,
+      `        <span class="kw">case</span> IDLE -&gt; {`,
+      `            flywheel_.setTargetVelocity(0.0);`,
+      `            indexer_.setTargetDutyCycle(0.0);`,
+      `        }`,
+      `        <span class="kw">case</span> SPIN_UP -&gt; {`,
+      `            flywheel_.setTargetVelocity(CONSTANTS.SHOOTING_SPEED);`,
+      `            indexer_.setTargetDutyCycle(0.0);`,
+      `        }`,
+      `        <span class="kw">case</span> SHOOTING -&gt; {`,
+      `            flywheel_.setTargetVelocity(CONSTANTS.SHOOTING_SPEED);`,
+      `            indexer_.setTargetDutyCycle(1.0);  <span class="c">// feed balls</span>`,
+      `        }`,
+      `    }`,
+      `}`,
+    ].map((l) => `<span class="ln">${l}</span>`).join("");
+    for (const sel of $("cells").querySelectorAll("select")) sel.classList.toggle("bad", !!badCell && sel.dataset.s === badCell[0] && sel.dataset.w === badCell[1]);
+  }
+
+  // Run the shooter with the student's table. script(t) gives the wanted state at time t.
+  function exRun(init, script, dur) {
+    let st = init.state, w = init.w, feedT = EX.FEED - 0.06;
+    const tr = [], balls = [];
+    for (let k = 0; k * DT < dur - 1e-9; k++) {
+      const t = k * DT, wanted = script(t);
+      const at = Math.abs(w - EX.SPEED) < EX.TOL;
+      const before = st, v = grid[st][wanted], w0 = w;
+      let next = st;
+      switch (v) {
+        case "ignore": break;
+        case "SHOOT_IF": if (at) next = "SHOOTING"; break;
+        case "SPIN_IF_NOT": if (!at) next = "SPIN_UP"; break;
+        default: next = v;
+      }
+      st = next;
+      // updateLogic + physics
+      const cmd = st === "IDLE" ? 0 : EX.SPEED;
+      w += (cmd - w) * (DT / EX.TAU);
+      let ball = null;
+      if (st === "SHOOTING") {
+        feedT += DT;
+        if (feedT >= EX.FEED) { feedT = 0; ball = { t, w, ok: Math.abs(w - EX.SPEED) < EX.TOL, cell: [before, wanted] }; balls.push(ball); w -= EX.DROP; }
+      } else feedT = EX.FEED - 0.06;
+      tr.push({ t, wanted, before, st, w, w0, at, cell: [before, wanted] });
+    }
+    return { tr, balls, dur };
+  }
+
+  const HINTS = {
+    "IDLE|IDLE": "Already idle: ignore it, or set IDLE again. Anything else starts the shooter when nobody asked.",
+    "IDLE|SPIN_UP": "Asked to spin up: go to SPIN_UP.",
+    "IDLE|SHOOTING": "The button only ever asks for SHOOTING, never for SPIN_UP. So this cell must send the shooter to SPIN_UP first. That's how you forbid IDLE → SHOOTING without ignoring the driver.",
+    "SPIN_UP|IDLE": "Letting go must always work: go to IDLE.",
+    "SPIN_UP|SPIN_UP": "Stay in SPIN_UP. Moving on to SHOOTING here would feed a ball nobody asked for.",
+    "SPIN_UP|SHOOTING": "This is the guard. Move on to SHOOTING only once isAtShootingSpeed() is true. The condition lives here, in the table, not in updateLogic.",
+    "SHOOTING|IDLE": "Letting go must always work: go to IDLE.",
+    "SHOOTING|SPIN_UP": "Asked to keep spinning without feeding: go to SPIN_UP.",
+    "SHOOTING|SHOOTING": "A ball slows the flywheel. While SHOOTING is still wanted, drop back to SPIN_UP when !isAtShootingSpeed(), and stay in SHOOTING while it is at speed.",
+  };
+  const CORRECT = {
+    "IDLE|IDLE": ["ignore", "IDLE"], "IDLE|SPIN_UP": ["SPIN_UP"], "IDLE|SHOOTING": ["SPIN_UP"],
+    "SPIN_UP|IDLE": ["IDLE"], "SPIN_UP|SPIN_UP": ["ignore", "SPIN_UP"], "SPIN_UP|SHOOTING": ["SHOOT_IF"],
+    "SHOOTING|IDLE": ["IDLE"], "SHOOTING|SPIN_UP": ["SPIN_UP"], "SHOOTING|SHOOTING": ["SPIN_IF_NOT"],
+  };
+  const cellText = ([s, w]) => `the cell <code>case ${s}</code>, wanted <code>${w}</code> (yours: <i>${esc(optLabel(grid[s][w]))}</i>)`;
+  // In SHOOTING the indexer runs, so being there below speed is a bad shot even before a ball lands
+  const slowShooting = (r) => r.tr.find((x) => x.st === "SHOOTING" && !x.at);
+
+  // Each scenario returns { ok, msg, cell, runs }
+  const SCENARIOS = [
+    {
+      title: "Hold shoot from rest",
+      desc: "Start in IDLE at 0 rad/s. The driver holds the shoot button (wanted SHOOTING) for 3 s.",
+      run() {
+        const r = exRun({ state: "IDLE", w: 0 }, () => "SHOOTING", 3);
+        const early = slowShooting(r);
+        if (early) return { ok: false, runs: [r], cell: early.cell, msg: `At t = ${early.t.toFixed(2)} s it was in SHOOTING (indexer feeding) with the flywheel at only ${early.w0.toFixed(0)} rad/s. That came from ${cellText(early.cell)}.` };
+        const slow = r.balls.find((b) => !b.ok);
+        if (slow) return { ok: false, runs: [r], cell: slow.cell, msg: `It fed a ball at ${slow.w.toFixed(0)} rad/s at t = ${slow.t.toFixed(2)} s. A slow flywheel means a short shot. It was put in SHOOTING by ${cellText(slow.cell)}.` };
+        if (!r.balls.length) {
+          const last = r.tr[r.tr.length - 1];
+          const cell = [last.st, "SHOOTING"];
+          const why = last.st === "IDLE" ? "It never left IDLE." : last.st === "SPIN_UP" ? `It reached ${last.w.toFixed(0)} rad/s but stayed in SPIN_UP.` : "It never fed a ball.";
+          return { ok: false, runs: [r], cell, msg: `${why} Look at ${cellText(cell)}.` };
+        }
+        return { ok: true, runs: [r], msg: `Spun up first, then fed ${r.balls.length} balls, all at speed.` };
+      },
+    },
+    {
+      title: "A ball slows the flywheel",
+      desc: "Start in SHOOTING at 250 rad/s with the button held for 2.5 s. Every ball knocks 40 rad/s off.",
+      run() {
+        const r = exRun({ state: "SHOOTING", w: EX.SPEED }, () => "SHOOTING", 2.5);
+        const early = slowShooting(r);
+        if (early) return { ok: false, runs: [r], cell: early.cell, msg: `At t = ${early.t.toFixed(2)} s it was in SHOOTING (indexer feeding) with the flywheel at only ${early.w0.toFixed(0)} rad/s. That came from ${cellText(early.cell)}.` };
+        const slow = r.balls.find((b) => !b.ok);
+        if (slow) {
+          const cell = slow.cell[0] === "SHOOTING" ? ["SHOOTING", "SHOOTING"] : slow.cell;
+          return { ok: false, runs: [r], cell, msg: `After a shot it kept feeding: a ball went in at ${slow.w.toFixed(0)} rad/s. Look at ${cellText(cell)}.` };
+        }
+        const flap = r.tr.find((x) => x.before === "SHOOTING" && x.st !== "SHOOTING" && x.at);
+        if (flap) return { ok: false, runs: [r], cell: ["SHOOTING", "SHOOTING"], msg: `It left SHOOTING at t = ${flap.t.toFixed(2)} s even though the flywheel was at speed. Look at ${cellText(["SHOOTING", "SHOOTING"])}.` };
+        if (r.balls.length < 2) {
+          const last = r.tr[r.tr.length - 1], cell = [last.st, "SHOOTING"];
+          return { ok: false, runs: [r], cell, msg: `It only fed ${r.balls.length} ball${r.balls.length === 1 ? "" : "s"} and got stuck in ${last.st}. Look at ${cellText(cell)}.` };
+        }
+        return { ok: true, runs: [r], msg: `Dropped back to SPIN_UP after each shot and fed ${r.balls.length} balls, all at speed.` };
+      },
+    },
+    {
+      title: "Let go",
+      desc: "The driver lets go (wanted IDLE): once from SHOOTING at speed, once from SPIN_UP at 100 rad/s. It must be IDLE within 0.1 s and stay there.",
+      run() {
+        const runs = [];
+        for (const init of [{ state: "SHOOTING", w: EX.SPEED }, { state: "SPIN_UP", w: 100 }]) {
+          const r = exRun(init, () => "IDLE", 1.2);
+          runs.push(r);
+          const idleAt = r.tr.findIndex((x) => x.st === "IDLE");
+          if (idleAt < 0 || r.tr[idleAt].t > 0.1) {
+            const at = r.tr[Math.min(5, r.tr.length - 1)];
+            const cell = [idleAt < 0 ? r.tr[r.tr.length - 1].st : at.before, "IDLE"];
+            return { ok: false, runs, cell, msg: `From ${init.state}, letting go never reached IDLE. Look at ${cellText(cell)}.` };
+          }
+          const left = r.tr.slice(idleAt).find((x) => x.st !== "IDLE");
+          if (left) return { ok: false, runs, cell: ["IDLE", "IDLE"], msg: `It reached IDLE, then left again to ${left.st} while IDLE was still wanted. Look at ${cellText(["IDLE", "IDLE"])}.` };
+        }
+        return { ok: true, runs, msg: "Stopped right away both times, and stayed stopped." };
+      },
+    },
+    {
+      title: "Spin up only",
+      desc: "Wanted SPIN_UP (like a 'get ready' button): once from IDLE for 2.5 s, once from SHOOTING. It must be in SPIN_UP within 0.1 s and never feed.",
+      run() {
+        const runs = [];
+        for (const init of [{ state: "IDLE", w: 0 }, { state: "SHOOTING", w: EX.SPEED }]) {
+          const r = exRun(init, () => "SPIN_UP", init.state === "IDLE" ? 2.5 : 1);
+          runs.push(r);
+          const at = r.tr.findIndex((x) => x.st === "SPIN_UP");
+          if (at < 0 || r.tr[at].t > 0.1) {
+            const cell = [init.state, "SPIN_UP"];
+            return { ok: false, runs, cell, msg: `From ${init.state}, it never went to SPIN_UP. Look at ${cellText(cell)}.` };
+          }
+          const bad = r.tr.slice(at).find((x) => x.st !== "SPIN_UP");
+          if (bad) return { ok: false, runs, cell: [bad.before, "SPIN_UP"], msg: `It left SPIN_UP for ${bad.st} at t = ${bad.t.toFixed(2)} s, but only SPIN_UP was asked for. Look at ${cellText([bad.before, "SPIN_UP"])}.` };
+        }
+        return { ok: true, runs, msg: "Spun up and held speed without feeding, both times." };
+      },
+    },
+  ];
+
+  const EXC = { IDLE: "--idle", SPIN_UP: "--running", SHOOTING: "--success" };
+  function traceSvg(r) {
+    const W = 600, x = (t) => 52 + (W - 60) * (t / r.dur), yw = (w) => 70 - (w / 320) * 40;
+    let h = `<svg viewBox="0 0 ${W} 82" aria-hidden="true" shape-rendering="crispEdges">`;
+    h += `<text x="0" y="9">wanted</text><text x="0" y="23">state</text><text x="0" y="52">ω rad/s</text>`;
+    for (const p of r.tr) {
+      h += `<rect x="${x(p.t)}" y="2" width="${(W - 60) * DT / r.dur + 0.5}" height="8" fill="var(${EXC[p.wanted]})"/>`;
+      h += `<rect x="${x(p.t)}" y="14" width="${(W - 60) * DT / r.dur + 0.5}" height="12" fill="var(${EXC[p.st]})"/>`;
+    }
+    h += `<rect x="52" y="${yw(EX.SPEED + EX.TOL)}" width="${W - 60}" height="${yw(EX.SPEED - EX.TOL) - yw(EX.SPEED + EX.TOL)}" fill="var(--success)" opacity=".18"/>`;
+    h += `<line x1="52" x2="${W - 8}" y1="70" y2="70" stroke="var(--line)"/>`;
+    h += `<polyline fill="none" stroke="var(--actual)" stroke-width="1.6" points="${r.tr.map((p) => `${x(p.t).toFixed(1)},${yw(p.w).toFixed(1)}`).join(" ")}"/>`;
+    for (const b of r.balls) h += `<circle cx="${x(b.t)}" cy="${yw(b.w)}" r="4" fill="var(${b.ok ? "--goal" : "--warn"})" stroke="var(--bg)"/>`;
+    h += `<text x="52" y="80">0 s</text><text x="${W - 8}" y="80" text-anchor="end">${r.dur} s</text></svg>`;
+    return h;
+  }
+
+  function runTests() {
+    const res = SCENARIOS.map((sc) => ({ sc, out: sc.run() }));
+    exAllPass = res.every((x) => x.out.ok);
+    const firstFail = res.find((x) => !x.out.ok);
+    badCell = firstFail ? firstFail.out.cell : null;
+    const nPass = res.filter((x) => x.out.ok).length;
+    const el = $("ex-score");
+    el.style.visibility = "visible";
+    el.textContent = exAllPass ? "All 4 pass" : `${nPass} of 4 pass`;
+    el.classList.toggle("good", exAllPass);
+    $("ex-results").innerHTML = res.map(({ sc, out }) => {
+      const key = out.cell ? out.cell.join("|") : null;
+      const hint = !out.ok && key && !CORRECT[key].includes(grid[out.cell[0]][out.cell[1]]) ? `<p><b>Hint:</b> ${esc(HINTS[key])}</p>` : "";
+      return `<div class="res ${out.ok ? "pass" : "fail"}"><h4><span class="verdict">${out.ok ? "Pass" : "Fail"}</span>${esc(sc.title)}</h4>
+        <p class="note">${esc(sc.desc)}</p><p>${out.msg}</p>${hint}${out.runs.map(traceSvg).join("")}</div>`;
+    }).join("") + `<div class="legend"><span><i class="sq" style="background:var(--idle)"></i>IDLE</span><span><i class="sq" style="background:var(--running)"></i>SPIN_UP</span><span><i class="sq" style="background:var(--success)"></i>SHOOTING</span><span><i class="sw" style="border-color:var(--actual)"></i>flywheel</span><span><i class="sq" style="background:var(--goal);border-radius:99px"></i>ball at speed</span><span><i class="sq" style="background:var(--warn);border-radius:99px"></i>ball too slow</span></div>`;
+    renderEx();
+    updateWalkthrough();
+  }
+  $("ex-test").addEventListener("click", runTests);
+  $("ex-reset").addEventListener("click", () => {
+    grid = defaultGrid(); badCell = null; exAllPass = false;
+    buildCells(); renderEx();
+    $("ex-results").innerHTML = ""; $("ex-score").style.visibility = "hidden";
+  });
+
+  // ---------------------------------------------------------------------------------------------
+  buildCells();
+  renderEx();
+  resetSim();
+  goStep(0);
+  if (!WT.guided) setGuided(false);
+  requestAnimationFrame(frame);
+  // test hook for automated checks
+  window.__lab = { get sim() { return sim; }, get step() { return WT.i; }, get variant() { return variant; }, inp };
+})();
+</script>
+</body>
+</html>

@@ -5,6 +5,8 @@ hide_table_of_contents: true
 sidebar_position: 1
 ---
 
+import {LabLink} from '@site/src/components/LabLink';
+
 import april_tags from '@site/static/img/software/vision/april_tags.png';
 
 AprilTags are a special type of QR Code like marker that are use for computer vision recognition.
@@ -14,6 +16,10 @@ field relative to the field elements. AprilTags are often placed on or near the 
 field elements, such as scoring areas or game piece pickup locations.
 
 <img src={april_tags} style={{maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}}/>
+
+:::tip Try it in the Pose Estimator Lab
+Drive a robot around the field and watch AprilTag measurements pull a drifting odometry estimate back into place. <LabLink slug="pose-estimator-lab" />
+:::
 
 ## AprilTag Detection
 To detect AprilTags, we use the algorithm described in the [WPILIB documentation](https://frcdocs.wpi.edu/en/latest/docs/software/vision-processing/apriltag/apriltag-intro.html#processing-technique) 
@@ -42,3 +48,8 @@ pose estimator.
 
 For the details, see [Deep Dive: How the Tag Detector Works](./detector-deep-dive.mdx) and
 [Deep Dive: How PnP Finds the Camera](./pnp-deep-dive.mdx).
+
+### Try It: Pose Estimator Lab {#pose-estimator-lab}
+Drive a swerve robot on the 2026 field. Wheel odometry slowly loses track of where the robot really is, while our cameras read AprilTags and a Kalman filter blends the two, using the same filter rules as the 2026 robot.
+
+<LabLink slug="pose-estimator-lab" button />

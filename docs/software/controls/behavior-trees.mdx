@@ -5,17 +5,10 @@ hide_table_of_contents: false
 sidebar_position: 6
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import pickupAndScore from '@site/static/img/software/controls/behavior-trees/pickup-and-score-arbor.png';
+import {LabLink} from '@site/src/components/LabLink';
 
-export const BtAnimation = ({name, alt}) => (
-  <img
-    src={useBaseUrl(`/img/software/controls/behavior-trees/${name}.svg`)}
-    alt={alt}
-    width="640"
-    style={{maxWidth: '100%', height: 'auto'}}
-  />
-);
+import ArboristTree from '@site/src/components/ArboristTree';
+import * as BT from '@site/src/data/btTrees';
 
 # Behavior Trees
 
@@ -27,9 +20,15 @@ Where a [state machine](./state-machines.mdx) answers "what mode is the robot in
 "what should happen, in what order, and what if a step goes wrong?" The two work together on our robot: the tree decides
 the *order* and handles *failure*, and the steps it runs mostly ask the robot's own state machine for a state.
 
-:::tip Every animation on this page loops
-Watch the **tick** counter in the top left, the bright ring (where the tick is right now), the bright edges (the path
-it took), and the badge on each node (its status). The caption says what just happened.
+:::tip The trees on this page are live
+They are drawn by **Arborist**, the viewer inside [Arbor](../tools/arbor.mdx), so they look exactly like Arbor. The
+animations play tick by tick: a node turns **orange** while it is RUNNING, then **green** (SUCCESS) or **red**
+(FAILURE), and the caption under the tree says what just happened. Pause, or step with ◀ ▶. Click a tree to pan and
+zoom it, and select a node to see its settings.
+:::
+
+:::tip Try it in the Behavior Tree Lab
+Run these trees tick by tick on a simulated robot, in the same viewer Arbor uses, and make steps fail on purpose. <LabLink slug="behavior-tree-lab" />
 :::
 
 ---
@@ -39,28 +38,7 @@ it took), and the badge on each node (its status). The caption says what just ha
 Every box in the tree is a **node**. Nodes at the bottom do real work and are called **leaves**. Nodes that hold other
 nodes decide *how* their children run. Here is a real-looking auto:
 
-```mermaid
-flowchart TD
-    seq["→ Sequence"]
-    drive["FollowPath ToPickup"]
-    fb["? Fallback"]
-    shoot["SetWantedState SHOOT"]
-    to["Timeout 3000 ms"]
-    back["FollowPath ToBackup"]
-    aim["SetWantedState AIM"]
-
-    seq -->|1| drive
-    seq -->|2| fb
-    seq -->|3| shoot
-    fb -->|try first| to
-    fb -->|if not, try| back
-    to --> aim
-
-    classDef control fill:#3b4357,stroke:#9ca3af,color:#fff
-    classDef leaf fill:#2563eb,stroke:#93c5fd,color:#fff
-    class seq,fb,to control
-    class drive,aim,shoot,back leaf
-```
+<ArboristTree xml={BT.STEPS_TREE} height={400} label="PickupAndScore: a Sequence of Drive to the pickup, a Fallback (a Timeout of 3000 ms around Aim, else Drive to the backup spot), and SetWantedState SHOOT" />
 
 Read it from the top, left to right:
 
@@ -70,8 +48,8 @@ Read it from the top, left to right:
    the Fallback gives up on it and drives to the backup spot instead.
 4. Finally it shoots.
 
-The boxes that hold other boxes (Sequence, Fallback, Timeout) are the **control flow**. The blue boxes are the **actions**
-that actually move the robot. All the cleverness in a behavior tree is in how the control flow combines simple actions.
+The boxes that hold other boxes (Sequence, Fallback, and the Timeout drawn as a frame around Aim) are the **control
+flow**. The boxes at the ends are the **actions** that actually move the robot. All the cleverness in a behavior tree is in how the control flow combines simple actions.
 
 ---
 
@@ -170,11 +148,11 @@ A **Sequence** runs its children one after another. It moves on to the next chil
 a child answers RUNNING the Sequence answers RUNNING too, and **next tick it resumes at that same child**, not at the
 start.
 
-<BtAnimation name="sequence-success" alt="Animation: a Sequence runs Drive path, Aim and Shoot in turn, each RUNNING and then SUCCESS, and finally the Sequence reports SUCCESS" />
+<ArboristTree {...BT.SEQUENCE_SUCCESS} height={320} label="Animated tree: a Sequence runs Drive path, Aim and Shoot in turn, each RUNNING and then SUCCESS, and finally the Sequence reports SUCCESS" />
 
 The Sequence is only SUCCESS when **all** of its children succeeded. But the moment one of them fails, it gives up:
 
-<BtAnimation name="sequence-failure" alt="Animation: Drive path succeeds, Aim fails, the Sequence reports FAILURE and Shoot is never ticked" />
+<ArboristTree {...BT.SEQUENCE_FAILURE} height={320} label="Animated tree: Drive path succeeds, Aim fails, the Sequence reports FAILURE and Shoot is never ticked" />
 
 ```mermaid
 flowchart TD
@@ -196,7 +174,7 @@ is only reached after Aim succeeded, **Shoot never has to check whether Aim work
 A **Fallback** is "plan B" (some people call it a *selector*). It tries its children in order and stops at the first
 one that **succeeds**. It only fails if *every* child failed.
 
-<BtAnimation name="fallback" alt="Animation: a Fallback tries Aim: vision, which fails, then Aim: manual, which succeeds, so the Fallback succeeds. In a second run Aim: vision, Aim: manual and Skip the shot fail one after another, and only then does the Fallback fail" />
+<ArboristTree {...BT.FALLBACK} height={320} label="Animated tree: a Fallback tries Aim: vision, which fails, then Aim: manual, which succeeds, so the Fallback succeeds. In a second run Aim: vision, Aim: manual and Skip the shot fail one after another, and only then does the Fallback fail" />
 
 It is the mirror image of a Sequence:
 
@@ -217,7 +195,7 @@ the *whole time* an action runs: "keep driving only while we still hold the game
 A **ReactiveSequence** ticks **all** of its earlier children again on **every** tick, starting from the first. If a
 condition that used to pass now fails, the running action after it is **halted**.
 
-<BtAnimation name="reactive-sequence" alt="Animation: a ReactiveSequence checks Has game piece? on every tick while Drive path runs; on the third tick the condition fails, Drive path is halted and the ReactiveSequence fails" />
+<ArboristTree {...BT.REACTIVE_SEQUENCE} height={300} label="Animated tree: a ReactiveSequence checks Has game piece? on every tick while Drive path runs; on the third tick the condition fails, Drive path is halted and the ReactiveSequence fails" />
 
 :::info Only one child should be RUNNING
 A ReactiveSequence is meant for "some conditions, then one long action". Two children that both take several ticks
@@ -232,7 +210,7 @@ Control nodes do not have to run children one at a time. A **Parallel** ticks al
 finishes based on how many succeeded or failed. Our own **ParallelDeadline** is the version autos use most: the **first**
 child is the *deadline*. When it finishes, every other child is halted, and the node reports the deadline's result.
 
-<BtAnimation name="parallel-deadline" alt="Animation: Follow path and Intake on event run together; when Follow path succeeds, Intake on event is halted and the ParallelDeadline succeeds" />
+<ArboristTree {...BT.PARALLEL_DEADLINE} height={300} label="Animated tree: Follow path and Intake on event run together; when Follow path succeeds, Intake on event is halted and the ParallelDeadline succeeds" />
 
 That is exactly what "drive this path, and drop the intake when the robot passes the marker" needs: the path is the
 deadline, and the intake branch is just along for the ride. If the robot reaches the end of the path before the marker
@@ -245,7 +223,7 @@ ever fires, the waiting branch is stopped instead of hanging the auto.
 A **decorator** has exactly one child and modifies it. The one you will use most is **Timeout**: it gives its child a
 time limit, and if the child is still RUNNING when time is up, it halts the child and reports FAILURE.
 
-<BtAnimation name="timeout" alt="Animation: a Timeout gives Aim three seconds; when time is up it halts Aim and fails, so the Fallback moves on to Backup path, which succeeds" />
+<ArboristTree {...BT.TIMEOUT} height={320} label="Animated tree: a Timeout gives Aim three seconds; when time is up it halts Aim and fails, so the Fallback moves on to Backup path, which succeeds" />
 
 Put a Timeout under a Fallback and a step that *might* never finish becomes a step that *fails after three seconds*, which
 the Fallback turns into a plan B. This is the single most useful pattern in an auto.
@@ -300,12 +278,7 @@ Most leaves in an auto do not drive motors themselves. **`SetWantedState`** asks
 tick. To wait until the robot gets there, the tree retries the condition **`IsSystemState`**, which succeeds once the
 robot is in the state, inside a `Timeout` so it can't wait forever:
 
-```text
-├─ SetWantedState                      state = AIM
-└─ Timeout                             msec = 3000
-   └─ RetryUntilSuccessful             num_attempts = -1
-      └─ IsSystemState                 state = AIM
-```
+<ArboristTree xml={BT.TALK_TO_ROBOT} height={300} label="A Sequence: SetWantedState AIM, then a Timeout of 3000 ms around RetryUntilSuccessful around IsSystemState AIM" />
 
 ```mermaid
 sequenceDiagram
@@ -338,10 +311,11 @@ aiming can fail, and a `Fallback` for what to do then. See [The Super State Mach
 
 ## Reading a Real Auto
 
-Putting it all together, here is an example in the style of our autos, and what each part does. Decorators (`Timeout`, `RetryUntilSuccessful`) are drawn as frames around the child
-they wrap, and the edge labels give each child's place in its parent:
+Putting it all together, here is an example in the style of our autos, playing a run where aiming fails. Decorators
+(`Timeout`, `RetryUntilSuccessful`) are drawn as frames around the child they wrap, and the edge labels give each
+child's place in its parent:
 
-<img src={pickupAndScore} width="900" alt="PickupAndScore in Arbor: a Sequence with four steps (FollowTrajectory ToPickup, SetWantedState AIM, a Fallback, SetWantedState SHOOT). The Fallback first tries a Timeout of 3000 ms around RetryUntilSuccessful around IsSystemState AIM, and if not, FollowTrajectory ToBackup"/>
+<ArboristTree {...BT.PICKUP_AND_SCORE} height={460} label="PickupAndScore: a Sequence with four steps (FollowTrajectory ToPickup, SetWantedState AIM, a Fallback, SetWantedState SHOOT). The Fallback first tries a Timeout of 3000 ms around RetryUntilSuccessful around IsSystemState AIM, and if not, FollowTrajectory ToBackup. The animation shows aiming time out and the backup path run instead." />
 
 When you are not sure what a tree will do, trace one tick by hand: start at the root, ask "what does this node do with
 each child's answer?", and follow the RUNNING answers down to the node that is actually busy.
@@ -350,7 +324,7 @@ each child's answer?", and follow the RUNNING answers down to the node that is a
 
 ## Seeing It Run
 
-[Arbor](../tools/arbor.mdx) shows exactly these animations for a real robot: connect to the robot or the simulator and each
+[Arbor](../tools/arbor.mdx) shows exactly these colours for a real robot: connect to the robot or the simulator and each
 node turns **orange** while it is RUNNING, then **green** or **red**. If an auto stops where you did not expect, the node
 that is red, or the one that stayed orange, is where to look. The `.btlog` files the robot writes can be replayed there
 afterwards, one tick at a time.
@@ -361,6 +335,11 @@ afterwards, one tick at a time.
 | One node stays orange forever | That step never finishes. Wrap it in a `Timeout` and give the Fallback a plan B |
 | The whole tree is green but the robot did not do the thing | The step succeeded without doing the work: check it asked for the right state or path name |
 | An auto does nothing and Arbor shows no colours | The file failed to load: look at `BehaviorTree/<auto>/Error` and the Elastic alert |
+
+### Try It: Behavior Tree Lab {#behavior-tree-lab}
+No robot handy? This lab ticks a tree on a pretend robot and draws it with Arborist, the same viewer Arbor uses, so the colours mean the same thing. Break the camera or jam the intake to make each row of the table above happen, then edit the XML and run your own tree.
+
+<LabLink slug="behavior-tree-lab" button />
 
 ---
 

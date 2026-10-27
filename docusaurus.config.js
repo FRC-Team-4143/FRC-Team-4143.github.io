@@ -93,6 +93,9 @@ const config = {
           onInlineAuthors: 'warn',
           onUntruncatedBlogPosts: 'warn',
         },
+        theme: {
+          customCss: './src/css/drawings.css',
+        },
       }),
     ],
   ],
@@ -140,6 +143,11 @@ const config = {
             sidebarId: 'businessServicesSidebar',
             position: 'left',
             label: 'Business Services',
+          },
+          {
+            to: '/labs',
+            label: 'Labs',
+            position: 'left',
           },
           // adds sight seach to the navbar
           {

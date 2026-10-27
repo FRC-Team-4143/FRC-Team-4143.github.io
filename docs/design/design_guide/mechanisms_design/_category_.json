@@ -1,0 +1,10 @@
+{
+  "label": "Mechanism Design Guides",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Design best practices for specific mechanisms.",
+    "slug": "/design/design-guide/mechanisms"
+  },
+  "collapsed": true
+}

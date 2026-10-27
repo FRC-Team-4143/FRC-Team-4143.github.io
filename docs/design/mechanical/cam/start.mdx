@@ -1,32 +1,152 @@
 ---
-title: Getting Started with Fusion
-hide_table_of_contents: true
+title: Fusion Guide
 sidebar_position: 1
-unlisted: true
-
+description: Exporting a part from Onshape and turning it into a CNC program in Fusion.
 ---
-
-The following text will walk you through how to set up and generate G-Code from Fusion.
-If you do not have access to Fusion or the shared work space refer to [**Fusion Sign-Up**](https://frc-team-4143.github.io/docs/mechanical/fusion/fusion-sign-up)
-
-- Right click the part in Onshape model or the part tree and click **Export**.
-
-<img src={onshape_export} width="1000"/>
-
-- Confirm the part has a descriptive name.
-    - Subassembly
-    - Part Name
-    - Date of Export
-- Format: Step
-- Option: Download
-<img src={onshape_download} width="400"/>
-
-
-
-
-
-
-
 
 import onshape_download from '@site/static/img/mechanical/Fusion/Onshape_Download.png';
 import onshape_export from '@site/static/img/mechanical/Fusion/Onshape_Export.png';
+import Upload_1 from '@site/static/img/mechanical/Fusion/Upload_1.jpg';
+import Upload_2 from '@site/static/img/mechanical/Fusion/Upload_2.jpg';
+import Upload_3 from '@site/static/img/mechanical/Fusion/Upload_3.jpg';
+
+:::info Work in progress
+This page is still being written. Later sections are only outlines.
+:::
+
+This guide walks you through setting up a part and generating G-code in Fusion. If you do not have access to Fusion or
+the shared workspace, see [Fusion Sign-Up](./fusion-sign-up) first.
+
+## Exporting from Onshape to Fusion
+
+1. Right click the part in the Onshape model or part tree and click **Export**.
+
+    <img src={onshape_export} width="800" alt="Export option in Onshape"/>
+
+2. Confirm the part has a descriptive name (see [Naming Conventions](../../design_guide/naming)):
+    - Subassembly
+    - Part name
+    - Date of export
+3. Set **Format** to **STEP** and **Option** to **Download**.
+
+    <img src={onshape_download} width="400" alt="Onshape export dialog"/>
+
+4. Open Autodesk Fusion and open the **Data Panel** in the upper left corner.
+5. Select the season's project folder (for example, **2026FRC4143**).
+
+    <img src={Upload_1} width="400" alt="Fusion Data Panel project list"/>
+
+6. Navigate to the subassembly folder.
+
+    <img src={Upload_2} width="400" alt="Subassembly folder in the Data Panel"/>
+
+7. Click **Upload** in the Data Panel, drag the exported STEP file into the upload window, and click **Upload**.
+8. Once the file is uploaded, double click the part to open it in Fusion.
+
+    <img src={Upload_3} width="400" alt="Uploaded part in the Data Panel"/>
+
+:::tip Fix the mouse controls
+Fusion's mouse controls are different from Onshape's. Click your name in the upper right corner, open
+**Preferences**, and change **Pan, Zoom, Orbit** to **Tinkercad**.
+:::
+
+## Fusion CAM Setup
+
+Fusion uses a right-hand coordinate system: **Z** is the tool direction, and **X** is usually the part's long axis.
+
+1. Align the part in the Fusion workspace.
+    - Identify the top, front, and right faces of the part.
+    - Use the **Align** tool to set the orientation of the part onto the XY plane.
+2. Switch to the **Manufacture** workspace.
+3. Click the **Setup** dropdown and select **New Setup**.
+
+{/* TODO: add screenshots for alignment and new setup */}
+
+### Stock Setup
+
+- **Stock:** set **Stock Offset** to **No Additional Stock**. The brown shaded box will disappear.
+- Set the origin point.
+- **Post Process tab:**
+    - **Program number:** the name of the Onshape part.
+    - **Program comment:** warnings or setup notes for whoever runs the program, who may not be familiar with it.
+    - **WCS offset:** which corner of the vise the part origin is at. **This is very important.** See
+      [Tools & Offsets](./tools#cnc-mill-work-offsets) for work offset locations.
+
+| G-code | WCS offset |
+|---|---|
+| G54 | 1 |
+| G55 | 2 |
+| G56 | 3 |
+| G57 | 4 |
+
+### Operations
+
+Determine the order of operations, typically:
+
+1. Drilling
+2. Milling
+3. Parting
+
+#### Drilling
+
+1. **Tool tab:** select the tool and check the speeds and feeds.
+2. **Geometry tab:** select the holes.
+3. **Heights tab:** select **Drill tip through bottom** and set **Break-through depth** to 0.1".
+
+- Use pecking for deep holes (material thicker than 0.25").
+- See [Torque Monitoring](../machining/milling_cnc#torque-monitoring) for how to watch spindle load while drilling.
+
+{/* TODO: screenshots of drill selection, parameters, and depth */}
+
+#### Boring
+
+Use **2D > Bore** for larger holes, like bearing bores.
+
+1. **Tool tab:** select the tool and check the speeds and feeds.
+2. **Geometry tab:** select the inner surface of the bore.
+3. **Heights tab:** set **Bottom Height** to -0.1".
+
+#### Milling
+
+*Coming soon.*
+
+#### Parting
+
+{/* TODO: screenshots of contour selection, parameters, and tabs */}
+*Coming soon.*
+
+### Validation
+
+- Check the toolpaths.
+- Simulate the program.
+
+### Pre-Run Checklist
+
+- Are the stock settings right?
+- Are the coordinates rotated correctly? (Z is the tool direction, X is the long axis.)
+- Does the zero point make sense?
+- Is the right WCS selected, and does it agree with the zero point and the machine?
+- Are the tool numbers correct, and do they agree with the machine's tool table?
+- Are the speeds and feeds reasonable? (About 5,000 RPM, under 20 in/min.)
+
+### Post Process
+
+Right click the **setup** and click **Post Process**, then select **Post** to save the `.nc` file to a USB drive.
+
+:::warning Common problem
+Right click the **setup**, not an operation. Otherwise you get a program with only one tool.
+:::
+
+| Machine | Post processor |
+|---|---|
+| Woodshop router | Carbide 3D |
+| Tormach mill | Tormach PathPilot |
+| McBride & Shoff mill | Fanuc |
+
+Before posting, confirm:
+
+- Post processor
+- Operations
+- Work offset
+- File name (see [Naming Conventions](../../design_guide/naming#g-code))
+- Save location
