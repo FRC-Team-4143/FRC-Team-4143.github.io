@@ -50,7 +50,8 @@ issue — ask an existing `legion-admin` to add you under **Admin → User Group
 something to troubleshoot in the individual app. The **-manager** groups (vs.
 **-admin**) exist for a reason: a `tempus-manager` gets the dashboard and report view
 only, and a `munus-manager` can manage opportunities/shifts but not the rest of admin —
-useful for someone who needs day-to-day access without full admin.
+useful for someone who needs day-to-day access without full admin. (A `tempus-manager`
+can also edit sessions and the weekly hour requirements.)
 
 **A bookmarked `*.marswars.org` link skips all of this.** Go straight to
 `tempus.marswars.org`, `munus.marswars.org`, `legion.marswars.org` — any of them —
@@ -96,11 +97,17 @@ browser, or are cleaning up several sessions at once:
 Other commands worth having memorized:
 
 - **`/shop`** — who's currently signed in, without opening a browser.
-- **`/gtfo`** — mass-signs-out every student still signed in (end-of-night cleanup),
-  counted as Contributor hours up to that moment. Mentor-only; students get an error if
-  they try it.
+- **`/gtfo`** — mass-signs-out every student and mentor still signed in (end-of-night
+  cleanup). Mentor-only; students get an error if they try it. Like the 10 PM auto
+  sign-out, it treats those sessions as forgotten: each one is credited only the
+  "Session length (minutes)" set under **Admin → Settings** (5 by default), not the time
+  up to that moment. Fix any that were real work from **Admin → Sessions**.
 
 `/qr` also works for you if you ever need a replacement badge yourself.
+
+**Lead mentors** are set by Legion groups named `tempus-lead-<team>-<subteam>` (for
+example `tempus-lead-4143-software`). When a student on that team and subteam misses
+their weekly goal, Sunday's update goes to a group DM with them and their leads.
 
 ## Munus — volunteer hours
 
@@ -113,7 +120,8 @@ report right there:
 </div>
 
 **Approve**, **Edit hours** (if the number needs correcting before you approve it), or
-**Reject** — all from the DM, no site visit needed. The same queue lives on the admin
+**Reject** — all from the DM, no site visit needed. A submission you haven't acted on
+gets re-sent to you every few days until you do. The same queue lives on the admin
 dashboard if you'd rather work from a browser, or are catching up on more than one:
 
 ![Munus admin dashboard showing one pending submission awaiting review, with Approve and Reject buttons](./img/munus-admin-review.png)

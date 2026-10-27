@@ -9,6 +9,8 @@ date: 2026-09-11T09:00
 
 import SlackTempusHours from './img/slack-tempus-hours.png';
 import SlackMunusLogHours from './img/slack-munus-log-hours.png';
+import SlackTempusQr from './img/slack-tempus-qr.png';
+import SlackTempusWeekly from './img/slack-tempus-weekly-behind.png';
 import WorkflowAnnounce from './img/workflow-munus-1-announce.png';
 import WorkflowSignupModal from './img/workflow-munus-2-signup-modal.png';
 import WorkflowReminder from './img/workflow-munus-3-reminder.png';
@@ -38,9 +40,17 @@ mentor's guide if that's ever you); as a student it doesn't affect anything you 
 
 Tempus tracks your hours in the shop. There's no app to open for the everyday part:
 
-- **Walk in, scan your badge** at the kiosk — you're signed in.
+- **Walk in, scan your badge** at the kiosk — you're signed in. Hold your phone's QR
+  up to the kiosk camera, or use the handheld scanner.
 - **Walk out, scan it again** — you're signed out, counted as full "Contributor" hours
   by default.
+
+![The shop kiosk: who's signed in for each team, the all-time and this-week leaderboards, and the Scan Badge panel](./img/tempus-kiosk.png)
+
+**Don't forget to scan out.** At 10 PM Tempus signs out anyone still signed in, but a
+forgotten session only counts a few minutes (5 by default), not the whole night, and only
+a mentor can fix it afterward.
+
 - **`/hours`** in Slack any time for a private summary of your week and season so far:
 
 <div style={{textAlign: 'center'}}>
@@ -55,8 +65,24 @@ your recent sessions, total hours, and whether you're on pace for the week:
 A couple of other commands worth knowing:
 
 - **`/qr`** — lost your badge? This DMs you a fresh QR code on the spot, no mentor
-  needed.
+  needed. The DM also links your personal badge page, which you can bookmark (it opens
+  without signing in), and, when the team has them turned on, Apple and Google Wallet
+  passes that turn your screen brightness up so the kiosk reads it first try. No phone?
+  Ask a mentor for a printed badge card.
+
+<div style={{textAlign: 'center'}}>
+<img src={SlackTempusQr} alt="A Slack DM from Mercury with a student's kiosk QR badge, a link to their badge page, and Add to Apple Wallet and Add to Google Wallet links" width="360" />
+</div>
+
 - **`/shop`** — see who else is currently signed in.
+
+**Every Sunday night** Mercury sends your week: hours so far against your team's weekly
+goal. If you're behind, that message goes to a group DM with your subteam's lead mentors,
+so you can plan make-up time together:
+
+<div style={{textAlign: 'center'}}>
+<img src={SlackTempusWeekly} alt="A Slack group DM between a student, a lead mentor and Mercury: the student's weekly hours update showing they are 3.7 hours behind, and the mentor offering to plan extra build nights" width="360" />
+</div>
 
 If a mentor needs to correct a session (say, you were marked Contributor but were
 mostly goofing off — or the reverse), that happens on their end via `/edit`; there's
@@ -65,7 +91,9 @@ nothing for you to do there.
 ## Munus — volunteer hours
 
 Munus is where volunteer opportunities get posted, and where you sign up and log your
-hours toward your season requirement. The whole loop below — signing up, getting
+hours toward your season requirement: 5 hours for freshmen (and junior high), 10 for 4423
+sophomores, and 15 for everyone else on 4143. Opportunities marked 🚨 Required need every
+student to sign up for at least one shift. The whole loop below — signing up, getting
 reminded, and logging your hours — happens without leaving Slack.
 
 **1. An opportunity gets posted** to the team's volunteer channel:
@@ -101,7 +129,8 @@ length, or adjust it if you ran long or short:
 <img src={WorkflowOutcome} alt="A Slack DM from Mercury confirming a student's hours were approved and now count toward their season total" width="360" />
 </div>
 
-Only **approved** hours count toward your season total — if a submission is sitting as
+Log your hours within **7 days** of the shift: after that it's closed out automatically
+and won't count. Only **approved** hours count toward your season total — if a submission is sitting as
 "Pending" for a bit, that's normal, it just means nobody's reviewed it yet.
 
 If you'd rather do any of this from a browser, **`/vhours`** replies with your season
