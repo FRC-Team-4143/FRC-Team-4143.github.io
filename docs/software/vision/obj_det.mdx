@@ -52,21 +52,42 @@ techniques and deep learning.
 
 ## Traditional Computer Vision Techniques
 
-The traditional way is to write the rules yourself. For a bright yellow ball, the classic recipe is:
+The traditional way is to write the rules yourself, as a **pipeline**: a chain of simple image operations,
+each one feeding the next. Here is a classic pipeline for bright yellow balls, run step by step on a picture
+where we added a strip of yellow tape, a yellow number plate on the robot and some camera noise, to show
+what each step is for:
 
-1. Convert the picture from RGB to **HSV** (hue, saturation, value), so "yellow" is one range of hue no
-   matter how bright the lighting is.
-2. Keep only the pixels whose hue, saturation and value are in the yellow range (a **color threshold**).
-3. Group the kept pixels into blobs (**contours**), and keep blobs that are big enough and round enough.
+![The traditional pipeline in six steps: the camera picture, its hue, the yellow pixels, the cleaned up mask, the outlines of 12 blobs, and the 10 round blobs kept as targets with the tape and plate rejected](/img/software/vision/ml/10-traditional-pipeline.webp)
+
+1. **Camera picture.** Each pixel is three numbers: red, green and blue (RGB).
+2. **Convert to HSV** (hue, saturation, value). In RGB, a ball in shadow and the same ball in light have
+   very different numbers. In HSV, **hue** is the color itself (yellow, red, blue...), **saturation** is how
+   strong the color is, and **value** is how bright it is, so "yellow" is roughly one range of hue whether
+   the pixel is lit or shaded.
+3. **Color threshold.** Keep only pixels whose hue, saturation and value are all inside the "yellow" ranges
+   (white), and drop everything else (black). The result is a black and white **mask**. Notice it also keeps
+   the tape, the plate and hundreds of noise specks: they are yellow too.
+4. **Clean up.** An **opening** shrinks every white region by a few pixels and then grows it back. Specks
+   smaller than the shrink disappear completely and don't come back; big regions return to their shape.
+5. **Find contours.** Trace the outline of every white region that's left. Each outline is one candidate
+   blob: here, 12 of them.
+6. **Filter.** Keep blobs that look like a game piece. Here the rule is "big enough, and round": the
+   **roundness** $\frac{4\pi \cdot \text{area}}{\text{perimeter}^2}$ is 1 for a perfect circle and gets
+   smaller for long or jagged shapes. The tape (0.09) and the plate (0.43) fail it. For each blob kept, the
+   center of its circle is the target, and from there it is turned into angles exactly like a detector's box
+   (see [From a box to the robot](#from-a-box-to-the-robot)).
+
+Every number in this pipeline (the hue range, the opening size, the minimum area, the roundness cutoff) is a
+setting someone tuned by hand while looking at camera pictures. This is fast and easy to understand, and it
+works well when the lighting and the scene match what it was tuned for. But it breaks when they don't:
 
 ![The same color rule finds all 10 balls under practice lighting but only 1 when the lights are dimmer and warmer. A YOLOv8 nano model finds 8 of them in that dim picture.](/img/software/vision/ml/8-traditional.webp)
 
-This is fast and easy to understand, and on the practice field picture it finds all 10 balls. But every
-number in those rules was tuned for one lighting. In the middle picture, the same scene is lit dimmer and
-warmer, like a different venue: the balls turn orange-brown, fall outside the "yellow" range, and the rule
-finds just 1 of them. A neural network that was never tuned for this lighting still finds 8.
+In the middle picture, the same rule, tuned on the practice field picture, runs on the same scene lit dimmer
+and warmer, like a different venue: the balls turn orange-brown, fall outside the "yellow" range, and the
+rule finds just 1 of them. A neural network that was never tuned for this lighting still finds 8.
 
-Lighting is only one way rules break: a yellow bumper or a team shirt passes the color test, two touching
+Lighting is only one way rules break: a yellow bumper or a team shirt can pass both the color and shape tests, two touching
 pieces can merge into one blob, and a piece half hidden behind a robot isn't round anymore. Each fix is
 another hand-tuned rule.
 
