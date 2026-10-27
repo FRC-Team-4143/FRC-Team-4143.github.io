@@ -20,6 +20,33 @@ The picture above is a real detection: a rendered practice field run through a Y
 model trained on everyday objects, which calls our balls "sports ball"). A team model is trained on our own
 game piece pictures instead.
 
+## Kinds of vision tasks
+
+Object detection is one of several related jobs a vision model can do. They differ in how much detail they
+give back about *where* things are:
+
+![The same picture four ways: a classification model gives one label for the whole picture, a detector draws a box around each ball, semantic segmentation colors every ball pixel the same, and instance segmentation colors each ball separately](/img/software/vision/ml/9-tasks.webp)
+
+- **Image classification** gives one answer for the whole picture: "this picture shows a tennis ball", with
+  a confidence. It says nothing about where the object is or how many there are. (Here a general model
+  trained on everyday pictures guessed "tennis ball" at 0.38.) Useful for questions like "is there a game
+  piece in the intake?"
+- **Object detection** finds every object, with a class and a box for each one. This is what we use most,
+  because the center of a box is enough to steer toward a piece.
+- **Semantic segmentation** labels every *pixel* with a class ("ball", "carpet", "robot"), but doesn't
+  separate one object from the next: two touching balls are one patch of "ball" pixels.
+- **Instance segmentation** does both: an outline (a **mask**) of the exact pixels of each separate object.
+  It is the most detailed and takes the most computing. It helps when a box isn't precise enough, for
+  example to find the bottom edge of a piece on the floor or to split pieces that are piled together.
+
+There are also **pose** (or keypoint) models, which find specific points on an object, like the corners of
+a game piece or the joints of a person, and **oriented** detectors, whose boxes can be rotated to fit long
+objects lying at an angle.
+
+Our Jetson's detector can run either **detection** or **instance segmentation** models (the "segment"
+versions of YOLOv8 and RF-DETR). The pictures above come from general YOLOv8 nano models, not a team model;
+the semantic segmentation panel was made by merging the instance masks.
+
 There are two common approaches that can be used for object detection: traditional computer vision
 techniques and deep learning.
 
