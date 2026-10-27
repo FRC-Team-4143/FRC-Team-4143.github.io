@@ -1,0 +1,144 @@
+---
+title: Setting Up the Cameras
+description: Adding, calibrating and placing a camera on the Jetson's camera web page.
+sidebar_position: 2
+---
+
+# Setting Up the Cameras
+
+Every vision camera is set up from the camera web page that runs on the [Jetson](../hardware/jetsons.mdx).
+Connect to the robot's network and open:
+
+- Varsity: [http://10.41.43.200:5800](http://10.41.43.200:5800)
+- JV: [http://10.44.23.200:5800](http://10.44.23.200:5800)
+
+The page has a tab for each step below. A new camera goes through them in this order: **Sources**,
+**Calibration**, **Pipelines**, then check the **Field Layout** once a season. See
+[How Our Vision System Works](./pipeline.mdx) for what each piece does.
+
+:::warning Units
+Every distance on the camera page is in **meters** and every angle is in **radians**, the same as in our
+robot code. The one exception is the calibration board's square size, which is in millimeters because
+that's how it's printed.
+:::
+
+## Sources
+
+The **Sources** tab lists the cameras the Jetson can find on its network and USB ports, by serial number.
+For each camera you want to use:
+
+1. **Enable** it.
+2. Set its **frame rate** (30 frames per second is the default) and **binning** (1 means full resolution;
+   2 combines each 2 × 2 block of pixels into one, for a picture half as wide and half as tall that is
+   faster to process).
+3. Pick its **calibration file**, once it has one (next step).
+
+Only enabled cameras get a pipeline when the vision app starts.
+
+## Calibration
+
+A camera's **calibration** describes its lens: the focal length, the center of the picture, and how much
+the lens bends straight lines near the edges. The AprilTag detector needs it to turn a tag's size in the
+picture into a distance. **Every camera needs its own calibration**, even two of the same model, and it has
+to be redone if the lens is changed, refocused or bumped.
+
+You need a printed chessboard with **7 × 10 inner corners**. Measure one square's edge with a ruler; the
+default is 22.86 mm (0.9 in).
+
+1. On the **Calibration** tab, enter the square's edge length in millimeters and choose the camera.
+2. Press **Start**. The camera's picture appears on the left.
+3. Hold the board in front of the camera and move it around slowly: near and far, in every corner of the
+   picture, and tilted in different directions. Hold it still for a moment in each spot so the picture is
+   sharp.
+4. Watch the **Coverage** bars. X min/max and Y min/max fill as the board reaches each edge of the picture,
+   **Skew** as you tilt it, and **Scale** as you move it nearer and farther. Keep going until they are all
+   well filled.
+5. Check the **Reprojection error**. It is how many pixels the solved lens model is off by, on average, when
+   it predicts where the board's corners should be. Under about 0.5 px is good.
+6. Press **Complete** to save the calibration file, or **Stop** to throw it away and start over.
+
+Then go back to **Sources** and pick the new calibration file for that camera.
+
+:::tip
+Most bad calibrations come from too few board positions near the edges and corners of the picture. That
+is where the lens bends straight lines the most, and where tags often are during a match.
+:::
+
+## Pipelines
+
+Each enabled camera has a **pipeline**: its settings for the camera driver and the detectors.
+
+### Camera pose
+
+The **camera pose** says where the camera is mounted on the robot, measured from the center of the robot on
+the floor:
+
+| Field | Meaning |
+| --- | --- |
+| x | Meters forward from the robot's center (negative is behind it) |
+| y | Meters to the left of the robot's center (negative is to the right) |
+| z | Meters up from the floor |
+| Roll | Radians the camera is rolled about its forward axis |
+| Pitch | Radians the camera is tilted. Positive pitch points the camera **down** |
+| Yaw | Radians the camera is turned left from straight ahead (π/2 ≈ 1.571 is facing left, π ≈ 3.142 is facing backward) |
+
+The proxy client uses this to move each camera's pose to the center of the robot before it sends it to the
+roboRIO. An error here shows up directly as an error in the robot's position. If the robot's pose jumps
+when a different camera sees a tag, check that camera's pose first.
+
+:::tip Measuring angles
+It is fine to measure the camera's angle in degrees with a protractor or from CAD. Convert it before you
+type it in: radians = degrees × π / 180. A camera tilted 15° down has a pitch of about 0.262 rad.
+:::
+
+### Exposure and gain
+
+- **Exposure** is how long each picture collects light. Short exposures keep tags sharp while the robot is
+  moving fast; too short and the picture is too dark for tags to be found.
+- **Gain** brightens the picture electronically. It makes a dark picture usable but adds noise, so turn
+  exposure up first and gain second.
+
+Set them on the field (or under similar lights) with the robot moving, and watch the debug image: tags
+should be sharp black-and-white squares, not gray or smeared.
+
+### AprilTag detection
+
+- **Enabled** turns the AprilTag detector on for this camera.
+- **Family** is `TAG36H11` for FRC.
+- **Tag size** is the edge length of the tag's black square, in meters. FRC tags are 0.1651 m (6.5 in).
+
+### Object detection
+
+The pipeline also has settings for the game piece detector: the **model** (trained models are uploaded on
+the **Models** tab), the **confidence threshold**, and the **IoU threshold**. See
+[Object Detection](./obj_det.mdx).
+
+## Field Layout
+
+The **Field Layout** tab lists where every AprilTag is on the field. The detector can only use tags that are
+in this list.
+
+Each season, WPILib publishes the official layout as a JSON file (in the
+[allwpilib repository](https://github.com/wpilibsuite/allwpilib/tree/main/apriltag/src/main/native/resources/edu/wpi/first/apriltag)).
+Load it with the **Load JSON** button: each tag becomes an entry named `tag_<ID>`, with its x, y and z
+in meters and its roll, pitch and yaw in radians. You can also add or edit a single tag by hand, which is
+useful for a practice field whose tags aren't quite where the official drawing says.
+
+## Status
+
+The **Status** tab shows every program the vision app is running (each camera's driver and detector, the
+proxy client, the video streamer) with its state and how many times it has restarted. You can start, stop
+or restart them from here. Restart a camera's programs after changing its source or pipeline if the
+change doesn't seem to take effect.
+
+## Checking it on the robot
+
+Once a camera is set up:
+
+1. Point the robot at a tag and open AdvantageScope or Elastic.
+2. Check the dashboard alerts. MW-Lib raises "Proxy Server: Lost connection to ..." when a Jetson stops
+   talking to the roboRIO, and "Proxy Server: Lost camera '...'" when a camera hasn't sent anything in the
+   last 2 seconds (which also happens when it can't see any tags).
+3. Look at the `Proxy/TagSolutions` log: the poses should appear while a tag is in view.
+4. Put the robot at a measured spot on the field and compare the camera's pose to where the robot really is.
+   See [Using Vision in Robot Code](./robot-code.mdx).
