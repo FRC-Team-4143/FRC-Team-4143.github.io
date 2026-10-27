@@ -1,34 +1,66 @@
 ---
 title: Object Detection
-description: Object Detection overview and what it is used for.
+description: How our robots find game pieces with a neural network, from the camera picture to angles the robot code can use.
 hide_table_of_contents: true
 sidebar_position: 10
 ---
 
-import object_detection from '@site/static/img/software/vision/obj_det.webp';
 import trt from '@site/static/img/software/vision/trt.png';
 
 Object detection is a computer vision technique that allows a computer to identify and locate
 objects within an image. For our applications, this often means identifying game pieces or field elements.
-There are two common approaches that can be used for object detection: traditional computer vision 
-techniques and deep learning.
 
-<img src={object_detection} style={{maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}}/>
+![A camera picture of a practice field with yellow game pieces, each one boxed and labeled by an object detector with its confidence](/img/software/vision/ml/5-detections.webp)
+
+For every object it finds, a detector gives back three things:
+
+- a **class**: what it is ("game piece", "robot", ...),
+- a **bounding box**: the smallest rectangle around it, in pixels,
+- a **confidence**: how sure it is, from 0 to 1.
+
+The picture above is a real detection: a rendered practice field run through a YOLOv8 nano model (a general
+model trained on everyday objects, which calls our balls "sports ball"). A team model is trained on our own
+game piece pictures instead.
+
+There are two common approaches that can be used for object detection: traditional computer vision
+techniques and deep learning.
 
 ## Traditional Computer Vision Techniques
 
+The traditional way is to write the rules yourself. For a bright yellow ball, the classic recipe is:
+
+1. Convert the picture from RGB to **HSV** (hue, saturation, value), so "yellow" is one range of hue no
+   matter how bright the lighting is.
+2. Keep only the pixels whose hue, saturation and value are in the yellow range (a **color threshold**).
+3. Group the kept pixels into blobs (**contours**), and keep blobs that are big enough and round enough.
+
+![The same color rule finds all 10 balls under practice lighting but only 1 when the lights are dimmer and warmer. A YOLOv8 nano model finds 8 of them in that dim picture.](/img/software/vision/ml/8-traditional.webp)
+
+This is fast and easy to understand, and on the practice field picture it finds all 10 balls. But every
+number in those rules was tuned for one lighting. In the middle picture, the same scene is lit dimmer and
+warmer, like a different venue: the balls turn orange-brown, fall outside the "yellow" range, and the rule
+finds just 1 of them. A neural network that was never tuned for this lighting still finds 8.
+
+Lighting is only one way rules break: a yellow bumper or a team shirt passes the color test, two touching
+pieces can merge into one blob, and a piece half hidden behind a robot isn't round anymore. Each fix is
+another hand-tuned rule.
+
 ## Deep Learning Techniques
-Deep learning techniques involve the training of a deep learning model on a large dataset of 
-labelled training data, often called a dataset. The data is fed to the model, which uses it to 
-learn important features and patterns that can be used to identify objects in new images.
+
+Deep learning involves training a model on a large set of labelled example pictures, called a dataset.
+The model uses the examples to learn the features and patterns that identify each object by itself, instead
+of being told them. That handles the lighting, partly hidden pieces and look-alikes that break hand-written
+rules, as long as the training pictures include them.
 
 For computer vision applications, most of the deep learning models use a foundational concept
 called [Convolutional Neural Networks](https://learnopencv.com/understanding-convolutional-neural-networks-cnn/)
-(CNNs). CNNs are designed to process visual data and have proven to be highly effective for image recognition tasks. 
-They use a special mathematical operation called convolution to extract features from images. These convolution 
-operations are able to capture features in the image such as edges, textures, and shapes. Most models use a series 
-of convolutional layers, to allow the network to better learn more complex features and patterns that are important 
-for object detection.
+(CNNs). CNNs use a mathematical operation called convolution to extract features such as edges, textures,
+and shapes, and stack many of these layers to learn more complex patterns.
+
+:::tip New to neural networks?
+[Deep Dive: How Neural Networks Work](./neural-networks.mdx) explains neurons, training, and convolution
+from the ground up, with pictures of a small network learning.
+:::
 
 Over the past few years we have used several different deep learning models for object detection, including:
 - [YOLO v5](https://huggingface.co/Ultralytics/YOLOv5)
@@ -36,30 +68,113 @@ Over the past few years we have used several different deep learning models for 
 - [YOLO 11](https://huggingface.co/Ultralytics/YOLO11)
 - [Resnet-50](https://huggingface.co/microsoft/resnet-50)
 
-### Yolo Models 
+Our Jetson software, [Aquila Vision](https://github.com/coalman321/Aquila-Vision), currently runs two
+families of detectors: **YOLOv8** and **RF-DETR**. Each can either draw boxes (detection) or also outline
+the exact pixels of each object (segmentation).
 
-The You Only Look Once (YOLO) family of models are a series of real-time object detection models that are
-designed to be fast and accurate. YOLO models work by dividing the input image into a grid and predicting bounding boxes
-and class probabilities for each grid cell. This allows the model to detect multiple objects in a single pass through
-the network, making it much faster than traditional object detection methods. This is the model architecture we have selected
-for the 2024 and 2025 seasons, due to its speed and accuracy.
+### How YOLO finds objects
+
+The You Only Look Once (YOLO) family of models are real-time object detection models designed to be fast
+and accurate. They look at the whole picture once, in a single pass through the network, and predict every
+object at the same time. This is the model architecture we have selected for the 2024 and 2025 seasons, due
+to its speed and accuracy.
+
+Here is what happens to each camera picture in our YOLOv8 detector:
+
+1. **Straighten the picture.** The camera's [calibration](./camera-setup.mdx#calibration) is used to undo the
+   lens distortion first, so straight lines are straight and angles to objects come out right.
+2. **Resize to 640 × 640.** The network always takes a 640 × 640 picture. The camera picture is shrunk to fit
+   and the leftover space is filled with black bars (**letterboxing**), so objects aren't stretched.
+3. **Run the network.** The network divides the picture into grids at three sizes: 80 × 80 cells (for small,
+   far-away objects), 40 × 40 and 20 × 20 (for big, close ones). Every cell predicts a box and a score for
+   each class. That is $6400 + 1600 + 400 = 8400$ candidate boxes for every picture.
+4. **Drop unlikely boxes.** Each candidate keeps its most likely class. Candidates whose score is below the
+   **confidence threshold** are thrown away.
+5. **Remove duplicates (non-maximum suppression).** Neighboring cells often find the same object, so one ball
+   can have a dozen overlapping boxes. **Non-maximum suppression (NMS)** keeps the most confident box and
+   removes every other box of the same class that overlaps it too much, then repeats with the next most
+   confident box that's left.
+
+![Left: before NMS, every ball has 7 to 11 nearly identical candidate boxes stacked on top of each other. Right: after NMS, one box per ball.](/img/software/vision/ml/6-nms.webp)
+
+(For this picture the confidence threshold was set very low, 0.05, to show all the candidates.)
+
+"Overlaps too much" is measured with **Intersection over Union (IoU)**: the area where two boxes overlap,
+divided by the area they cover together. Two identical boxes have an IoU of 1, two boxes that don't touch
+have 0:
+
+![IoU is the overlap area divided by the total area covered by both boxes](/img/software/vision/ml/7-iou.webp)
+
+Both thresholds are set per camera on the [Pipelines tab](./camera-setup.mdx#object-detection) of the camera
+web page:
+
+- **Confidence threshold**: raise it to get fewer false detections, lower it to find more of the hard
+  pieces (far away, half hidden).
+- **IoU threshold**: the overlap above which two boxes count as the same object. Too high and one piece gets
+  two boxes; too low and two pieces touching each other merge into one.
+
+### RF-DETR
+
+**RF-DETR** is a newer kind of detector, built on a **transformer** (the same building block as the language
+models behind chatbots) instead of only convolutions. Instead of a grid of cells, it has a fixed number of
+**queries**, and each query learns to "claim" one object in the picture. Because each object is claimed by
+only one query, RF-DETR doesn't need non-maximum suppression. Transformers look at the whole picture at once,
+which helps with crowded scenes and objects partly hidden behind each other, at the cost of more computing
+per picture.
+
+### From a box to the robot
+
+The robot doesn't need pixels, it needs directions. For each detection, the center of its box is turned into
+two angles from the camera, using the same [pinhole camera model](./pnp-deep-dive.mdx#the-pinhole-camera)
+as for AprilTags:
+
+$$
+\theta_x = \arctan\!\left(\frac{u - c_x}{f_x}\right)
+\qquad
+\theta_y = \arctan\!\left(\frac{v - c_y}{f_y}\right)
+$$
+
+where $(u, v)$ is the center of the box in pixels. Those angles, in radians, are sent to the roboRIO as
+[piece detection packets](./pipeline.mdx#4-sending-it-to-the-roborio) along with the class and the time the
+picture was taken. With the camera's height and tilt, the vertical angle also tells the robot how far away a
+piece on the floor is.
 
 ### Model Training
-For our deep learning models, we use a two step process to train the models. First we create a dataset in 
-RoboFlow, which is a tool that allows us to create a labelled dataset for training. We have a 
+For our deep learning models, we use a two step process to train the models. First we create a dataset in
+RoboFlow, which is a tool that allows us to create a labelled dataset for training. We have a
 [RoboFlow organization](https://app.roboflow.com/4143-marswars) set up for our team. Once the dataset is created,
 we then use that dataset to train the model using the [Ultralytics YOLO training framework](https://docs.ultralytics.com/).
 This framework provides a simple interface for training YOLO models from our RoboFlow dataset.
 
+A few things make the biggest difference to how well a model works on the field:
+
+- **Pictures from our own cameras**, at the resolution and exposure we run in matches, on real carpet under
+  event lighting.
+- **Hard examples**: pieces far away, half hidden, touching each other, blurred by motion, and pictures with
+  look-alikes (yellow bumpers, shirts, signs) but no pieces at all.
+- **A held-back validation set** to measure the model on pictures it never trained on.
+
+To compare models we look at:
+
+- **Precision**: of the boxes the model drew, how many were really game pieces?
+- **Recall**: of the game pieces really in the pictures, how many did the model find?
+- **mAP** (mean average precision): one number that combines both over all the confidence thresholds. Higher
+  is better.
+
 ### Model Deployment
 Once the model is trained, we then deploy the model to our [Nvidia Jetson](../hardware/jetsons.mdx) vision computer. Since the Jetson is not as powerful
-as a desktop computer, we often need to optimize the model for inference on the Jetson. To do this, we use a tool called 
+as a desktop computer, we often need to optimize the model for inference on the Jetson. To do this, we use a tool called
 [TensorRT](https://developer.nvidia.com/tensorrt), which is a high-performance deep learning optimizer and runtime library.
 
 <img src={trt} style={{maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px'}}/>
 
 First the model must be exported to the ONNX format, which is a standard format for trained deep learning models. ONNX encodes
-both the model architecture and the learned weights. Once encoded, the model is then fed to TensorRT for optimization. 
+both the model architecture and the learned weights. Once encoded, the model is then fed to TensorRT for optimization.
 TensorRT Converts the model to a highly optimized runtime that is specifically designed for inference on Nvidia hardware like
 the Jetson.
 
+On our Jetson, you upload the `.onnx` file on the **Models** tab of the [camera web page](./camera-setup.mdx).
+The first time the detector loads it, it builds the TensorRT engine and saves it next to the model as a `.trt`
+file, so later starts are fast. (The detector also accepts a `.trt` engine directly, but an engine only works
+on the same Jetson model and TensorRT version it was built with, so the `.onnx` file is the one to keep.) Building the engine can take a few minutes, so do it in the pits, not right
+before a match.
