@@ -67,6 +67,9 @@ many pixels at once, which is what lets one Jetson keep up with several cameras.
 For every `tag36h11` tag it finds (the family used on FRC fields), the detector reports the tag's ID and the
 pixel positions of its four corners.
 
+Curious how it finds them? [Deep Dive: How the Tag Detector Works](./detector-deep-dive.mdx) goes
+through every step with pictures.
+
 ## 3. Working out where the camera is
 
 Knowing *where in the picture* the tag corners are is not enough: we want to know *where on the field the
@@ -89,7 +92,8 @@ Our pipelines run in **multi-tag** mode:
 
 Solving with every tag at once is much steadier than solving each tag on its own. One tag's four corners are
 close together, so a pixel of error in one corner swings the answer a lot. Corners from several tags spread
-across the picture pin the camera down much better.
+across the picture pin the camera down much better. [Deep Dive: How PnP Finds the Camera](./pnp-deep-dive.mdx) explains
+the math, and shows how much steadier.
 
 The result is published as a **tag solution**: the camera's pose on the field, the IDs of the tags used, and
 the time the picture was taken.
