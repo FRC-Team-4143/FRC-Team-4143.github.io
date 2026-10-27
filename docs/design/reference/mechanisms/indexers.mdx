@@ -1,0 +1,52 @@
+---
+title: Indexers & Hoppers
+description: Moving many game pieces from the intake to the shooter one at a time without jams.
+sidebar_position: 2
+---
+
+import RobotClips from '@site/src/components/RobotClips';
+
+An indexer (also called a serializer, feeder, or hopper) stores game pieces and hands them to the next mechanism one
+at a time. Most jams happen here, so a simple, reliable indexer is worth more than a fast one that jams.
+
+## Principles
+
+- **Single file.** Line pieces up before the shooter so each shot starts from the same place.
+- **Control every piece.** A piece that is free to bounce around will jam. Keep each one touching a belt, roller, or
+  wall at all times.
+- **Gaps between pieces.** Space the pieces out (for example, with a faster stage downstream) so two never enter the
+  shooter at once.
+- **Sensors.** Beam breaks or proximity sensors tell the code where each piece is, so it can stop, count, and feed
+  on command.
+- **Short and direct.** Every turn and handoff is a chance to jam. Use the fewest stages that work.
+
+## Types
+
+- **Belt or roller tunnel:** Belts or rollers on both sides carry pieces in a line. The most common design.
+- **Spindexer:** A rotating plate spins pieces around and feeds them out one exit.
+- **Hopper with agitator:** A bin stores many pieces, and a moving floor or wall keeps them from jamming.
+- **Funnel and diverter:** Guides pieces into one path, or sends them to different mechanisms.
+
+## On Real Robots
+
+Short clips from the teams' own robot videos, mostly Behind the Bumpers close-ups. Fast clips are slowed down. Each one links to the full video.
+
+<RobotClips items={[
+  {clip: "indexer-1986-2017", team: "1986 Team Titanium, 2017", program: "FRC", text: "Top-down view of the spindexer turning to feed balls out one at a time. Half speed.", video: "https://www.youtube.com/watch?v=ewTCvLp5EUo"},
+  {clip: "indexer-4028-2026", team: "4028 The Beak Squad, 2026", program: "FRC", text: "A ball moving through the indexer rollers.", video: "https://www.youtube.com/watch?v=cKtQ4_GqEaY&t=469s"},
+  {clip: "indexer-6328-2026", team: "6328 Mechanical Advantage, 2026", program: "FRC", text: "Overhead view of balls in the hopper feeding toward the shooter. Half speed.", video: "https://www.youtube.com/watch?v=uy4nd5wp0PU&t=26s"},
+]}/>
+
+## Robots to Study
+
+| Robot | Game piece | What to look at | Links |
+|---|---|---|---|
+| FRC 604, 2026 | [Small balls](../game/pieces/small-balls.mdx) | Single-file serializer, with prototype data comparing single file and full width. | [CAD & code](https://www.chiefdelphi.com/t/team-604-quixilver-2026-robot-cad-and-code-release/524289) |
+| FRC 2412, 2026 | [Small balls](../game/pieces/small-balls.mdx) | Spindexer (rotating plate indexer). | [Behind the Bumpers](https://www.youtube.com/watch?v=FH-ps0uqnFM) |
+| FRC 971, 2017 | [Small balls](../game/pieces/small-balls.mdx) | Turret fed from a spinning hopper. | [CAD](https://www.chiefdelphi.com/t/971-cad-release-2017/159909) |
+| FRC 254, 2013 | [Rings & discs](../game/pieces/rings-discs.mdx) | Indexer that feeds one disc at a time to prevent jams. | [Season page](https://www.team254.com/first/2013/) · [Chief Delphi](https://www.chiefdelphi.com/t/team-254-presents-overkill/128051) |
+| FRC 2910, 2024 | [Rings & discs](../game/pieces/rings-discs.mdx) | Note path and diverter that take a note from any direction. | [Behind the Bumpers](https://www.youtube.com/watch?v=AefyOa_38F8) |
+| FRC 254, 2024 | [Rings & discs](../game/pieces/rings-discs.mdx) | Feeder between the under-bumper intake and the turreted shooter. | [Tech binder](https://media.team254.com/2024/10/8f2607a0-2024-Tech-Binder.pdf) |
+| FRC 254, 2025 | [Tubes](../game/pieces/tubes.mdx) | Indexer and funnel that line coral up for the end effector. | [Tech binder](https://media.team254.com/2025/09/985607eb-2025-Tech-Binder-254.pdf) |
+| FRC 6328, 2025 | [Tubes](../game/pieces/tubes.mdx) | Coral funnel and hard stop. | [Open Alliance build thread](https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-2025-build-thread/477314) |
+| FTC 12862, 2025-26 | [Small balls](../game/pieces/small-balls.mdx) | Spindexer for 5 in balls. | [Build thread](https://www.chiefdelphi.com/t/ftc-12862-build-thread-2025-decode/505789) |

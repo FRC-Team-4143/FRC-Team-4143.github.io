@@ -1,0 +1,202 @@
+---
+title: Bars, Rungs & Poles
+description: Endgames where robots hang from a bar or climb rung to rung, from the 2004 chin-up bar to the 2026 tower, plus FTC hangs.
+sidebar_position: 2
+---
+
+import GamePiece from '@site/src/components/GamePiece';
+
+A fixed bar or a ladder of rungs is the most common endgame. Robots that climb them well tend to have:
+
+- **Hooks that are hard to miss.** A wide opening with a lead-in, sized for the bar (1.66 in outside diameter for the
+  1¼ in pipe used in 2020, 2022, and 2026), and often a spring latch so the hook can't come off.
+- **A strong winch or elevator that holds with the power off**, using a ratchet or brake.
+- **A plan for the center of gravity.** The robot hangs below its hooks, so it swings and tips unless the hook sits
+  above the center of gravity or something braces against the structure.
+
+## FRC 2026 REBUILT (tower)
+
+<GamePiece
+  img="2026-tower"
+  imgWidth={440}
+  name="Tower rungs (2026)"
+  specs={[
+  ["Rung heights", "27 in, 45 in, and 63 in to the rung centers"],
+  ["Spacing", "18 in center to center"],
+  ["Uprights", "72.1 in tall, 32¼ in apart; rungs stick out 5⅞ in past each upright"],
+  ["Level 1", "Off the carpet and tower base: 15 points in auto (2 robots per alliance), 10 in teleop"],
+  ["Level 2", "Bumpers fully above the low rung: 20 points"],
+  ["Level 3", "Bumpers fully above the mid rung: 30 points"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2026/Manual/2026GameManual.pdf"
+  sourceLabel="Game manual"
+/>
+
+Robots climb a ladder-like tower, and a robot only scores its highest level. Level 1 can also be scored in auto.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 1690 Orbit, "Kepler" | Tower climb, with discussion of climbing on the outside of the tower. | [Chief Delphi thread](https://www.chiefdelphi.com/t/515277) |
+| 6004 / 6242 | Open Alliance thread for a Level 1 to 3 climb in auto and teleop. | [Build thread](https://www.chiefdelphi.com/t/510639) |
+| 4458 Infernobotix | A simple Level 1-only climber on the outside of the tower. | [Chief Delphi thread](https://www.chiefdelphi.com/t/509731) |
+
+## FRC 2022 Rapid React (hangar rungs)
+
+<GamePiece
+  img="2022-hangar"
+  imgWidth={440}
+  name="Hangar rungs (2022)"
+  specs={[
+  ["Rung", "1¼ in Schedule 40 steel pipe, 1.66 in outside diameter"],
+  ["Rung tops", "Low 4 ft ¾ in, Mid 5 ft ¼ in, High 6 ft 3⅝ in, Traversal 7 ft 7 in"],
+  ["Spacing", "Low to Mid 3 ft 6 in, Mid to High 2 ft, High to Traversal 2 ft (center to center, horizontal)"],
+  ["Points", "Low 4, Mid 6, High 10, Traversal 15"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2022/Manual/Sections/2022FRCGameManual-05.pdf"
+  sourceLabel="Game manual, arena section"
+/>
+
+The top robots grabbed the Mid rung, then swung from rung to rung up to Traversal. Controlling the swing was the hard
+part.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Sideways" | Elevator climber with a reaction arm that braces on the hangar truss during the traversal. | [Tech binder](https://media.team254.com/2022/10/8f2407a5-Team_254_Tech_Binder_2022.pdf) |
+| 1690 Orbit, "Parker" | Arm traversal that shifts the center of gravity gradually to cut the swing. | [Reveal thread](https://www.chiefdelphi.com/t/frc-team-1690-orbit-2022-robot-reveal-parker/403533) · [Video](https://www.youtube.com/watch?v=9s7zUlTgnDc) |
+| 1678 Citrus Circuits, "Margie" | One-button automated traversal climb. | [Code](https://github.com/frc1678/C2022) |
+| 2910 Jack in the Bot | Fully automated traversal in about 7 seconds. | [Code release](https://www.chiefdelphi.com/t/team-2910-code-release-2022/417181) |
+| 3175 Knight Vision, "Mantis" | A pneumatic lock keeps the robot from dropping after the match. | [Robot thread](https://www.chiefdelphi.com/t/3175-2022-robot-mantis/405120) |
+
+## FRC 2020-21 Infinite Recharge (generator switch)
+
+<GamePiece
+  img="2020-switch"
+  imgWidth={440}
+  name="Generator switch rung (2020)"
+  specs={[
+  ["Rung", "1¼ in Schedule 40 aluminum pipe, 1.66 in outside diameter"],
+  ["Height", "Top of the rung 5 ft 3 in above the carpet at the start of the match"],
+  ["Tilt", "Swings up to 14.5° each way; counts as level within 8°"],
+  ["Points", "Hang 25 per robot, Park 5, Level 15 per alliance"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2020/Manual/Sections/Section03.pdf"
+  sourceLabel="Game manual, arena section"
+/>
+
+The bar tilts like a seesaw, so where each robot hangs decides whether the alliance gets the level bonus. Robots could
+also hang off a partner.
+
+## FRC 2018 Power Up (scale rung)
+
+<GamePiece
+  img="2018-scale-rung"
+  imgWidth={440}
+  name="Scale rung (2018)"
+  specs={[
+  ["Rung", "1 in Schedule 40 aluminum pipe, 1 ft 1 in long, about 8 in out from the scale"],
+  ["Height", "Top of the rung 7 ft above the carpet"],
+  ["Points", "Climb 30, Park 5"],
+  ]}
+  source="https://firstfrc.blob.core.windows.net/frc2018/Manual/HTML/2018FRCGameSeasonManual.htm"
+  sourceLabel="Game manual"
+/>
+
+Robots could count as climbed while held up by a partner, which led to buddy-climb ramps and forks that lifted two
+robots at once.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Lockdown" | Climb on the scale rung. | [Robot page](https://www.team254.com/?p=13496) |
+
+## FRC 2016 Stronghold (tower rung)
+
+<GamePiece
+  name="Tower rung (2016)"
+  specs={[
+  ["Height", "About 6 ft 4 in above the floor"],
+  ["Points", "Scale 15, Challenge (park on the batter) 5"],
+  ]}
+  source="https://www.firstinspires.org/robotics/frc/game-and-season"
+  sourceLabel="FIRST game archive"
+/>
+
+Each tower had three rungs, so all three robots could hang at once.
+
+## FRC 2013 Ultimate Ascent (pyramid)
+
+<GamePiece
+  name="Pyramid (2013)"
+  specs={[
+  ["Levels", "Three rung levels at about 30, 60, and 90 in to the bar centers"],
+  ["Points", "Level 1 10, Level 2 20, Level 3 30, set by the robot's lowest point"],
+  ]}
+  source="https://www.firstinspires.org/robotics/frc/game-and-season"
+  sourceLabel="FIRST game archive"
+/>
+
+Robots climbed the corner of a steel pyramid one level at a time, in order.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 254 Cheesy Poofs, "Overkill" | 30-point climb powered by a power take-off from the drive gearbox, plus a separate 10-point hang. | [Robot page](https://www.team254.com/?p=3014) |
+| 1114 Simbotics, 2994 ASTECHZ | Level 3 climbers. | [Design 1st article](https://design1st.com/first-robotics-2013-astechz-team-2994/) |
+
+## FRC 2011 Logomotion (minibot pole)
+
+Each robot carried a small minibot (up to a 12 in cube, built from FTC parts) and launched it up a vertical pole in the
+last 10 seconds. The first minibot to the top scored 30, then 20, 15, and 10. Speed was everything: the best minibots
+were light, with magnets or wheels pressed against the pole.
+
+## FRC 2010 Breakaway (tower)
+
+Robots hung from a bar on one of the two center towers for 2 points, and a robot hanging from another robot scored 3,
+so teams built robots that could carry a partner up with them.
+
+## FRC 2004 FIRST Frenzy (chin-up bar)
+
+Robots hung from a bar at midfield, about 10 ft up, for a 50-point bonus each.
+
+:::info FTC
+FTC (FIRST Tech Challenge) robots are smaller, but they hang and climb the same ways. FTC teams share engineering portfolios and CAD instead of Behind the Bumpers videos. The [gm0 robot gallery](https://gm0.org/en/latest/docs/appendix/gallery.html) lists them by season.
+:::
+
+## FTC 2024-25 INTO THE DEEP (submersible rungs)
+
+<GamePiece
+  program="FTC"
+  name="Submersible rungs (2024-25)"
+  specs={[
+  ["Rungs", "A low rung and a high rung, about 15 in apart"],
+  ["Level 1", "Touch the low rung: 3 points"],
+  ["Level 2", "Hang from either rung: 15 points"],
+  ["Level 3", "Hang only from the high rung, fully above the low rung: 30 points"],
+  ]}
+  source="https://ftc-resources.firstinspires.org/ftc/archive/2025/game/manual-10"
+  sourceLabel="Game manual"
+/>
+
+Level 2 and Level 3 don't count if a partner, the floor, or game pieces hold the robot up.
+
+| Team | What to look at | Links |
+|---|---|---|
+| goBILDA starter bot | A simple Level 2 hang to start from. | [Resource guide](https://www.gobilda.com/ftc-starter-bot-resource-guide-into-the-deep/) |
+| Ignite Pathways | Write-ups of Level 3 ascents, including a tape-measure design. | [Level 3 ascent](https://www.ignitepathways.org/post/level-3-ascent) · [Tape-measure ascent](https://www.ignitepathways.org/post/tape-measure-inspired-level-3-ascent) |
+
+## FTC 2023-24 CENTERSTAGE (rigging)
+
+Robots hung from the truss rigging bars for 20 points.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 17969 MECH | Lead-screw lifter on a rotating mount. | [REV spotlight](https://revrobotics.com/blog/teamrev-spotlight-ftc-17969-mech) |
+| Decorah teams | Flexible hooks on two rack-and-pinion towers. | [Write-up](https://decorah.k12.ia.us/2024/02/decorah-robotics-teams-have-a-strong-showing-at-their-league-tournament/) |
+
+## FTC 2018-19 Rover Ruckus (lander latch)
+
+Robots latched onto a bracket on the lander and hung off the ground for 50 points. Many started the match hanging and
+lowered themselves in auto. Lead screws became popular because they hold with the power off.
+
+| Team | What to look at | Links |
+|---|---|---|
+| 9410 Franks Garage | Rack and pinion with a passive latch. | [Robot page](https://www.fwparkerrobotics.org/2018-19-rover-ruckus-9410.html) |
+| Lincoln GearTicks | Lesson learned: the first hook was too short to reach the lander. | [Article](https://lincolnsquirrel.com/gearticks-robot-goes-far-at-world-championships) |

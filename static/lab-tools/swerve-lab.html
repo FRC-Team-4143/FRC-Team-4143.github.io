@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><!-- the site defaults to dark (docusaurus.config.js colorMode) -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swerve Kinematics Lab</title>
+<link rel="stylesheet" href="lab-base.css">
+<script src="lab-theme.js"></script>
+<style>
+/* Swerve Kinematics Lab. Guided by default: step card, field + module view, sticks. Extras folded away. */
+.lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px;
+  grid-template-areas: "field" "guide" "sticks" "mods" "fixes"; }
+.guide { grid-area: guide; } #p-field { grid-area: field; } #p-sticks { grid-area: sticks; } #p-mods { grid-area: mods; } #p-fixes { grid-area: fixes; }
+@media (min-width: 1000px) {
+  .lab { grid-template-columns: minmax(0, 6fr) 220px minmax(0, 5fr); align-items: start; grid-template-rows: auto auto 1fr;
+    grid-template-areas: "guide guide guide" "field sticks mods" "field fixes mods"; }
+  #p-fixes .check span small { font-size: 12px; }
+  #p-sticks .sticks { flex-direction: column; justify-content: flex-start; gap: 6px; }
+  #p-sticks .pad { width: 84px; height: 84px; }
+  #p-sticks .speeds .line { font-size: 15px; gap: 0; }
+  #p-fixes { gap: 6px; } #p-fixes h2 { font-size: 17px; }
+  #p-sticks .speeds { flex: 0 0 auto; }
+  #p-sticks .speeds .line { flex-direction: column; align-items: center; }
+}
+.lab > .panel { gap: 8px; }
+#field { width: 100%; aspect-ratio: 1 / 1; max-height: max(300px, calc(100vh - 470px)); touch-action: none; margin: 0 auto; }
+#mods { width: 100%; aspect-ratio: 1 / 1; max-height: max(280px, calc(100vh - 470px)); margin: 0 auto; }
+.sw.t { border-color: var(--actual); } .sw.r { border-color: var(--setp); } .sw.m { border-color: var(--goal); }
+.sw.b { border-color: var(--warn); } .sw.v { border-color: var(--volt); }
+.guide-nav button.primary { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent); }
+.guide-status { font-size: 13px; color: var(--muted); }
+.guide-status.good { color: var(--volt); }
+
+/* Sticks */
+.sticks { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.stick { display: grid; justify-items: center; gap: 2px; }
+.stick .label { text-align: center; }
+.pad { position: relative; width: 96px; height: 96px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); touch-action: none; cursor: grab; }
+.pad::before, .pad::after { content: ""; position: absolute; background: var(--grid); }
+.pad::before { left: 50%; top: 8px; bottom: 8px; width: 1px; }
+.pad::after { top: 50%; left: 8px; right: 8px; height: 1px; }
+.pad.hz::before { display: none; }
+.knob { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px; border-radius: 50%; background: var(--brand); box-shadow: 0 1px 3px rgba(0,0,0,.35); z-index: 1; pointer-events: none; }
+.pad:active { cursor: grabbing; }
+.pad.locked { opacity: .45; }
+.speeds { flex: 1 1 200px; display: grid; gap: 4px; min-width: 0; text-align: center; }
+.speeds .line { font-family: var(--f-mono); font-size: 16px; font-variant-numeric: tabular-nums; color: var(--goal); display: flex; flex-wrap: wrap; gap: 2px 14px; justify-content: center; }
+.speeds .line span { white-space: nowrap; }
+.speeds .line i { font-style: normal; color: var(--muted); }
+.src { font-size: 12px; color: var(--muted); }
+@media (max-width: 520px) { .sticks { justify-content: space-around; } .speeds { order: 3; flex-basis: 100%; } }
+
+.readout.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 520px) { .readout.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.readout .m { color: var(--actual); }
+.codeline { font-family: var(--f-mono); font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px; overflow-x: auto; white-space: pre; color: var(--ink); }
+.modes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 520px) { .modes .seg button { padding-inline: 9px; font-size: 13px; white-space: nowrap; } }
+
+/* Module table */
+.tbl-wrap { overflow-x: auto; }
+table.mt { border-collapse: collapse; width: 100%; font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink); margin-top: 6px; }
+.mt th, .mt td { padding: 3px 8px 3px 0; text-align: right; white-space: nowrap; }
+.mt th:first-child, .mt td:first-child { text-align: left; }
+.mt th { font-family: var(--f-body); font-weight: 500; font-size: 12px; color: var(--muted); }
+.mt td.over { color: var(--warn); }
+.mt .flip { font-family: var(--f-body); font-size: 11px; font-weight: 600; color: var(--setp); border: 1px solid var(--setp); border-radius: 99px; padding: 0 6px; }
+.mt small { color: var(--muted); }
+@media (max-width: 520px) { table.mt { font-size: 12px; } .mt th { font-size: 11px; white-space: normal; } .mt small { display: none; } }
+.sat-pill[hidden] { display: none; }
+.kbd { font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--bg); }
+.consts { margin: 6px 0 0; display: grid; grid-template-columns: auto auto; gap: 2px 12px; justify-content: start; }
+.consts dt { color: var(--muted); } .consts dd { margin: 0; font-family: var(--f-mono); color: var(--ink); }
+.deeper p, .deeper ol { margin: 0 0 8px; }
+.deeper ol { padding-left: 22px; display: grid; gap: 6px; }
+.check span small { display: block; font-size: 13px; color: var(--muted); line-height: 1.4; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Software · Drivetrain</p>
+      <h1>Swerve Kinematics Lab</h1>
+      <p class="lede short">Drive a swerve robot and watch two sticks become four wheel speeds and angles.</p>
+    </div>
+    <div class="toolbar">
+      <button id="pause" aria-pressed="false">Pause</button>
+      <button id="reset">Reset</button>
+    </div>
+  </header>
+
+  <div class="lab">
+    <section class="guide" id="guide" aria-live="polite">
+      <span class="guide-count"><span id="g-count">Step 1 of 7</span> <span class="guide-status" id="g-status"></span></span>
+      <h2 id="g-title"></h2>
+      <p id="g-body"></p>
+      <div class="guide-nav">
+        <button id="g-show">Show me</button>
+        <button id="g-back">Back</button>
+        <button id="g-next">Next</button>
+        <button id="g-free" aria-pressed="false">Free play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="p-field">
+      <div class="panel-head">
+        <h2>Field</h2>
+        <div class="legend">
+          <span><i class="sw v"></i>Robot velocity</span>
+          <span id="lg-lock" hidden><i class="sw dash r"></i>Aim at hub</span>
+        </div>
+      </div>
+      <canvas id="field" aria-label="Top-down view of the blue half of the field. The blue driver station wall is at the bottom."></canvas>
+      <div class="modes" id="modes" data-step-from="3">
+        <div class="seg" role="group" aria-label="Swerve state">
+          <button id="m-fc" aria-pressed="true">Field-centric</button>
+          <button id="m-rc" aria-pressed="false">Robot-centric</button>
+          <button id="m-lock" aria-pressed="false" data-step-from="7">Rotation lock</button>
+        </div>
+        <button id="turn90">Turn robot +π/2</button>
+      </div>
+    </section>
+
+    <section class="panel" id="p-sticks" aria-label="Driver sticks">
+      <div class="sticks">
+        <div class="stick">
+          <div class="pad" id="pad-l" tabindex="0" role="application" aria-label="Left stick: drive. Drag, or focus and use the arrow keys."><span class="knob" id="knob-l"></span></div>
+          <span class="label">Left stick · drive</span>
+        </div>
+        <div class="speeds">
+          <span class="label">ChassisSpeeds</span>
+          <div class="line"><span><i>vx</i> <b id="r-vx">–</b></span><span><i>vy</i> <b id="r-vy">–</b></span><span><i>ω</i> <b id="r-w">–</b></span></div>
+          <span class="src" id="src">Keys: W A S D, Q E · gamepads work too</span>
+        </div>
+        <div class="stick" data-step-from="2">
+          <div class="pad hz" id="pad-r" tabindex="0" role="application" aria-label="Right stick: turn, left and right only. Drag, or focus and use the arrow keys."><span class="knob" id="knob-r"></span></div>
+          <span class="label">Right stick · turn</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-mods">
+      <div class="panel-head">
+        <h2>Wheels</h2>
+        <span class="pill sat-pill" id="sat-pill" hidden>Saturated</span>
+      </div>
+      <div class="legend">
+        <span><i class="sw m"></i>Wheel command</span>
+        <span data-step-from="5"><i class="sw dash b"></i>Before desaturation</span>
+        <span id="lg-t" hidden><i class="sw t"></i>Translation</span>
+        <span id="lg-r" hidden><i class="sw r"></i>ω × r</span>
+      </div>
+      <canvas id="mods" aria-label="The four swerve modules seen from above, robot front at the top. Each wheel shows its angle and an arrow for its commanded speed. The dashed circle is the 5.0 m/s limit."></canvas>
+      <label class="check" for="o-vec" data-step-from="4"><input type="checkbox" id="o-vec"><span>Show the vector sum (translation + ω × r)</span></label>
+      <details id="numbers">
+        <summary>Show numbers</summary>
+        <div class="tbl-wrap">
+          <table class="mt" aria-label="Module states">
+            <thead><tr><th>Module</th><th>Angle (rad)</th><th>Asked (m/s)</th><th>Sent (m/s)</th><th>Steer travel (rad)</th></tr></thead>
+            <tbody id="mt-body"></tbody>
+          </table>
+        </div>
+        <p class="note">Asked: straight out of kinematics. Sent: after desaturation and optimization (minus = wheel spins backward).</p>
+        <div class="readout four" style="margin-top:8px">
+          <div><span>Heading θ</span><b id="r-th">–</b></div>
+          <div><span>Measured vx m/s</span><b class="m" id="r-mvx">–</b></div>
+          <div><span>Measured vy m/s</span><b class="m" id="r-mvy">–</b></div>
+          <div><span>Measured ω rad/s</span><b class="m" id="r-mw">–</b></div>
+        </div>
+        <p class="note">Measured speeds come back from the wheels. If they differ from what you asked, the robot isn't doing what the driver wanted.</p>
+      </details>
+    </section>
+
+    <section class="panel" id="p-fixes" data-step-from="5">
+      <h2>Wheel fixes</h2>
+      <label class="check" for="o-desat"><input type="checkbox" id="o-desat" checked><span>Desaturate<small>Too fast? Scale all four wheels down together.</small></span></label>
+      <label class="check" for="o-opt" data-step-from="6"><input type="checkbox" id="o-opt" checked><span>Optimize<small>Never steer more than π/2; spin the wheel backward instead.</small></span></label>
+      <div class="row" data-step-from="6">
+        <label for="o-steer"><span>Steering speed</span><span><span class="k" id="steer-val">20</span> <span class="u">rad/s</span></span></label>
+        <input type="range" id="o-steer" min="2" max="30" step="1" value="20" style="grid-column:1/-1">
+      </div>
+      <details class="more" data-step-from="7">
+        <summary>More controls</summary>
+        <label class="check" for="o-cos"><input type="checkbox" id="o-cos" checked><span>Cosine scaling<small>Slow a wheel while it still points the wrong way.</small></span></label>
+        <label class="check" for="o-disc"><input type="checkbox" id="o-disc" checked><span>Discretize<small>Correct for spinning during each 20 ms loop.</small></span></label>
+        <label class="check" for="o-trail"><input type="checkbox" id="o-trail" checked><span>Show the robot's path</span></label>
+        <div class="row">
+          <label for="o-scalar"><span>Teleop speed scalar</span><span class="k" id="scalar-val">1.00</span></label>
+          <input type="range" id="o-scalar" min="0.1" max="1" step="0.05" value="1" style="grid-column:1/-1">
+        </div>
+        <div class="toolbar"><button id="zero">Zero gyro</button><button id="slow" aria-pressed="false">Slow motion</button></div>
+      </details>
+    </section>
+  </div>
+
+  <section class="deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>Things to try</summary>
+      <ol>
+        <li>Spin in place with only the right stick. Every wheel shows the same speed: ω × 0.269 m.</li>
+        <li>Full forward plus full spin, then turn off <b>Desaturate</b>. The path bends.</li>
+        <li>Turn off <b>Optimize</b>, set steering to 4 rad/s and flick from full forward to full back.</li>
+        <li>Turn off <b>Optimize</b> and <b>Cosine scaling</b>, then reverse fast. The robot lurches the wrong way first.</li>
+        <li>Turn off <b>Discretize</b> and drive straight while spinning hard in field-centric. The path drifts.</li>
+        <li>In <b>Rotation lock</b>, strafe around the hub. The right stick does nothing.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>In our robot code</summary>
+      <p>The state <code>RobotContainer</code> asks for:</p>
+      <div class="codeline" id="code"></div>
+      <p style="margin-top:8px" id="mode-note"></p>
+      <p><b>Which fixes we use.</b> MWLib's <code>Module.runSetpoint</code> calls <code>optimize</code> and <code>cosineScale</code> on every module, and every drive request calls <code>ChassisSpeeds.discretize</code>. The drive requests do not call <code>desaturateWheelSpeeds</code>: in open-loop teleop a wheel asked for more than <code>SPEED_AT_12V_MPS</code> just runs at 12 V. Turn <b>Desaturate</b> off to see that.</p>
+      <p><b>From stick to ChassisSpeeds.</b> MWLib's <code>calculateSpeedsBasedOnJoystickInputs()</code> deadbands each axis, flips the sign (stick forward reads negative, and WPILib +y is left), multiplies by the max rate, then slew-limits vx and vy:</p>
+      <div class="codeline" id="pipe"></div>
+    </details>
+    <details>
+      <summary>Robot constants and further reading</summary>
+      <p>Modules, <code>ChassisSpeeds</code>, inverse kinematics and the wheel fixes are explained in <a href="/docs/software/robot_dev/swerve#how-swerve-works" target="_top">How Swerve Works</a>. Controller axes: <a href="/docs/software/robot_dev/oi" target="_top">Operator Interface</a>.</p>
+      <dl class="consts">
+        <dt>Module positions</dt><dd>±0.1905 m (7.5 in)</dd>
+        <dt>Track width / wheelbase</dt><dd>0.381 m</dd>
+        <dt>SPEED_AT_12V_MPS</dt><dd>5.0 m/s</dd>
+        <dt>MAX_TRANSLATION_RATE</dt><dd>5.0 m/s</dd>
+        <dt>MAX_ANGULAR_RATE</dt><dd>10.0 rad/s</dd>
+        <dt>MAX_TRANSLATION_ACCEL</dt><dd>40 m/s²</dd>
+        <dt>CONTROLLER_DEADBAND</dt><dd>0.1</dd>
+        <dt>HEADING_CONTROLLER</dt><dd>kP 10, kD 1</dd>
+        <dt>Hub (blue)</dt><dd>(4.61, 4.02) m</dd>
+      </dl>
+      <p style="margin-top:8px">From the 2026 robot's <code>SwerveConstants</code> (AlphaBot) and MWLib's <code>MwSwerveConstants</code> defaults. Keys: <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> drive, <span class="kbd">Q</span>/<span class="kbd">E</span> turn, <span class="kbd">Shift</span> half stick.</p>
+    </details>
+  </section>
+  <footer class="foot">MARS/WARS · FRC Team 4143</footer>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const TAU = Math.PI * 2;
+  const wrap = (a) => { a = (a + Math.PI) % TAU; if (a < 0) a += TAU; return a - Math.PI; };
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const DEG = 180 / Math.PI;
+
+  // ---- Robot constants (2026 AlphaBot SwerveConstants + MwSwerveConstants defaults) ----
+  const R = 0.1905;                       // module offset, 7.5 in
+  const MODS = [
+    { n: "FL", x: R, y: R }, { n: "FR", x: R, y: -R },
+    { n: "BL", x: -R, y: R }, { n: "BR", x: -R, y: -R },
+  ];
+  const MAX_V = 5.0;            // MAX_TRANSLATION_RATE and SPEED_AT_12V_MPS
+  const MAX_W = 10.0;           // MAX_ANGULAR_RATE
+  const ACCEL = 40.0;           // MAX_TRANSLATION_ACCEL (slew limiter)
+  const DB = 0.1;               // CONTROLLER_DEADBAND
+  const KP = 10.0, KD = 1.0;    // HEADING_CONTROLLER
+  const LOOP = 0.02, SUB = 10;  // 20 ms robot loop, 2 ms physics
+  const WHEEL_ACCEL = 30.0;     // m/s² a wheel can change speed
+  const FIELD_X = 8.27, FIELD_Y = 8.04;   // blue half (x to the center line), full width
+  const HUB = { x: 4.611624, y: 4.021328 };
+  const HUB_HALF = 0.597;
+  const BUMPER = 0.42;          // half of the bumper square
+
+  const opt = { desat: true, optimize: true, cosine: true, disc: true, vectors: false, trail: true, scalar: 1, steer: 20 };
+  let mode = "FIELD_CENTRIC";
+  let paused = false, slow = false;
+
+  // ---- Input ----
+  const stick = { lx: 0, ly: 0, rx: 0 };      // on-screen pads, raw WPILib values (forward = negative ly)
+  const keys = new Set();
+  const padKeys = { l: new Set(), r: new Set() };
+  let script = null;                          // walkthrough-driven input: { segs, t }
+  let source = "sticks";
+
+  function applyDeadband(v, d) {
+    if (Math.abs(v) <= d) return 0;
+    return v > 0 ? (v - d) / (1 - d) : (v + d) / (1 - d);
+  }
+  function gamepadAxes() {
+    let pads = [];
+    try { pads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : []; } catch (e) {}
+    for (const gp of pads) {
+      if (!gp || !gp.axes || gp.axes.length < 3) continue;
+      const a = [gp.axes[0] || 0, gp.axes[1] || 0, gp.axes[2] || 0];
+      if (a.some((v) => Math.abs(v) > 0.12)) return a;
+    }
+    return null;
+  }
+  function readInputs() {
+    if (script) {
+      let t = script.t, seg = null;
+      for (const s of script.segs) { if (t < s.dur) { seg = s; break; } t -= s.dur; }
+      source = "walkthrough";
+      return seg ? { lx: seg.lx || 0, ly: seg.ly || 0, rx: seg.rx || 0 } : { lx: 0, ly: 0, rx: 0 };
+    }
+    const gp = gamepadAxes();
+    if (gp) { source = "gamepad"; return { lx: gp[0], ly: gp[1], rx: gp[2] }; }
+    let kx = 0, ky = 0, kr = 0;
+    if (keys.has("w")) ky -= 1; if (keys.has("s")) ky += 1;
+    if (keys.has("a")) kx -= 1; if (keys.has("d")) kx += 1;
+    if (keys.has("q")) kr -= 1; if (keys.has("e")) kr += 1;
+    const pl = padKeys.l, pr = padKeys.r;
+    if (pl.has("ArrowUp")) ky -= 1; if (pl.has("ArrowDown")) ky += 1;
+    if (pl.has("ArrowLeft")) kx -= 1; if (pl.has("ArrowRight")) kx += 1;
+    if (pr.has("ArrowLeft")) kr -= 1; if (pr.has("ArrowRight")) kr += 1;
+    if (kx || ky || kr) {
+      const h = Math.hypot(kx, ky) || 1, s = keys.has("shift") ? 0.5 : 1;
+      source = "keyboard";
+      return { lx: (kx / h) * s, ly: (ky / h) * s, rx: clamp(kr, -1, 1) * s };
+    }
+    source = "sticks";
+    return { lx: stick.lx, ly: stick.ly, rx: stick.rx };
+  }
+
+  // ---- Simulation state ----
+  const robot = { x: 2.2, y: 2.6, th: 0 };
+  const mods = MODS.map(() => ({ a: 0, s: 0, setA: 0, setS: 0, lastA: 0, asked: 0, askedA: 0, before: 0, flipped: false, travel: 0, tvec: [0, 0], rvec: [0, 0] }));
+  let cmd = { vx: 0, vy: 0, w: 0 };          // robot-relative ChassisSpeeds sent to kinematics
+  let meas = { vx: 0, vy: 0, w: 0 };
+  let raw = { lx: 0, ly: 0, rx: 0 };
+  let slewX = 0, slewY = 0, prevErr = 0, lockTarget = 0;
+  let maxBefore = 0, scaleK = 1;
+  const trail = [];
+  const stats = { fcMoved: false, rcMoved: false, satOff: 0, satOn: 0, flips: 0, run: null, runs: {}, lockGood: 0 };
+
+  function resetSim() {
+    Object.assign(robot, { x: 2.2, y: 2.6, th: 0 });
+    for (const m of mods) Object.assign(m, { a: 0, s: 0, setA: 0, setS: 0, lastA: 0, asked: 0, askedA: 0, before: 0, flipped: false, travel: 0 });
+    slewX = slewY = prevErr = 0;
+    trail.length = 0;
+    script = null;
+  }
+
+  function slew(cur, target) { const d = ACCEL * LOOP; return cur + clamp(target - cur, -d, d); }
+
+  // WPILib ChassisSpeeds.discretize(speeds, dt) via Pose2d.log
+  function discretize(s, dt) {
+    const dx = s.vx * dt, dy = s.vy * dt, dth = s.w * dt;
+    const half = dth / 2, cm1 = Math.cos(dth) - 1;
+    const hb = Math.abs(cm1) < 1e-9 ? 1 - (dth * dth) / 12 : -(half * Math.sin(dth)) / cm1;
+    const tx = dx * hb - dy * -half, ty = dx * -half + dy * hb;
+    return { vx: tx / dt, vy: ty / dt, w: dth / dt };
+  }
+
+  function robotLoop() {
+    raw = readInputs();
+    // calculateSpeedsBasedOnJoystickInputs()
+    const xm = -applyDeadband(raw.ly, DB), ym = -applyDeadband(raw.lx, DB), wm = -applyDeadband(raw.rx, DB);
+    slewX = slew(slewX, xm * MAX_V * opt.scalar);
+    slewY = slew(slewY, ym * MAX_V * opt.scalar);
+    let vx = slewX, vy = slewY, w = wm * MAX_W;
+    if (Math.hypot(vx, vy) < MAX_V * 0.01) { vx = 0; vy = 0; }   // request deadband
+
+    if (mode === "FIELD_CENTRIC_ROTATION_LOCK") {
+      lockTarget = Math.atan2(HUB.y - robot.y, HUB.x - robot.x);
+      const err = wrap(lockTarget - robot.th);
+      w = clamp(KP * err + KD * (err - prevErr) / LOOP, -MAX_W, MAX_W);
+      prevErr = err;
+    } else prevErr = 0;
+    if (Math.abs(w) < MAX_W * 0.01) w = 0;
+
+    let s = { vx, vy, w };
+    if (mode !== "ROBOT_CENTRIC") {           // fromFieldRelativeSpeeds (blue alliance: operator forward = 0)
+      const c = Math.cos(robot.th), sn = Math.sin(robot.th);
+      s = { vx: vx * c + vy * sn, vy: -vx * sn + vy * c, w };
+    }
+    cmd = s;
+    const k = opt.disc ? discretize(s, LOOP) : s;
+
+    // toSwerveModuleStates
+    maxBefore = 0;
+    for (let i = 0; i < 4; i++) {
+      const p = MODS[i], m = mods[i];
+      const tvx = k.vx, tvy = k.vy, rvx = -k.w * p.y, rvy = k.w * p.x;
+      m.tvec = [tvx, tvy]; m.rvec = [rvx, rvy];
+      const mvx = tvx + rvx, mvy = tvy + rvy, sp = Math.hypot(mvx, mvy);
+      if (sp > 1e-6) { m.askedA = Math.atan2(mvy, mvx); m.asked = sp; } else { m.askedA = m.lastA; m.asked = 0; }
+      m.lastA = m.askedA;
+      maxBefore = Math.max(maxBefore, sp);
+    }
+    // desaturateWheelSpeeds
+    scaleK = opt.desat && maxBefore > MAX_V ? MAX_V / maxBefore : 1;
+    let anyFlip = false;
+    for (const m of mods) {
+      let sp = m.asked * scaleK, ang = m.askedA;
+      m.before = m.asked;
+      // Module.runSetpoint: optimize, then cosineScale
+      m.flipped = false;
+      if (opt.optimize && Math.abs(wrap(ang - m.a)) > Math.PI / 2) { sp = -sp; ang = wrap(ang + Math.PI); m.flipped = sp !== 0; }
+      if (opt.cosine) sp *= Math.cos(ang - m.a);
+      // open loop: speed / SPEED_AT_12V * 12 V, and the battery caps it at 12 V
+      m.setS = clamp(sp, -MAX_V, MAX_V);
+      m.setA = ang;
+      if (m.flipped) anyFlip = true;
+    }
+    if (anyFlip && !mods._wasFlip) stats.flips++;
+    mods._wasFlip = anyFlip;
+
+    // walkthrough bookkeeping
+    const moving = Math.hypot(vx, vy) > 1;
+    if (moving && Math.abs(wrap(robot.th)) > 0.5) { if (mode === "ROBOT_CENTRIC") stats.rcMoved = true; else stats.fcMoved = true; }
+    if (maxBefore > MAX_V * 1.05) { if (opt.desat) stats.satOn++; else stats.satOff++; }
+    if (mode === "FIELD_CENTRIC_ROTATION_LOCK" && moving && Math.abs(wrap(lockTarget - robot.th)) < 0.15) stats.lockGood++;
+
+    if (opt.trail) { trail.push([robot.x, robot.y]); if (trail.length > 400) trail.shift(); }
+  }
+
+  function physics(h) {
+    let sx = 0, sy = 0, sw = 0;
+    for (let i = 0; i < 4; i++) {
+      const m = mods[i], p = MODS[i];
+      const d = wrap(m.setA - m.a), step = clamp(d, -opt.steer * h, opt.steer * h);
+      m.a = wrap(m.a + step); m.travel += Math.abs(step);
+      m.s += clamp(m.setS - m.s, -WHEEL_ACCEL * h, WHEEL_ACCEL * h);
+      const gx = m.s * Math.cos(m.a), gy = m.s * Math.sin(m.a);
+      sx += gx; sy += gy; sw += p.x * gy - p.y * gx;
+    }
+    // forward kinematics (least squares; square layout, all |r| equal)
+    meas = { vx: sx / 4, vy: sy / 4, w: sw / (4 * 2 * R * R) };
+    const c = Math.cos(robot.th), s = Math.sin(robot.th);
+    robot.x += (meas.vx * c - meas.vy * s) * h;
+    robot.y += (meas.vx * s + meas.vy * c) * h;
+    robot.th = wrap(robot.th + meas.w * h);
+    robot.x = clamp(robot.x, BUMPER, FIELD_X - BUMPER);
+    robot.y = clamp(robot.y, BUMPER, FIELD_Y - BUMPER);
+    // keep out of the hub
+    const dx = robot.x - HUB.x, dy = robot.y - HUB.y, lim = HUB_HALF + BUMPER;
+    if (Math.abs(dx) < lim && Math.abs(dy) < lim) {
+      if (Math.abs(dx) > Math.abs(dy)) robot.x = HUB.x + Math.sign(dx || 1) * lim;
+      else robot.y = HUB.y + Math.sign(dy || 1) * lim;
+    }
+  }
+
+  // ---- Drawing ----
+  let C = {};
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement), g = (n) => cs.getPropertyValue(n).trim();
+    C = { bg: g("--bg"), field: g("--field"), panel: g("--panel"), ink: g("--ink"), muted: g("--muted"), line: g("--line"), grid: g("--grid"),
+      brand: g("--brand"), actual: g("--actual"), goal: g("--goal"), setp: g("--setp"), volt: g("--volt"), warn: g("--warn"),
+      blue: g("--blue-alliance"), red: g("--red-alliance"), mono: g("--f-mono") || "monospace", body: g("--f-body") || "sans-serif" };
+  }
+  readColors();
+  new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors); } catch (e) {}
+
+  function fit(cv) {
+    const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+    const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w: r.width, h: r.height };
+  }
+  function arrow(ctx, x0, y0, x1, y1, color, width, dash) {
+    const L = Math.hypot(x1 - x0, y1 - y0); if (L < 1.5) return;
+    ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.setLineDash([]);
+    const a = Math.atan2(y1 - y0, x1 - x0), hl = Math.min(10, 4 + width * 2, L * 0.6);
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - hl * Math.cos(a - 0.45), y1 - hl * Math.sin(a - 0.45));
+    ctx.lineTo(x1 - hl * Math.cos(a + 0.45), y1 - hl * Math.sin(a + 0.45));
+    ctx.closePath(); if (dash) ctx.stroke(); else ctx.fill(); ctx.restore();
+  }
+
+  const fieldCv = $("field"), modsCv = $("mods");
+  function drawField() {
+    const { ctx, w, h } = fit(fieldCv);
+    ctx.clearRect(0, 0, w, h);
+    const m = 22, s = Math.min((w - 2 * m) / FIELD_Y, (h - 2 * m) / FIELD_X);
+    const ox = (w - FIELD_Y * s) / 2, oy = (h - FIELD_X * s) / 2;
+    // field (x, y) -> screen: +x up, +y left (the blue driver's view)
+    const P = (x, y) => [ox + (FIELD_Y - y) * s, oy + (FIELD_X - x) * s];
+    ctx.fillStyle = C.field; ctx.fillRect(ox, oy, FIELD_Y * s, FIELD_X * s);
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+    for (let x = 1; x < FIELD_X; x++) { const [a, b] = P(x, 0), [c] = P(x, FIELD_Y); ctx.beginPath(); ctx.moveTo(c, b); ctx.lineTo(a, b); ctx.stroke(); }
+    for (let y = 1; y < FIELD_Y; y++) { const [a, b] = P(0, y), [, d] = P(FIELD_X, y); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(a, d); ctx.stroke(); }
+    ctx.strokeStyle = C.line; ctx.strokeRect(ox, oy, FIELD_Y * s, FIELD_X * s);
+    // blue wall and center line
+    ctx.fillStyle = C.blue; ctx.fillRect(ox, oy + FIELD_X * s - 4, FIELD_Y * s, 4);
+    ctx.save(); ctx.setLineDash([6, 6]); ctx.strokeStyle = C.muted; ctx.beginPath(); ctx.moveTo(ox, oy + 1); ctx.lineTo(ox + FIELD_Y * s, oy + 1); ctx.stroke(); ctx.restore();
+    ctx.font = `12px ${C.body}`; ctx.fillStyle = C.muted; ctx.textAlign = "center";
+    ctx.fillText("center line", ox + FIELD_Y * s / 2, oy - 6);
+    ctx.fillStyle = C.blue; ctx.fillText("blue driver station", ox + FIELD_Y * s / 2, oy + FIELD_X * s + 15);
+    // origin axes (bottom-right corner is (0, 0))
+    const [o0, o1] = P(0, 0);
+    arrow(ctx, o0 - 10, o1 - 10, o0 - 10, o1 - 10 - 34, C.ink, 1.5);
+    arrow(ctx, o0 - 10, o1 - 10, o0 - 10 - 34, o1 - 10, C.ink, 1.5);
+    ctx.fillStyle = C.ink; ctx.font = `12px ${C.mono}`; ctx.textAlign = "left";
+    ctx.fillText("+x", o0 - 6, o1 - 38); ctx.textAlign = "right"; ctx.fillText("+y", o0 - 46, o1 - 14);
+    // hub
+    const [hx0, hy0] = P(HUB.x + HUB_HALF, HUB.y + HUB_HALF);
+    ctx.fillStyle = C.grid; ctx.strokeStyle = C.goal; ctx.lineWidth = 2;
+    ctx.fillRect(hx0, hy0, HUB_HALF * 2 * s, HUB_HALF * 2 * s); ctx.strokeRect(hx0, hy0, HUB_HALF * 2 * s, HUB_HALF * 2 * s);
+    const [hcx, hcy] = P(HUB.x, HUB.y);
+    ctx.fillStyle = C.goal; ctx.textAlign = "center"; ctx.font = `600 12px ${C.body}`; ctx.fillText("Hub", hcx, hcy + 4);
+    // trail
+    if (opt.trail && trail.length > 1) {
+      ctx.strokeStyle = C.volt; ctx.globalAlpha = 0.55; ctx.lineWidth = 2; ctx.beginPath();
+      trail.forEach(([x, y], i) => { const [a, b] = P(x, y); if (i) ctx.lineTo(a, b); else ctx.moveTo(a, b); });
+      ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    const c = Math.cos(robot.th), sn = Math.sin(robot.th);
+    const RP = (u, v) => P(robot.x + u * c - v * sn, robot.y + u * sn + v * c);
+    // aim line
+    if (mode === "FIELD_CENTRIC_ROTATION_LOCK") {
+      const [a, b] = P(robot.x, robot.y);
+      ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = C.setp; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(hcx, hcy); ctx.stroke(); ctx.restore();
+    }
+    // robot body
+    ctx.beginPath();
+    [[BUMPER, BUMPER], [BUMPER, -BUMPER], [-BUMPER, -BUMPER], [-BUMPER, BUMPER]].forEach(([u, v], i) => { const [a, b] = RP(u, v); if (i) ctx.lineTo(a, b); else ctx.moveTo(a, b); });
+    ctx.closePath(); ctx.fillStyle = C.panel; ctx.fill(); ctx.strokeStyle = C.brand; ctx.lineWidth = 3; ctx.stroke();
+    // front marker
+    ctx.beginPath(); [RP(BUMPER - 0.04, 0.16), RP(BUMPER - 0.04, -0.16), RP(BUMPER - 0.2, 0)].forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b));
+    ctx.closePath(); ctx.fillStyle = C.brand; ctx.fill();
+    // wheels
+    for (let i = 0; i < 4; i++) {
+      const p = MODS[i], md = mods[i], ca = Math.cos(md.a) * 0.09, sa = Math.sin(md.a) * 0.09;
+      const [a, b] = RP(p.x + ca, p.y + sa), [d, e] = RP(p.x - ca, p.y - sa);
+      ctx.strokeStyle = C.ink; ctx.lineWidth = Math.max(3, s * 0.07); ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(d, e); ctx.lineTo(a, b); ctx.stroke();
+    }
+    // velocity arrow (field frame)
+    const fvx = meas.vx * c - meas.vy * sn, fvy = meas.vx * sn + meas.vy * c;
+    const [rx0, ry0] = P(robot.x, robot.y), [rx1, ry1] = P(robot.x + fvx * 0.35, robot.y + fvy * 0.35);
+    arrow(ctx, rx0, ry0, rx1, ry1, C.volt, 3);
+    // "stick forward drives this way" compass
+    if ($("modes").classList.contains("not-yet")) return;
+    const fwd = mode === "ROBOT_CENTRIC" ? robot.th : 0;
+    const cx = ox + 34, cy = oy + 40;
+    ctx.fillStyle = C.bg; ctx.globalAlpha = 0.85; ctx.fillRect(ox + 4, oy + 6, 112, 64); ctx.globalAlpha = 1; ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.strokeRect(ox + 4.5, oy + 6.5, 112, 64);
+    ctx.fillStyle = C.muted; ctx.font = `11px ${C.body}`; ctx.textAlign = "left";
+    ctx.fillText("Stick forward", ox + 10, oy + 20); ctx.fillText("drives:", ox + 10, oy + 34);
+    const L = 20, ex = cx + 48 - Math.sin(fwd) * L, ey = cy + 4 - Math.cos(fwd) * L;
+    arrow(ctx, cx + 48 + Math.sin(fwd) * L * 0.6, cy + 4 + Math.cos(fwd) * L * 0.6, ex, ey, C.brand, 2.5);
+  }
+
+  function drawMods() {
+    const { ctx, w, h } = fit(modsCv);
+    ctx.clearRect(0, 0, w, h);
+    const half = Math.min(w, h) / 2, cx = w / 2, cy = h / 2;
+    const pos = half * 0.42 / R, vk = (half * 0.32) / MAX_V;
+    // robot frame -> screen: +x (front) up, +y left
+    const S = (u, v) => [cx - v * pos, cy - u * pos];
+    const V = (x0, y0, vx, vy) => [x0 - vy * vk, y0 - vx * vk];
+    // frame
+    const [fx, fy] = S(R * 1.25, R * 1.25);
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.strokeRect(fx, fy, R * 2.5 * pos, R * 2.5 * pos);
+    ctx.fillStyle = C.muted; ctx.font = `12px ${C.body}`; ctx.textAlign = "center";
+    ctx.fillText("front", cx, fy - 6);
+    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TAU); ctx.fillStyle = C.muted; ctx.fill();
+    // ω as a curved arrow at the centre
+    if (Math.abs(cmd.w) > 0.05) {
+      const rr = half * 0.12, sweep = clamp(cmd.w / MAX_W, -1, 1) * Math.PI * 1.2;
+      ctx.strokeStyle = C.setp; ctx.lineWidth = 2; ctx.beginPath();
+      const a0 = -Math.PI / 2, a1 = a0 - sweep;
+      ctx.arc(cx, cy, rr, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+      const ex = cx + rr * Math.cos(a1), ey = cy + rr * Math.sin(a1), tan = a1 + (sweep > 0 ? -Math.PI / 2 : Math.PI / 2);
+      arrow(ctx, ex - 6 * Math.cos(tan), ey - 6 * Math.sin(tan), ex, ey, C.setp, 2);
+    }
+    for (let i = 0; i < 4; i++) {
+      const p = MODS[i], m = mods[i], [mx, my] = S(p.x, p.y);
+      // speed limit circle
+      ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(mx, my, MAX_V * vk, 0, TAU); ctx.stroke(); ctx.restore();
+      // wheel at its actual angle
+      const wl = half * 0.11, ww = half * 0.045;
+      ctx.save(); ctx.translate(mx, my); ctx.rotate(-m.a); // screen rotation: robot +x is screen up
+      ctx.fillStyle = C.ink; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-ww, -wl, ww * 2, wl * 2, 3) : ctx.rect(-ww, -wl, ww * 2, wl * 2); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = C.brand; ctx.beginPath(); ctx.arc(0, -wl + ww, ww * 0.6, 0, TAU); ctx.fill();
+      ctx.restore();
+      // vector construction
+      if (opt.vectors) {
+        const [tx, ty] = V(mx, my, m.tvec[0], m.tvec[1]);
+        arrow(ctx, mx, my, tx, ty, C.actual, 2.5);
+        const [ux, uy] = V(tx, ty, m.rvec[0], m.rvec[1]);
+        arrow(ctx, tx, ty, ux, uy, C.setp, 2.5);
+      }
+      // before desaturation (dashed) and command (solid): the ground velocity the wheel is asked to make
+      const bvx = m.asked * Math.cos(m.askedA), bvy = m.asked * Math.sin(m.askedA);
+      if (scaleK < 0.999) { const [bx, by] = V(mx, my, bvx, bvy); arrow(ctx, mx, my, bx, by, C.warn, 2, [5, 4]); }
+      const gvx = m.setS * Math.cos(m.setA), gvy = m.setS * Math.sin(m.setA);
+      const [gx, gy] = V(mx, my, gvx, gvy);
+      arrow(ctx, mx, my, gx, gy, C.goal, 3.5);
+      // label
+      ctx.fillStyle = C.ink; ctx.font = `600 13px ${C.body}`; ctx.textAlign = "center";
+      const ly = my + (p.x > 0 ? -(MAX_V * vk + 8) : MAX_V * vk + 16);
+      ctx.fillText(p.n + (m.flipped ? " · flipped" : ""), mx, ly);
+    }
+  }
+
+  // ---- Readouts ----
+  const f2 = (v) => (Math.abs(v) < 0.005 ? 0 : v).toFixed(2);
+  const sgn = (v) => (v >= 0 ? "+" : "−") + Math.abs(Math.abs(v) < 0.005 ? 0 : v).toFixed(2);
+  const MODE_TEXT = {
+    FIELD_CENTRIC: "Left stick forward always drives away from the blue wall (+x on the field), no matter which way the robot faces. The code rotates the field speeds by −θ before kinematics.",
+    ROBOT_CENTRIC: "Left stick forward drives the way the robot's front points. No gyro is used, so the speeds go straight to kinematics.",
+    FIELD_CENTRIC_ROTATION_LOCK: "Translation is field-centric. The right stick is ignored: a heading controller (kP 10, kD 1) picks ω so the robot's front faces the hub. In the real code the shooter supplies the target with setDesiredRotationLockCORWithFF(...).",
+  };
+  const rows = MODS.map((p) => { const tr = document.createElement("tr"); $("mt-body").appendChild(tr); return tr; });
+  let lastRO = 0;
+  function updateReadouts(now) {
+    if (now - lastRO < 80) return; lastRO = now;
+    $("r-vx").textContent = sgn(cmd.vx) + " m/s"; $("r-vy").textContent = sgn(cmd.vy) + " m/s"; $("r-w").textContent = sgn(cmd.w) + " rad/s";
+    $("r-mvx").textContent = sgn(meas.vx); $("r-mvy").textContent = sgn(meas.vy); $("r-mw").textContent = sgn(meas.w);
+    $("r-th").textContent = `${f2(robot.th)} rad (${Math.round(robot.th * DEG)}°)`;
+    $("src").textContent = ({ sticks: "Keys: W A S D, Q E · gamepads work too", keyboard: "Input: keyboard", gamepad: "Input: gamepad", walkthrough: "Input: Show me (hands off)" })[source];
+    rows.forEach((tr, i) => {
+      const m = mods[i];
+      tr.innerHTML = `<td>${MODS[i].n}${m.flipped ? ' <span class="flip">flip</span>' : ""}</td>` +
+        `<td>${f2(m.setA)} <small>${Math.round(m.setA * DEG)}°</small></td>` +
+        `<td class="${m.asked > MAX_V + 0.005 ? "over" : ""}">${f2(m.asked)}</td>` +
+        `<td>${f2(m.setS)}</td><td>${m.travel.toFixed(1)}</td>`;
+    });
+    $("sat-pill").hidden = !(maxBefore > MAX_V + 0.005);
+    $("sat-pill").textContent = opt.desat ? `Scaled ×${scaleK.toFixed(2)}` : "Clipped at 5.0 m/s";
+    const xm = -applyDeadband(raw.ly, DB), ym = -applyDeadband(raw.lx, DB), wm = -applyDeadband(raw.rx, DB);
+    $("pipe").textContent =
+      `left Y  ${f2(raw.ly).padStart(5)} → deadband, negate ${f2(xm).padStart(5)} × ${(MAX_V * opt.scalar).toFixed(2)} → vx ${f2(slewX)} m/s\n` +
+      `left X  ${f2(raw.lx).padStart(5)} → deadband, negate ${f2(ym).padStart(5)} × ${(MAX_V * opt.scalar).toFixed(2)} → vy ${f2(slewY)} m/s\n` +
+      `right X ${f2(raw.rx).padStart(5)} → deadband, negate ${f2(wm).padStart(5)} × ${MAX_W.toFixed(2)} → ω  ${f2(wm * MAX_W)} rad/s` +
+      (mode !== "ROBOT_CENTRIC" ? `\nthen field → robot: rotate (vx, vy) by −θ = ${f2(-robot.th)} rad` : "") +
+      (mode === "FIELD_CENTRIC_ROTATION_LOCK" ? `\nω replaced by heading controller → ${f2(cmd.w)} rad/s` : "");
+  }
+  function moveKnobs(r) {
+    const L = $("pad-l").clientWidth / 2 - 20, Rr = $("pad-r").clientWidth / 2 - 20;
+    $("knob-l").style.transform = `translate(${r.lx * L}px, ${r.ly * L}px)`;
+    $("knob-r").style.transform = `translate(${r.rx * Rr}px, 0)`;
+  }
+
+  // ---- Mode + options ----
+  function setMode(m) {
+    mode = m;
+    $("m-fc").setAttribute("aria-pressed", String(m === "FIELD_CENTRIC"));
+    $("m-rc").setAttribute("aria-pressed", String(m === "ROBOT_CENTRIC"));
+    $("m-lock").setAttribute("aria-pressed", String(m === "FIELD_CENTRIC_ROTATION_LOCK"));
+    $("code").textContent = `swerve_.setWantedState(SwerveStates.${m});`;
+    $("mode-note").textContent = MODE_TEXT[m];
+    $("pad-r").classList.toggle("locked", m === "FIELD_CENTRIC_ROTATION_LOCK");
+    $("lg-lock").hidden = m !== "FIELD_CENTRIC_ROTATION_LOCK";
+  }
+  $("m-fc").addEventListener("click", () => setMode("FIELD_CENTRIC"));
+  $("m-rc").addEventListener("click", () => setMode("ROBOT_CENTRIC"));
+  $("m-lock").addEventListener("click", () => setMode("FIELD_CENTRIC_ROTATION_LOCK"));
+  const bindCheck = (id, key, after) => $(id).addEventListener("change", (e) => { opt[key] = e.target.checked; if (after) after(); });
+  bindCheck("o-desat", "desat"); bindCheck("o-opt", "optimize"); bindCheck("o-cos", "cosine"); bindCheck("o-disc", "disc");
+  bindCheck("o-vec", "vectors", () => { $("lg-t").hidden = $("lg-r").hidden = !opt.vectors; });
+  bindCheck("o-trail", "trail", () => { if (!opt.trail) trail.length = 0; });
+  function setOpt(key, id, v) { opt[key] = v; $(id).checked = v; $(id).dispatchEvent(new Event("change")); }
+  function setSteer(v) { opt.steer = v; $("o-steer").value = v; $("steer-val").textContent = v; }
+  $("o-scalar").addEventListener("input", (e) => { opt.scalar = +e.target.value; $("scalar-val").textContent = opt.scalar.toFixed(2); });
+  $("o-steer").addEventListener("input", (e) => setSteer(+e.target.value));
+  $("turn90").addEventListener("click", () => { robot.th = wrap(robot.th + Math.PI / 2); });
+  $("zero").addEventListener("click", () => { robot.th = 0; });
+  $("reset").addEventListener("click", () => { if (guide.free) resetSim(); else goStep(guide.i); });
+  $("pause").addEventListener("click", (e) => { paused = !paused; e.currentTarget.setAttribute("aria-pressed", String(paused)); e.currentTarget.textContent = paused ? "Resume" : "Pause"; });
+  $("slow").addEventListener("click", (e) => { slow = !slow; e.currentTarget.setAttribute("aria-pressed", String(slow)); });
+
+  // ---- Pads ----
+  function bindPad(id, horizontal) {
+    const pad = $(id);
+    let active = null;
+    const set = (ev) => {
+      const r = pad.getBoundingClientRect(), L = r.width / 2 - 20;
+      let x = (ev.clientX - (r.left + r.width / 2)) / L, y = (ev.clientY - (r.top + r.height / 2)) / L;
+      if (horizontal) { stick.rx = clamp(x, -1, 1); return; }
+      const h = Math.hypot(x, y); if (h > 1) { x /= h; y /= h; }
+      stick.lx = x; stick.ly = y;
+    };
+    const release = () => { active = null; if (horizontal) stick.rx = 0; else { stick.lx = 0; stick.ly = 0; } };
+    pad.addEventListener("pointerdown", (ev) => { active = ev.pointerId; pad.setPointerCapture(ev.pointerId); set(ev); ev.preventDefault(); });
+    pad.addEventListener("pointermove", (ev) => { if (ev.pointerId === active) set(ev); });
+    pad.addEventListener("pointerup", release); pad.addEventListener("pointercancel", release);
+    const ks = padKeys[horizontal ? "r" : "l"];
+    pad.addEventListener("keydown", (ev) => { if (ev.key.startsWith("Arrow")) { ks.add(ev.key); ev.preventDefault(); } });
+    pad.addEventListener("keyup", (ev) => ks.delete(ev.key));
+    pad.addEventListener("blur", () => ks.clear());
+  }
+  bindPad("pad-l", false); bindPad("pad-r", true);
+  const DRIVE_KEYS = new Set(["w", "a", "s", "d", "q", "e"]);
+  window.addEventListener("keydown", (ev) => {
+    const t = ev.target, tag = t && t.tagName;
+    if (tag === "INPUT" && t.type !== "checkbox" && t.type !== "range") return;
+    if (tag === "TEXTAREA" || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    const k = ev.key.toLowerCase();
+    if (k === "shift") keys.add("shift");
+    if (DRIVE_KEYS.has(k)) { keys.add(k); ev.preventDefault(); }
+  });
+  window.addEventListener("keyup", (ev) => { const k = ev.key.toLowerCase(); keys.delete(k); if (k === "shift") keys.delete("shift"); });
+  window.addEventListener("blur", () => { keys.clear(); padKeys.l.clear(); padKeys.r.clear(); });
+
+  // ---- Guided steps ----
+  const run = (segs, tag) => { script = { segs, t: 0 }; if (tag) stats.run = { tag, opt: opt.optimize, start: totalTravel() }; };
+  const totalTravel = () => mods.reduce((a, m) => a + m.travel, 0);
+  const STEPS = [
+    {
+      title: "Push the left stick forward.",
+      body: "vx is forward speed in m/s. Full stick is 5.0 m/s. Notice all four wheels point the same way.",
+      show: () => run([{ dur: 1.4, ly: -1 }]),
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); setOpt("vectors", "o-vec", false); stats.dmax = 0; stats.drove = null; },
+      status: () => { const v = Math.hypot(cmd.vx, cmd.vy); if (v > Math.max(1, stats.dmax || 0)) { stats.dmax = v; stats.drove = `${v.toFixed(1)} m/s`; } return stats.drove ? [stats.drove, true] : ["", false]; },
+    },
+    {
+      title: "Spin in place with the right stick.",
+      body: "ω is turning speed in rad/s; counter-clockwise is positive. Each wheel now points along a circle around the center.",
+      show: () => run([{ dur: 1.6, rx: -0.8 }]),
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); stats.spun = false; },
+      status: () => { if (Math.abs(cmd.w) > 3 && Math.hypot(cmd.vx, cmd.vy) < 0.5) stats.spun = true; return stats.spun ? ["spun in place", true] : ["", false]; },
+    },
+    {
+      title: "Drive forward in Robot-centric, then in Field-centric.",
+      body: "The robot faces left. Robot-centric drives toward its front. Field-centric drives away from the driver, using the gyro.",
+      show: () => run([{ dur: 1.2, ly: -0.7 }]),
+      enter: () => { resetSim(); robot.th = Math.PI / 2; robot.x = 2.6; robot.y = 5.6; setMode("ROBOT_CENTRIC"); stats.fcMoved = stats.rcMoved = false; },
+      status: () => stats.fcMoved && stats.rcMoved ? ["tried both", true] : [stats.rcMoved ? "now Field-centric" : stats.fcMoved ? "now Robot-centric" : "", false],
+    },
+    {
+      title: "Drive and turn at the same time.",
+      body: "Each wheel adds the same translation (blue) to its own rotation part ω × r (purple). The gold sum is the wheel's speed and angle.",
+      show: () => run([{ dur: 2.5, ly: -0.5, rx: -0.5 }]),
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); setOpt("vectors", "o-vec", true); stats.both = false; },
+      status: () => { if (Math.hypot(cmd.vx, cmd.vy) > 0.5 && Math.abs(cmd.w) > 0.5) stats.both = true; return stats.both ? ["driving and turning", true] : ["", false]; },
+    },
+    {
+      title: "Full forward + full spin, then untick Desaturate and repeat.",
+      body: "One wheel is asked for over 7 m/s but tops out at 5.0. Desaturate slows all four together, so the path stays true. Without it, the path bends.",
+      show: () => { resetSim(); run([{ dur: 1.6, ly: -1, rx: -1 }]); },
+      enter: () => { resetSim(); setMode("ROBOT_CENTRIC"); setOpt("vectors", "o-vec", false); stats.satOn = stats.satOff = 0; },
+      status: () => {
+        if (stats.satOn > 5 && stats.satOff > 5) return ["seen scaled and clipped", true];
+        if (maxBefore > MAX_V + 0.01) return [`asked ${maxBefore.toFixed(1)} m/s → ${opt.desat ? "scaled ×" + scaleK.toFixed(2) : "clipped at 5.0"}`, false];
+        return [stats.satOn > 5 ? "now untick Desaturate" : "", false];
+      },
+    },
+    {
+      title: "Go forward, then reverse. Then untick Optimize and repeat.",
+      body: "With Optimize, wheels spin backward instead of turning π rad. Steering is slowed so you can see it. Open Show numbers to compare steer travel.",
+      show: () => run([{ dur: 1.0, ly: -0.8 }, { dur: 1.4, ly: 0.8 }], "opt"),
+      enter: () => { resetSim(); robot.x = 3.0; robot.y = 6.2; robot.th = -Math.PI / 2; setMode("ROBOT_CENTRIC"); setSteer(6); stats.runs = {}; },
+      status: () => {
+        const r = stats.runs;
+        if (r.on != null && r.off != null) return [`steer travel ${r.on.toFixed(1)} vs ${r.off.toFixed(1)} rad`, true];
+        if (r.on != null) return [`${r.on.toFixed(1)} rad with Optimize; now untick it`, false];
+        if (r.off != null) return [`${r.off.toFixed(1)} rad without; now tick it`, false];
+        return ["use Show me for a clean test", false];
+      },
+    },
+    {
+      title: "Pick Rotation lock and strafe past the hub.",
+      body: "A heading controller turns the robot to face the hub; the right stick is ignored. You've got it — try Free play, and see Go deeper for ideas.",
+      show: () => { setMode("FIELD_CENTRIC_ROTATION_LOCK"); run([{ dur: 2.6, lx: 0.6 }, { dur: 2.6, lx: -0.6 }]); },
+      enter: () => { resetSim(); setMode("FIELD_CENTRIC"); robot.x = 1.6; robot.y = 5.6; stats.lockGood = 0; },
+      status: () => stats.lockGood > 15 ? [`locked on · error ${Math.abs(wrap(lockTarget - robot.th)).toFixed(2)} rad`, true] : ["", false],
+    },
+  ];
+  const guide = { free: false, i: 0 };
+  let lastStatus = "";
+  try { guide.free = localStorage.getItem("swerve-lab-mode") === "free"; } catch (e) {}
+  function applyReveal() {
+    document.querySelectorAll("[data-step-from]").forEach((el) => el.classList.toggle("not-yet", !guide.free && +el.dataset.stepFrom > guide.i + 1));
+  }
+  function defaults() {
+    setOpt("desat", "o-desat", true); setOpt("optimize", "o-opt", true); setOpt("cosine", "o-cos", true); setOpt("disc", "o-disc", true); setSteer(20);
+  }
+  function renderGuide() {
+    lastStatus = "";
+    $("g-free").setAttribute("aria-pressed", String(guide.free));
+    $("g-free").textContent = guide.free ? "Back to steps" : "Free play";
+    $("g-show").hidden = $("g-back").hidden = $("g-next").hidden = guide.free;
+    if (guide.free) {
+      $("g-count").textContent = "Free play"; $("g-status").textContent = "";
+      $("g-title").textContent = "Every control is out. Drive anything.";
+      $("g-body").textContent = "Ideas are under Go deeper → Things to try.";
+    } else {
+      const st = STEPS[guide.i];
+      $("g-count").textContent = `Step ${guide.i + 1} of ${STEPS.length}`;
+      $("g-title").textContent = st.title; $("g-body").textContent = st.body;
+      $("g-back").disabled = guide.i === 0;
+      $("g-next").disabled = guide.i === STEPS.length - 1;
+      $("g-next").classList.remove("primary");
+    }
+    applyReveal();
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+  }
+  function goStep(i) { guide.i = i; defaults(); STEPS[i].enter(); renderGuide(); }
+  function setFree(on) {
+    guide.free = on; script = null;
+    try { localStorage.setItem("swerve-lab-mode", on ? "free" : "guided"); } catch (e) {}
+    if (on) renderGuide(); else goStep(guide.i);
+  }
+  function updateGuide() {
+    if (guide.free) return;
+    const [text, good] = STEPS[guide.i].status(), key = text + good;
+    if (key === lastStatus) return; lastStatus = key;
+    const el = $("g-status");
+    el.textContent = good ? `✓ ${text}` : text ? `· ${text}` : "";
+    el.classList.toggle("good", good);
+    el.classList.toggle("done-mark", good);
+    $("g-next").classList.toggle("primary", good && guide.i < STEPS.length - 1);
+  }
+  $("g-free").addEventListener("click", () => setFree(!guide.free));
+  $("g-back").addEventListener("click", () => goStep(Math.max(0, guide.i - 1)));
+  $("g-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, guide.i + 1)));
+  $("g-show").addEventListener("click", () => STEPS[guide.i].show());
+
+  // ---- Main loop ----
+  let acc = 0, last = performance.now();
+  function frame(now) {
+    let dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!paused) {
+      acc += dt * (slow ? 0.25 : 1);
+      while (acc >= LOOP) {
+        acc -= LOOP;
+        robotLoop();
+        for (let k = 0; k < SUB; k++) physics(LOOP / SUB);
+        if (script) {
+          script.t += LOOP;
+          const total = script.segs.reduce((a, s) => a + s.dur, 0);
+          if (script.t >= total + 0.6 && stats.run) {    // let the wheels settle, then record the run
+            const r = stats.run; stats.runs[r.opt ? "on" : "off"] = totalTravel() - r.start; stats.run = null; script = null;
+          } else if (script.t >= total + 0.6) script = null;
+        }
+      }
+    }
+    moveKnobs(raw);
+    drawField(); drawMods();
+    updateReadouts(now); updateGuide();
+    requestAnimationFrame(frame);
+  }
+  setMode("FIELD_CENTRIC");
+  resetSim();
+  if (guide.free) renderGuide(); else goStep(0);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

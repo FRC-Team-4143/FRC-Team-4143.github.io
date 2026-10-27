@@ -1,0 +1,1424 @@
+<!doctype html>
+<!-- PID Tuning Lab for the MARS/WARS docs, served from static/lab-tools/ and embedded at /labs/pid-tuning-lab.
+     Adapted from FRC Team 1756 Argos's PID Tuning Lab (BSD 3-Clause, see THIRD_PARTY_NOTICES.md). -->
+<html lang="en" data-theme="dark"><!-- the site defaults to dark (docusaurus.config.js colorMode) -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PID Tuning Lab</title>
+<link rel="stylesheet" href="lab-base.css">
+<script src="lab-theme.js"></script>
+<style>
+/* Lab-specific layout. Shared tokens and components come from lab-base.css.
+   Workbench: sticky control column beside the mechanism view and live strip charts. */
+.rows { display: grid; gap: 12px; }
+/* Long method names like setTargetPositionMotionProfile(...) must wrap at phone width */
+.try code, .note code, .wt-body code, .guide code { overflow-wrap: anywhere; }
+/* Narrow: mechanism, step card, controls, then graphs. Wide: controls column | step card over mechanism + graphs. */
+.app { display: flex; flex-direction: column; gap: 16px; }
+.main { display: contents; }
+#mech-panel { order: 1; } #guide { order: 2; } .side { order: 3; } #graph-panel { order: 4; } #metrics-panel { order: 5; }
+@media (min-width: 1000px) {
+  .app { display: grid; }
+  .main { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+  .side, #mech-panel, #guide, #graph-panel, #metrics-panel { order: 0; }
+  #guide { grid-column: 1 / -1; }
+  #mech-panel { grid-column: 1; grid-row: 2; }
+  #graph-panel { grid-column: 2; grid-row: 2 / span 2; }
+  #metrics-panel { grid-column: 1; grid-row: 3; }
+}
+.volt-block { display: grid; gap: 10px; }
+@media (min-width: 641px) { .guide .guide-nav { grid-row: 1 / span 6; } }
+.g-act { grid-column: 1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.g-act .status { min-width: 0; }
+.g-extra, .guide .why { grid-column: 1; }
+.guide .why .wt-body { padding-top: 6px; font-size: 14px; }
+.deeper .note { font-size: 14px; }
+canvas { width: 100%; }
+/* Height caps keep the mechanism and both graphs inside one screen on wide monitors */
+#mech { aspect-ratio: 5 / 4; max-height: 44vh; touch-action: none; cursor: crosshair; }
+#plot-pos { aspect-ratio: 16 / 7; max-height: 34vh; }
+#plot-volt { aspect-ratio: 16 / 4.2; max-height: 20vh; }
+
+.sw.goal { border-color: var(--goal); } .sw.actual { border-color: var(--actual); } .sw.setp { border-color: var(--setp); } .sw.volt { border-color: var(--volt); } .sw.warn { border-color: var(--warn); }
+.readout .g { color: var(--goal); } .readout .a { color: var(--actual); }
+.goals { display: flex; flex-wrap: wrap; gap: 6px; }
+.goals button { font-size: 13px; padding: 5px 10px; }
+.goals button small { font-family: var(--f-mono); color: var(--muted); margin-left: 4px; }
+@media (max-width: 640px) { .goals .deg { display: none; } }
+
+.terms { display: grid; grid-template-columns: 56px minmax(0, 1fr) 76px; gap: 6px 10px; align-items: center; font-family: var(--f-mono); font-size: 13px; }
+.terms .total { font-weight: 500; }
+.bar { position: relative; height: 10px; background: var(--grid); border-radius: 2px; }
+.bar::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }
+.bar i { position: absolute; top: 0; bottom: 0; background: var(--muted); border-radius: 2px; }
+.bar.total i { background: var(--volt); }
+.bar.total.sat i { background: var(--warn); }
+.terms .val { text-align: right; font-variant-numeric: tabular-nums; }
+
+.head-left { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.runs { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.pins { list-style: none; margin: 0; padding: 0; display: contents; }
+.pins li { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--line); border-radius: 99px; padding: 2px 2px 2px 10px; font-variant-numeric: tabular-nums; }
+.pins li i { display: inline-block; width: 14px; border-top: 3px solid; }
+.pins li button { border: 0; background: transparent; padding: 0 8px; font-size: 15px; line-height: 1.2; color: var(--muted); }
+.pins li button:hover { color: var(--ink); }
+.row.log { grid-template-columns: 30px minmax(0, 1fr) 30px 72px; gap: 2px 6px; }
+.mul { font-family: var(--f-mono); font-size: 12px; padding: 3px 0; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; border-top: 1px solid var(--grid); }
+.presets button { font-size: 13px; padding: 5px 10px; }
+
+.metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; margin: 0; }
+.metrics dt { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+.metrics dd { margin: 0; font-family: var(--f-mono); font-size: 20px; font-variant-numeric: tabular-nums; }
+.metrics dd.dim { color: var(--muted); font-size: 15px; padding-top: 4px; }
+
+.row.locked { opacity: .4; }
+.row.focus { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 4px; }
+
+.wt-table { border-collapse: collapse; font-family: var(--f-mono); font-size: 13px; }
+.wt-table th, .wt-table td { padding: 3px 18px 3px 0; text-align: left; }
+.wt-table th { font-family: var(--f-body); font-weight: 500; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Software · Controls</p>
+      <h1>PID Tuning Lab</h1>
+      <p class="lede short">Tune a simulated robot arm one gain at a time, the way we tune real mechanisms.</p>
+    </div>
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Mechanism" data-step-from="Done">
+        <button id="mech-arm" aria-pressed="true">Arm</button>
+        <button id="mech-elevator" aria-pressed="false">Elevator</button>
+        <button id="mech-flywheel" aria-pressed="false">Flywheel</button>
+      </div>
+      <button id="pause" aria-pressed="false">Pause</button>
+      <button id="reset">Reset</button>
+    </div>
+  </header>
+
+  <div class="app">
+  <aside class="side" aria-label="Tuning controls">
+    <div class="panel" data-step-from="kG|kS">
+      <h2>Feedforward</h2>
+      <div id="ff-rows" class="rows"></div>
+    </div>
+    <div class="panel">
+      <h2>Feedback (PID)</h2>
+      <div id="pid-rows" class="rows"></div>
+    </div>
+    <details class="more" data-step-from="kP">
+      <summary>More controls</summary>
+      <label class="check" for="opt-profile" data-step-from="free"><input type="checkbox" id="opt-profile"><span>Motion profile (smooth setpoint)</span></label>
+      <div class="row">
+        <label for="opt-noise"><span>Sensor noise</span><span class="u" id="noise-val">off</span></label>
+        <input type="range" id="opt-noise" min="0" max="1" step="0.05" value="0" style="grid-column:1/-1">
+      </div>
+      <button id="bump">Bump the mechanism</button>
+      <button id="slow" aria-pressed="false">Slow motion</button>
+      <div data-step-from="free"><span class="label">Presets</span><div class="presets" id="presets"></div></div>
+    </details>
+  </aside>
+
+  <main class="main">
+    <section class="guide" id="guide" aria-label="Guided steps">
+      <span class="guide-count" id="g-count"></span>
+      <h2 id="wt-title"></h2>
+      <p id="g-text"></p>
+      <div class="g-act" id="g-act">
+        <button id="wt-action"></button>
+        <span class="status" id="wt-status" style="visibility:hidden">&nbsp;</span>
+      </div>
+      <div class="g-extra" id="g-extra" hidden></div>
+      <details class="why" id="g-why"><summary>Why?</summary><div class="wt-body" id="wt-body"></div></details>
+      <div class="guide-nav">
+        <button id="wt-back">Back</button>
+        <button id="wt-next">Next</button>
+        <button id="g-free" aria-pressed="false">Free play</button>
+      </div>
+    </section>
+
+    <div class="panel" id="mech-panel">
+      <div class="panel-head"><h2 id="mech-title">Single-jointed arm</h2><span class="hint">Click or drag to move the goal</span></div>
+      <canvas id="mech" aria-label="Mechanism view. Click or drag to set the goal position."></canvas>
+      <div class="readout">
+        <div><span>Goal</span><b class="g" id="ro-goal">–</b></div>
+        <div><span>Actual</span><b class="a" id="ro-actual">–</b></div>
+        <div><span>Error</span><b id="ro-error">–</b></div>
+      </div>
+      <div class="goals" id="goals"></div>
+    </div>
+
+    <div class="panel" id="graph-panel">
+      <div class="panel-head">
+        <div class="head-left">
+          <h2>Position vs time</h2>
+          <div class="seg small" role="group" aria-label="Position graph view" data-step-from="kV">
+            <button id="view-live" aria-pressed="true">Live</button>
+            <button id="view-cmp" aria-pressed="false">Step tests</button>
+          </div>
+        </div>
+        <div class="legend" id="lg-live">
+          <span><i class="sw dash goal"></i>Goal</span>
+          <span id="lg-setp" hidden><i class="sw setp"></i>Profile setpoint</span>
+          <span><i class="sw actual"></i>Measured</span>
+        </div>
+        <div class="legend" id="lg-cmp" hidden>
+          <span><i class="sw dash goal"></i>Goal</span>
+          <span><i class="sw actual"></i><span id="lg-latest">Latest run</span></span>
+        </div>
+      </div>
+      <canvas id="plot-pos"></canvas>
+      <div class="runs" data-step-from="kV">
+        <button id="run-step">Run step test</button>
+        <button id="pin-run" disabled>Pin this run</button>
+        <ul class="pins" id="pins"></ul>
+      </div>
+      <div class="volt-block" data-step-from="kG|kS">
+        <div class="panel-head">
+          <h2>Motor output</h2>
+          <div class="legend"><span><i class="sw volt"></i>Voltage</span><span><i class="sw dash warn"></i>±12 V limit</span></div>
+        </div>
+        <canvas id="plot-volt"></canvas>
+        <div class="terms" id="terms"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="metrics-panel" data-step-from="kP">
+      <div class="panel-head"><h2>Last step response</h2><span class="hint">Since the goal last changed</span></div>
+      <dl class="metrics">
+        <div><dt>Rise time 10–90%</dt><dd id="m-rise">–</dd></div>
+        <div><dt>Overshoot</dt><dd id="m-over">–</dd></div>
+        <div><dt>Settling time ±2%</dt><dd id="m-settle">–</dd></div>
+        <div><dt>Error now</dt><dd id="m-err">–</dd></div>
+        <div><dt id="m-rec-label">Bump recovery</dt><dd id="m-rec">–</dd></div>
+      </dl>
+    </div>
+  </main>
+  </div>
+
+  <section class="deeper" aria-label="Go deeper">
+    <h2>Go deeper</h2>
+    <details class="try"><summary>Things to try</summary><ol id="try-list"></ol></details>
+    <details><summary>What the feedforward terms do</summary>
+      <p class="note">Feedforward doesn't wait for error. <b>kG</b> holds the mechanism up against gravity. <b>kS</b> overcomes friction in the direction of the error. On our robots that is <code>kS</code> in the gain slot with <code>StaticFeedforwardSign = UseClosedLoopSign</code>, like the 2026 shooter hood. <b>kV</b> supplies the voltage a moving setpoint needs, so on the arm and elevator it only matters with the motion profile on. <a href="/docs/software/controls/system-control/feed-fwd" target="_top">Feed Forward Control</a> explains each term.</p>
+    </details>
+    <details><summary>kP, kI and kD</summary>
+      <p class="note">With good feedforward, many FRC mechanisms only need kP. <b>kI</b> can remove a small leftover error, but it builds up during long moves and causes overshoot. <b>kD</b> damps overshoot when kP alone rings. See <a href="/docs/software/controls/system-control/pid" target="_top">PID Controllers</a>.</p>
+    </details>
+    <details><summary>The motion profile</summary>
+      <p class="note">A trapezoid motion profile moves the setpoint smoothly toward the goal with a speed and acceleration limit. On an MW-Lib mechanism that is calling <code>setTargetPositionMotionProfile(...)</code> instead of <code>setTargetPosition(...)</code>. Turn it on under <b>More controls</b> in Free play.</p>
+    </details>
+    <details><summary>Copying gains to the robot</summary><p class="note" id="robot-units"></p></details>
+    <details><summary>The simulated mechanism</summary>
+      <p class="note" id="plant-consts"></p>
+      <p class="note">The controller runs every 20 ms like a roboRIO loop. The physics runs every 1 ms.</p>
+    </details>
+  </section>
+  <footer class="foot">MARS/WARS · FRC Team 4143</footer>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const DEG = Math.PI / 180;
+  const rpm = (radPerSec) => Math.round(radPerSec * 60 / (2 * Math.PI)).toLocaleString("en-US");
+  const DT = 0.001, CT = 0.02, WINDOW = 8;
+
+  // Plant uses WPILib feedforward form: V = kS·sgn(v) + kG·g(x) + kV·v + kA·a
+  const MECHS = {
+    arm: {
+      // Angles are radians (0 = level, counter-clockwise up), the same units MW-Lib's ArmMech uses.
+      kind: "position", title: "Single-jointed arm", unit: " rad", dec: 3, min: -80 * DEG, max: 170 * DEG, tol: 0.5 * DEG,
+      plant: { kS: 0.15, kG: 0.8, kV: 1.146, kA: 0.2292 },
+      plantShown: { kV: "1.15 V/(rad/s)", kA: "0.229 V/(rad/s²)" },
+      grav: (x) => Math.cos(x),
+      gu: (x) => x,
+      profile: { v: 240 * DEG, a: 720 * DEG }, noiseMax: 3 * DEG, bump: -160 * DEG, velEps: 0.5 * DEG, recBand: DEG,
+      bumpLabel: "Bump the mechanism", recLabel: "Bump recovery",
+      test: { hold: 0, creep: [0, 20 * DEG], step: [-60 * DEG, 90 * DEG], kpGood: [16, 48] },
+      start: { pos: -80 * DEG, goal: 45 * DEG },
+      chart: { min: -90 * DEG, max: 180 * DEG, ticks: [-1, 0, 1, 2, 3], fmt: (v) => +v.toFixed(2) + " rad" },
+      goalFmt: (v) => `${v.toFixed(2)} rad<span class="deg"> (${Math.round(v / DEG)}°)</span>`,
+      noiseFmt: (n) => n.toFixed(3) + " rad",
+      goals: [["Stow", -60 * DEG], ["Level", 0], ["Score", 45 * DEG], ["Vertical", 90 * DEG], ["Back", 135 * DEG]],
+      params: {
+        kP: { log: true, lo: 0.08, max: 80, seed: 1.6, unit: "V per rad" },
+        kI: { log: true, lo: 0.08, max: 80, seed: 1.6, unit: "V per rad·s" },
+        kD: { log: true, lo: 0.006, max: 6.4, seed: 0.16, unit: "V per rad/s" },
+        kG: { max: 1.5, step: 0.01, unit: "V × cos θ" },
+        kS: { max: 0.5, step: 0.01, unit: "V × sign of error" },
+        kV: { max: 2.5, step: 0.01, unit: "V per rad/s" },
+      },
+      presets: {
+        "P only": { kP: 8, kI: 0, kD: 0, kG: 0, kS: 0, kV: 0 },
+        "P + gravity": { kP: 8, kI: 0, kD: 0, kG: 0.8, kS: 0, kV: 0 },
+        "Too much P": { kP: 64, kI: 0, kD: 0, kG: 0.8, kS: 0, kV: 0 },
+        "Windup": { kP: 6.4, kI: 32, kD: 0, kG: 0, kS: 0, kV: 0 },
+        "Tuned": { kP: 32, kI: 0, kD: 2.55, kG: 0.8, kS: 0.15, kV: 1.15 },
+      },
+      robot: "<code>ArmMech</code> takes angles in radians, but it hands your gains to the TalonFX as <code>Slot0Configs</code>, and the motor controller works in rotations of the arm. To copy a gain from here, multiply <code>kP</code>, <code>kI</code>, <code>kD</code> and <code>kV</code> by 2π (about 6.28): kP 32 V/rad here is about 200 in <code>withKP(...)</code>. <code>kG</code> and <code>kS</code> are plain volts and copy straight over. <code>ArmMech</code> sets <code>GravityType</code> to <code>Arm_Cosine</code> for you, so kG is multiplied by cos θ just like here.",
+      tries: [
+        "Angles are in radians, like every MW-Lib arm call: <code>setTargetPosition(angle_rad)</code>. π rad is 180°, so 1 rad is about 57°. A 0.17 rad (10°) error with <code>kP</code> = 16 asks for 16 × 0.175 ≈ 2.8 V.",
+        "With <b>P only</b>, send the arm to <b>Level</b>. It stops short because gravity pulls down and P only pushes in proportion to the error. That gap is steady-state error.",
+        "Set <code>kP</code> to 0 and raise <code>kG</code> until the arm hangs wherever you leave it. That voltage is your gravity feedforward. Notice it needs the most voltage at 0 rad (level) and none at 1.57 rad (straight up). See <a href=\"/docs/software/controls/system-control/feed-fwd#arm-feed-forward\" target=\"_top\">Arm Feed Forward</a>.",
+        "Load <b>Too much P</b>. The arm overshoots and rings. Add <code>kD</code> a little at a time until it settles with one small overshoot.",
+        "Load <b>Windup</b> and move between <b>Stow</b> and <b>Vertical</b>. The integral builds up while the arm travels and then carries it past the goal.",
+        "Turn on sensor noise, then raise <code>kD</code>. Watch the motor output plot get jittery. D reacts to how fast the error changes, and noise changes fast.",
+        "Turn on the motion profile with <b>Tuned</b> gains. The purple marker is where the profile wants the arm right now (it is limited to 4.2 rad/s and 12.6 rad/s²). Set <code>kV</code> to 0 and see how far it lags behind. On the robot this is <code>setTargetPositionMotionProfile(angle_rad)</code>; see the <a href=\"/docs/software/robot_dev/mechanisms/arm\" target=\"_top\">Arm mechanism</a> page.",
+      ],
+    },
+    elevator: {
+      kind: "position", title: "Elevator", unit: " m", dec: 3, min: 0, max: 1.6, tol: 0.005,
+      plant: { kS: 0.15, kG: 1.0, kV: 6, kA: 0.6 },
+      plantShown: { kV: "6 V/(m/s)", kA: "0.6 V/(m/s²)" },
+      grav: () => 1,
+      gu: (x) => x,
+      profile: { v: 1.6, a: 6 }, noiseMax: 0.03, bump: -0.9, velEps: 0.003, recBand: 0.01,
+      bumpLabel: "Bump the mechanism", recLabel: "Bump recovery",
+      test: { hold: 0.8, creep: [0.8, 0.95], step: [0.2, 1.3], kpGood: [100, 300] },
+      start: { pos: 0, goal: 1.0 },
+      chart: { min: -0.05, max: 1.7, ticks: [0, 0.4, 0.8, 1.2, 1.6], fmt: (v) => v.toFixed(1) + " m" },
+      goalFmt: (v) => v.toFixed(2) + " m",
+      noiseFmt: (n) => (n * 100).toFixed(1) + " cm",
+      goals: [["Floor", 0], ["Low", 0.45], ["Mid", 0.85], ["High", 1.4]],
+      params: {
+        kP: { log: true, lo: 0.5, max: 500, seed: 10, unit: "V per m" },
+        kI: { log: true, lo: 0.5, max: 500, seed: 10, unit: "V per m·s" },
+        kD: { log: true, lo: 0.04, max: 40, seed: 1, unit: "V per m/s" },
+        kG: { max: 2, step: 0.01, unit: "V" },
+        kS: { max: 0.5, step: 0.01, unit: "V × sign of error" },
+        kV: { max: 15, step: 0.05, unit: "V per m/s" },
+      },
+      presets: {
+        "P only": { kP: 40, kI: 0, kD: 0, kG: 0, kS: 0, kV: 0 },
+        "P + gravity": { kP: 40, kI: 0, kD: 0, kG: 1.0, kS: 0, kV: 0 },
+        "Too much P": { kP: 450, kI: 0, kD: 0, kG: 1.0, kS: 0, kV: 0 },
+        "Windup": { kP: 30, kI: 240, kD: 0, kG: 0, kS: 0, kV: 0 },
+        "Tuned": { kP: 200, kI: 0, kD: 10, kG: 1.0, kS: 0.15, kV: 6 },
+      },
+      robot: "<code>ElevatorMech</code> takes heights in meters, but the TalonFX works in drum rotations. One drum rotation moves the carriage 2π × drum radius, so to copy <code>kP</code>, <code>kI</code>, <code>kD</code> or <code>kV</code> into <code>Slot0Configs</code>, multiply by 2π × drum radius (with a 0.025 m drum: × 0.157). <code>kG</code> and <code>kS</code> are plain volts. For a vertical elevator, <code>ElevatorMech</code> sets <code>GravityType</code> to <code>Elevator_Static</code>, so kG is the same at every height.",
+      tries: [
+        "With <b>P only</b>, send the elevator to <b>Mid</b>. It sags below the goal because P needs some error before it pushes back against gravity.",
+        "Set <code>kP</code> to 0 and raise <code>kG</code> until the carriage hovers. On an elevator gravity doesn't change with height, so one number works everywhere.",
+        "Load <b>Too much P</b> and watch the ringing. Add <code>kD</code> until it settles quickly.",
+        "Load <b>Windup</b> and jump from <b>Floor</b> to <b>High</b>. The integral keeps growing during the long trip and overshoots badly.",
+        "Turn on the motion profile with <b>Tuned</b> gains, then set <code>kV</code> to 0. Without velocity feedforward the PID has to fall behind before it pushes. On the robot this is <code>setTargetPositionMotionProfile(position_m)</code>; see the <a href=\"/docs/software/robot_dev/mechanisms/elevator\" target=\"_top\">Elevator mechanism</a> page.",
+        "Press <b>Bump the mechanism</b> a few times. Compare how each preset recovers from a hit it didn't see coming.",
+      ],
+    },
+    // Velocity loop: the controlled value is wheel speed in radians per second, the same units MW-Lib's FlywheelMech uses.
+    // Plant: V = kS·sgn(v) + kV·v + kA·a, with no gravity.
+    flywheel: {
+      kind: "velocity", title: "Shooter flywheel", unit: " rad/s", dec: 1, min: 0, max: 200 * Math.PI, tol: 1.5,
+      plant: { kS: 0.2, kV: 0.0191, kA: 0.00955 },
+      plantShown: { kV: "0.0191 V/(rad/s)", kA: "0.00955 V/(rad/s²)" },
+      grav: () => 0,
+      gu: (x) => x,
+      profile: { v: 300 * Math.PI, a: 1200 * Math.PI }, noiseMax: 9.4, velEps: 1.25, recBand: 6.3,
+      bumpLabel: "Shoot a game piece", recLabel: "Shot recovery",
+      test: { creep: [0, 30], step: [0, 375], kpGood: [0.032, 0.24] },
+      start: { pos: 0, goal: 375 },
+      chart: { min: -30, max: 690, ticks: [0, 100, 200, 300, 400, 500, 600], fmt: (v) => +v.toFixed(1) + " rad/s" },
+      goalFmt: (v) => `${v} rad/s<span class="deg"> (${rpm(v)} RPM)</span>`,
+      noiseFmt: (n) => n.toFixed(1) + " rad/s",
+      goals: [["Idle", 0], ["Close shot", 250], ["Mid shot", 375], ["Far shot", 500]],
+      params: {
+        kP: { log: true, lo: 0.0008, max: 0.8, seed: 0.016, unit: "V per rad/s" },
+        kI: { log: true, lo: 0.0016, max: 1.6, seed: 0.08, unit: "V per rad" },
+        kD: { log: true, lo: 0.000016, max: 0.016, seed: 0.0003, unit: "V per rad/s²" },
+        kS: { max: 0.5, step: 0.01, unit: "V × sign of velocity" },
+        kV: { max: 0.048, step: 0.0001, unit: "V per rad/s" },
+      },
+      presets: {
+        "P only": { kP: 0.08, kI: 0, kD: 0, kG: 0, kS: 0, kV: 0 },
+        "FF only": { kP: 0, kI: 0, kD: 0, kG: 0, kS: 0.2, kV: 0.0191 },
+        "Too much P": { kP: 0.64, kI: 0, kD: 0, kG: 0, kS: 0.2, kV: 0.0191 },
+        "kI, no FF": { kP: 0.048, kI: 0.48, kD: 0, kG: 0, kS: 0, kV: 0 },
+        "Tuned": { kP: 0.095, kI: 0, kD: 0, kG: 0, kS: 0.2, kV: 0.0191 },
+      },
+      robot: "<code>FlywheelMech</code> takes speeds in rad/s, but it hands your gains to the TalonFX as <code>Slot1Configs</code>, and the motor controller works in rotations per second. To copy <code>kP</code>, <code>kI</code>, <code>kD</code> or <code>kV</code>, multiply by 2π (about 6.28): kV 0.0191 V/(rad/s) here is 0.12 in <code>withKV(...)</code>. <code>kS</code> is plain volts.",
+      tries: [
+        "Speeds here are in rad/s, like <code>setTargetVelocity(velocity_rad_per_sec)</code> on an MW-Lib flywheel. To get RPM, multiply by 60 / 2π (about 9.55): 375 rad/s is about 3,580 RPM. The gauge shows RPM under the wheel.",
+        "With <b>P only</b>, spin up to <b>Mid shot</b>. It levels off well below the goal. A flywheel needs voltage just to keep spinning, and P only makes voltage when there's error.",
+        "Load <b>FF only</b>. Now it reaches the goal with no error at all, because <code>kV</code> × speed is exactly the voltage needed to hold that speed.",
+        "With <b>FF only</b>, press <b>Shoot a game piece</b>. The wheel recovers slowly because feedforward doesn't react to the dip. Load <b>Tuned</b> and shoot again. kP makes the recovery much faster.",
+        "Load <b>Too much P</b> and turn on sensor noise. Watch the motor output chatter. Speed measurements are noisy, so flywheels usually run a small kP.",
+        "Load <b>kI, no FF</b> and spin up from <b>Idle</b>. The integral eventually finds the voltage kV would have given you, but overshoots on the way. See the <a href=\"/docs/software/robot_dev/mechanisms/flywheel\" target=\"_top\">Flywheel mechanism</a> page for how our shooter is set up.",
+      ],
+    },
+  };
+
+  let mechKey = "arm", M = MECHS.arm;
+  const gains = {
+    arm: { ...MECHS.arm.presets["P only"] },
+    elevator: { ...MECHS.elevator.presets["P only"] },
+    flywheel: { ...MECHS.flywheel.presets["P only"] },
+  };
+  const opts = { profile: false, noise: 0 };
+  let paused = false, speed = 1;
+  let s, hist, step;
+
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const decimals = (st) => (String(st).split(".")[1] || "").length;
+  const fmtPos = (v) => v.toFixed(M.dec) + M.unit;
+  // Signed error; a value that rounds to zero shows as +0 rather than −0
+  const fmtErr = (e) => (Number(e.toFixed(M.dec)) >= 0 ? "+" : "−") + fmtPos(Math.abs(e));
+  function gauss() {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  // ---------- Simulation ----------
+  function resetSim() {
+    s = { t: 0, pos: M.start.pos, vel: 0, meas: M.start.pos, goal: M.start.goal, sp: M.start.pos, spV: 0, angle: 0,
+          integ: 0, prevErr: null, out: 0, terms: { p: 0, i: 0, d: 0, ff: 0, raw: 0 }, nextCtrl: 0, rec: null };
+    hist = [];
+    startStep();
+  }
+
+  function startStep() {
+    step = { t0: s.t, from: s.pos, to: s.goal, t10: null, t90: null, peak: 0, lastOut: s.t, maxTrack: 0 };
+    s.rec = null;
+  }
+
+  function setGoal(v) {
+    v = clamp(v, M.min, M.max);
+    if (Math.abs(v - s.goal) < 1e-9) return;
+    // A manual goal change cancels a step test in progress and returns to the live graph
+    if (run && !run.done) { run = null; updateRunUI(); }
+    if (view === "cmp") setView("live");
+    s.goal = v;
+    startStep();
+  }
+
+  function profileStep() {
+    const { v: vmax, a: amax } = M.profile;
+    const d = s.goal - s.sp;
+    if (Math.abs(d) < 1e-9 && Math.abs(s.spV) < amax * CT) { s.sp = s.goal; s.spV = 0; return; }
+    const dir = Math.sign(d) || 1;
+    let v = s.spV;
+    if (v * dir < 0) v += dir * amax * CT;
+    else if ((v * v) / (2 * amax) >= Math.abs(d)) v -= dir * amax * CT;
+    else v += dir * amax * CT;
+    v = clamp(v, -vmax, vmax);
+    s.sp += v * CT;
+    s.spV = v;
+    if ((s.goal - s.sp) * dir <= 0) { s.sp = s.goal; s.spV = 0; }
+  }
+
+  // One roboRIO loop: read sensor, run PID + feedforward, command the motor
+  function control() {
+    const g = gains[mechKey];
+    s.meas = s.pos + opts.noise * M.noiseMax * gauss();
+    if (opts.profile) profileStep(); else { s.sp = s.goal; s.spV = 0; }
+
+    const err = M.gu(s.sp - s.meas);
+    if (g.kI === 0) s.integ = 0; else s.integ += err * CT;
+    const p = g.kP * err;
+    let i = g.kI * s.integ;
+    if (Math.abs(i) > 12) { i = Math.sign(i) * 12; s.integ = i / g.kI; }
+    const d = s.prevErr === null ? 0 : g.kD * (err - s.prevErr) / CT;
+    s.prevErr = err;
+    // Position loops: kS uses the sign of the error (with a deadband so it doesn't chatter at the goal),
+    // and kV multiplies the profile's velocity. Velocity loops: the setpoint IS a velocity, so kS and kV act on it directly.
+    const errSign = Math.abs(s.sp - s.meas) > M.tol ? Math.sign(s.sp - s.meas) : 0;
+    const ff = M.kind === "velocity"
+      ? g.kS * Math.sign(s.sp) + g.kV * s.sp
+      : g.kS * errSign + g.kG * M.grav(s.sp) + g.kV * M.gu(s.spV);
+    const raw = p + i + d + ff;
+    s.out = clamp(raw, -12, 12);
+    s.terms = { p, i, d, ff, raw };
+
+    hist.push({ t: s.t, goal: s.goal, sp: s.sp, meas: s.meas, out: s.out });
+    while (hist.length && hist[0].t < s.t - WINDOW - 1) hist.shift();
+    trackStep();
+    trackRecovery();
+    recordRun();
+  }
+
+  // For a flywheel, s.vel is the wheel speed and s.pos mirrors it, since speed is the value being controlled
+  function physics(dt) {
+    const P = M.plant, velocityLoop = M.kind === "velocity";
+    const grav = velocityLoop ? 0 : P.kG * M.grav(s.pos);
+    const drive = s.out - grav - P.kV * s.vel;
+    let v = s.vel;
+    if (v === 0) {
+      if (Math.abs(drive) > P.kS) v += ((drive - Math.sign(drive) * P.kS) / P.kA) * dt;
+    } else {
+      const nv = v + ((drive - Math.sign(v) * P.kS) / P.kA) * dt;
+      v = Math.sign(nv) !== Math.sign(v) && Math.abs(drive) <= P.kS ? 0 : nv;
+    }
+    s.vel = v;
+    if (velocityLoop) { s.pos = v; s.angle += v * dt; return; }
+    s.pos += v * dt;
+    if (s.pos < M.min) { s.pos = M.min; if (s.vel < 0) s.vel = 0; }
+    if (s.pos > M.max) { s.pos = M.max; if (s.vel > 0) s.vel = 0; }
+  }
+
+  function trackStep() {
+    step.maxTrack = Math.max(step.maxTrack, Math.abs(s.sp - s.pos));
+    const span = step.to - step.from;
+    if (Math.abs(span) < M.tol * 2) return;
+    const frac = (s.pos - step.from) / span;
+    if (step.t10 === null && frac >= 0.1) step.t10 = s.t;
+    if (step.t90 === null && frac >= 0.9) step.t90 = s.t;
+    step.peak = Math.max(step.peak, frac);
+    const band = Math.max(0.02 * Math.abs(span), M.tol);
+    if (Math.abs(s.pos - step.to) > band) step.lastOut = s.t;
+  }
+
+  // After a bump or shot: time until the mechanism is back within recBand of the goal
+  function bump() {
+    if (M.kind === "velocity") { s.vel *= 0.8; s.pos = s.vel; }
+    else s.vel += M.bump;
+    s.rec = { t0: s.t, left: false, time: null };
+  }
+
+  function trackRecovery() {
+    if (!s.rec || s.rec.time !== null) return;
+    if (Math.abs(s.pos - s.goal) > M.recBand) s.rec.left = true;
+    else if (s.rec.left) s.rec.time = s.t - s.rec.t0;
+  }
+
+  // ---------- Drawing ----------
+  function tokens() {
+    const cs = getComputedStyle(document.documentElement);
+    const g = (n) => cs.getPropertyValue(n).trim();
+    return { ink: g("--ink"), muted: g("--muted"), line: g("--line"), grid: g("--grid"), panel: g("--panel"),
+             actual: g("--actual"), goal: g("--goal"), setp: g("--setp"), volt: g("--volt"), warn: g("--warn"),
+             pins: [g("--pin1"), g("--pin2"), g("--pin3")],
+             mono: g("--f-mono") };
+  }
+
+  function fit(c) {
+    const r = c.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    const ctx = c.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, r.width, r.height);
+    return { ctx, w: r.width, h: r.height };
+  }
+
+  let geom = null;
+
+  function armPath(ctx, cx, cy, ang, L, th) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-ang);
+    ctx.beginPath();
+    ctx.roundRect(-th * 0.7, -th / 2, L + th * 0.7, th, th / 2);
+    ctx.roundRect(L - th * 0.3, -th * 1.1, th * 1.4, th * 2.2, 3);
+    ctx.restore();
+  }
+
+  function drawArm(ctx, w, h, C) {
+    const cx = w * 0.5, cy = h * 0.55, L = Math.min(w * 0.34, h * 0.34), th = Math.max(10, L * 0.09);
+    geom = { type: "arm", cx, cy };
+
+    ctx.fillStyle = C.grid;
+    ctx.fillRect(cx - th * 0.9, cy, th * 1.8, h - 10 - cy);
+    ctx.strokeStyle = C.line; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(12, h - 10); ctx.lineTo(w - 12, h - 10); ctx.stroke();
+
+    // Protractor
+    const R = L + th * 1.4;
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, R, -M.max, -M.min); ctx.stroke();
+    ctx.font = `11px ${C.mono}`; ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    // Radian scale: a tick every 0.25 rad, labelled every 0.5 rad
+    for (let k = Math.ceil(M.min / 0.25); k * 0.25 <= M.max; k++) {
+      const a = k * 0.25, major = k % 2 === 0, c = Math.cos(a), sn = Math.sin(a);
+      ctx.beginPath();
+      ctx.moveTo(cx + c * R, cy - sn * R);
+      ctx.lineTo(cx + c * (R + (major ? 8 : 4)), cy - sn * (R + (major ? 8 : 4)));
+      ctx.stroke();
+      if (major) ctx.fillText(a === 0 ? "0 rad" : String(a), cx + c * (R + 24), cy - sn * (R + 24));
+    }
+    // Hard stops
+    ctx.fillStyle = C.muted;
+    for (const a of [M.min, M.max]) {
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(-a);
+      ctx.fillRect(L * 0.45, (a === M.min ? 1 : -1) * th * 0.6 - 3, L * 0.18, 6);
+      ctx.restore();
+    }
+
+    // Error arc
+    if (Math.abs(s.goal - s.pos) > 0.3 * DEG) {
+      ctx.strokeStyle = C.goal; ctx.lineWidth = 2;
+      ctx.beginPath();
+      const a0 = -s.pos, a1 = -s.goal;
+      ctx.arc(cx, cy, L * 0.32, Math.min(a0, a1), Math.max(a0, a1));
+      ctx.stroke();
+    }
+
+    // Ghost at goal
+    armPath(ctx, cx, cy, s.goal, L, th);
+    ctx.globalAlpha = 0.2; ctx.fillStyle = C.goal; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.setLineDash([6, 4]); ctx.strokeStyle = C.goal; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+    // Profile setpoint marker
+    if (opts.profile) {
+      ctx.strokeStyle = C.setp; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(cx + L * Math.cos(s.sp), cy - L * Math.sin(s.sp), th * 0.9, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // Actual arm
+    armPath(ctx, cx, cy, s.pos, L, th);
+    ctx.fillStyle = C.actual; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, th * 0.55, 0, Math.PI * 2);
+    ctx.fillStyle = C.panel; ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  function drawElevator(ctx, w, h, C) {
+    const top = 16, bot = h - 12, cx = w * 0.56;
+    const gap = Math.min(w * 0.2, 110), ch = Math.max(26, h * 0.1), cw = gap * 2 - 14;
+    const span = bot - top - ch;
+    const yTop = (p) => bot - ch - (p / M.max) * span;
+    geom = { type: "elevator", bot, ch, span };
+
+    ctx.strokeStyle = C.line; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(12, bot + 0.5); ctx.lineTo(w - 12, bot + 0.5); ctx.stroke();
+    ctx.fillStyle = C.grid;
+    ctx.fillRect(cx - gap - 5, top, 10, bot - top);
+    ctx.fillRect(cx + gap - 5, top, 10, bot - top);
+    ctx.fillRect(cx - gap - 5, top, gap * 2 + 10, 8);
+
+    // Height scale
+    const sx = cx - gap - 22;
+    ctx.font = `11px ${C.mono}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+    for (let p = 0; p <= M.max + 1e-9; p += 0.1) {
+      const y = yTop(p) + ch / 2, major = Math.round(p * 10) % 4 === 0;
+      ctx.beginPath(); ctx.moveTo(sx, y); ctx.lineTo(sx + (major ? 10 : 5), y); ctx.stroke();
+      if (major) ctx.fillText(p.toFixed(1) + " m", sx - 4, y);
+    }
+
+    // Cable
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, top + 8); ctx.lineTo(cx, yTop(s.pos)); ctx.stroke();
+
+    // Ghost at goal
+    ctx.beginPath(); ctx.roundRect(cx - cw / 2, yTop(s.goal), cw, ch, 4);
+    ctx.globalAlpha = 0.2; ctx.fillStyle = C.goal; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.setLineDash([6, 4]); ctx.strokeStyle = C.goal; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+    // Error bracket
+    const yg = yTop(s.goal) + ch / 2, ya = yTop(s.pos) + ch / 2, ex = cx + gap + 18;
+    if (Math.abs(yg - ya) > 2) {
+      ctx.strokeStyle = C.goal; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ex - 5, yg); ctx.lineTo(ex, yg); ctx.lineTo(ex, ya); ctx.lineTo(ex - 5, ya); ctx.stroke();
+    }
+
+    // Profile setpoint marker
+    if (opts.profile) {
+      const y = yTop(s.sp) + ch / 2;
+      ctx.fillStyle = C.setp;
+      ctx.beginPath(); ctx.moveTo(cx - gap - 8, y); ctx.lineTo(cx - gap - 18, y - 6); ctx.lineTo(cx - gap - 18, y + 6); ctx.closePath(); ctx.fill();
+    }
+
+    // Actual carriage
+    ctx.beginPath(); ctx.roundRect(cx - cw / 2, yTop(s.pos), cw, ch, 4);
+    ctx.fillStyle = C.actual; ctx.fill();
+    ctx.fillStyle = C.panel;
+    ctx.fillRect(cx - cw / 2 + 8, yTop(s.pos) + ch / 2 - 2, cw - 16, 4);
+  }
+
+  // Speed gauge sweeps 240° of the dial, from 210° (0 rad/s) clockwise to −30° (max)
+  const GA0 = 210, GA1 = -30;
+  const gaugeAngle = (v) => (GA0 + (GA1 - GA0) * clamp(v / M.max, -0.03, 1.05)) * DEG;
+
+  function drawFlywheel(ctx, w, h, C) {
+    const cx = w / 2, cy = h * 0.56, R = Math.min(w * 0.4, h * 0.46);
+    geom = { type: "gauge", cx, cy };
+    const at = (a, r) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+
+    // Track and ticks
+    ctx.lineCap = "butt";
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.arc(cx, cy, R, -GA0 * DEG, -GA1 * DEG); ctx.stroke();
+    ctx.font = `11px ${C.mono}`; ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
+    for (let v = 0; v <= M.max; v += 50) {
+      const a = gaugeAngle(v), major = v % 100 === 0;
+      const [x0, y0] = at(a, R - 8), [x1, y1] = at(a, R - (major ? 18 : 13));
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      if (major) { const [lx, ly] = at(a, R - 32); ctx.fillText(String(v), lx, ly); }
+    }
+
+    // Error wedge on the track between actual and goal
+    if (Math.abs(s.goal - s.pos) > 2) {
+      const a0 = -gaugeAngle(s.pos), a1 = -gaugeAngle(s.goal);
+      ctx.strokeStyle = C.goal; ctx.lineWidth = 12; ctx.globalAlpha = 0.35;
+      ctx.beginPath(); ctx.arc(cx, cy, R, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // Wheel in the hub, drawn at 1/20 speed so the spin is visible on screen
+    const rw = R * 0.3;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-s.angle / 20);
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, rw, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 2;
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(rw * Math.cos(a), rw * Math.sin(a)); ctx.stroke();
+    }
+    ctx.restore();
+
+    const needle = (v, color, width, dash) => {
+      const a = gaugeAngle(v), [x0, y0] = at(a, rw + 6), [x1, y1] = at(a, R - 4);
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round"; ctx.setLineDash(dash);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      ctx.setLineDash([]); ctx.lineCap = "butt";
+    };
+    needle(s.goal, C.goal, 3, [6, 4]);
+    if (opts.profile) {
+      const [px, py] = at(gaugeAngle(s.sp), R);
+      ctx.strokeStyle = C.setp; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.stroke();
+    }
+    needle(s.pos, C.actual, 5, []);
+
+    // Speed readout under the hub, with RPM as a hint
+    ctx.fillStyle = C.ink; ctx.font = `500 15px ${C.mono}`;
+    ctx.fillText(`${Math.round(s.pos)} rad/s`, cx, cy + R * 0.55);
+    ctx.fillStyle = C.muted; ctx.font = `12px ${C.mono}`;
+    ctx.fillText(`${rpm(s.pos)} RPM`, cx, cy + R * 0.55 + 18);
+    ctx.font = `11px ${C.mono}`;
+    ctx.fillText("rad/s", cx, cy - R * 0.45);
+  }
+
+  // Series are arrays of [x, y] points; cfg.x0/x1 set the visible x range
+  function drawChart(cv, cfg, C) {
+    const { ctx, w, h } = fit(cv);
+    ctx.font = `11px ${C.mono}`;
+    const Lp = Math.max(46, ...cfg.ticks.map((v) => ctx.measureText(cfg.fmt(v)).width + 14)), Rp = 8, Tp = 8, Bp = 20, pw = w - Lp - Rp, ph = h - Tp - Bp;
+    const { x0, x1, xStep = 1, xFmt = (t) => t + " s" } = cfg;
+    const X = (t) => Lp + ((t - x0) / (x1 - x0)) * pw;
+    const Y = (v) => Tp + (1 - (v - cfg.min) / (cfg.max - cfg.min)) * ph;
+
+    ctx.font = `11px ${C.mono}`; ctx.lineWidth = 1;
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (const v of cfg.ticks) {
+      const y = Math.round(Y(v)) + 0.5;
+      ctx.strokeStyle = v === 0 ? C.line : C.grid;
+      ctx.beginPath(); ctx.moveTo(Lp, y); ctx.lineTo(Lp + pw, y); ctx.stroke();
+      ctx.fillStyle = C.muted; ctx.fillText(cfg.fmt(v), Lp - 6, y);
+    }
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (let i = Math.ceil(x0 / xStep - 1e-9); i * xStep <= x1 + 1e-9; i++) {
+      const t = i * xStep, x = Math.round(X(t)) + 0.5;
+      ctx.strokeStyle = C.grid;
+      ctx.beginPath(); ctx.moveTo(x, Tp); ctx.lineTo(x, Tp + ph); ctx.stroke();
+      ctx.fillStyle = C.muted; ctx.fillText(xFmt(t), x, Tp + ph + 5);
+    }
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(Lp, Tp, pw, ph); ctx.clip();
+    if (cfg.extra) cfg.extra(ctx, Y, Lp, pw);
+    for (const sr of cfg.series) {
+      if (sr.hide || !sr.pts.length) continue;
+      ctx.beginPath();
+      let first = true, py = 0;
+      for (const [px, pv] of sr.pts) {
+        const x = X(px), y = Y(pv);
+        if (first) { ctx.moveTo(x, y); first = false; }
+        else { if (sr.step) ctx.lineTo(x, py); ctx.lineTo(x, y); }
+        py = y;
+      }
+      ctx.strokeStyle = sr.color; ctx.lineWidth = sr.w; ctx.lineJoin = "round";
+      ctx.setLineDash(sr.dash || []); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.restore();
+    ctx.strokeStyle = C.line; ctx.strokeRect(Lp + 0.5, Tp + 0.5, pw - 1, ph - 1);
+  }
+
+  const termRows = {};
+  function buildTerms() {
+    const el = $("terms");
+    for (const [key, label] of [["p", "P"], ["i", "I"], ["d", "D"], ["ff", "FF"], ["raw", "Total"]]) {
+      const name = document.createElement("span");
+      name.textContent = label;
+      const bar = document.createElement("div");
+      bar.className = "bar" + (key === "raw" ? " total" : "");
+      const fill = document.createElement("i");
+      bar.append(fill);
+      const val = document.createElement("span");
+      val.className = "val";
+      if (key === "raw") { name.className = "total"; val.className = "val total"; }
+      el.append(name, bar, val);
+      termRows[key] = { bar, fill, val };
+    }
+    const satRow = document.createElement("span");
+    satRow.style.gridColumn = "2 / -1";
+    satRow.innerHTML = '<span class="pill" id="sat" hidden>Saturated: asking for more than 12 V</span>';
+    el.append(document.createElement("span"), satRow);
+  }
+
+  function updateTerms() {
+    for (const [key, r] of Object.entries(termRows)) {
+      const v = key === "raw" ? s.out : s.terms[key];
+      const f = clamp(Math.abs(v) / 12, 0, 1) * 50;
+      r.fill.style.left = (v < 0 ? 50 - f : 50) + "%";
+      r.fill.style.width = f + "%";
+      r.val.textContent = (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2) + " V";
+    }
+    const sat = Math.abs(s.terms.raw) > 12;
+    termRows.raw.bar.classList.toggle("sat", sat);
+    $("sat").hidden = !sat;
+  }
+
+  function updateReadouts() {
+    $("ro-goal").textContent = fmtPos(s.goal);
+    $("ro-actual").textContent = fmtPos(s.pos);
+    const e = s.goal - s.pos;
+    $("ro-error").textContent = fmtErr(e);
+
+    const span = step.to - step.from;
+    const trivial = Math.abs(span) < M.tol * 2;
+    const rise = $("m-rise"), over = $("m-over"), settle = $("m-settle");
+    if (trivial) {
+      for (const el of [rise, over, settle]) { el.textContent = "–"; el.className = "dim"; }
+    } else {
+      const done = step.t10 !== null && step.t90 !== null;
+      rise.textContent = done ? (step.t90 - step.t10).toFixed(2) + " s" : "rising…";
+      rise.className = done ? "" : "dim";
+      over.textContent = (Math.max(0, step.peak - 1) * 100).toFixed(1) + "%";
+      over.className = "";
+      const settled = s.t - step.lastOut >= 1;
+      settle.textContent = settled ? (step.lastOut - step.t0).toFixed(2) + " s" : "not settled";
+      settle.className = settled ? "" : "dim";
+    }
+    $("m-err").textContent = fmtErr(e);
+    const rec = $("m-rec"), r = s.rec;
+    let recText = "–";
+    if (r && r.time !== null) recText = r.time.toFixed(2) + " s";
+    else if (r && r.left) recText = s.t - r.t0 > 5 ? "not recovered" : "recovering…";
+    if (rec.textContent !== recText) {
+      rec.textContent = recText;
+      rec.className = r && r.time !== null ? "" : "dim";
+    }
+  }
+
+  // ---------- Step-test runs ----------
+  // A run records the first RUN_LEN seconds after a step test starts, so runs line up at t = 0 and can be overlaid.
+  const RUN_LEN = 3, MAX_PINS = 3;
+  let view = "live", run = null, pins = [];
+
+  function setView(v) {
+    view = v;
+    $("view-live").setAttribute("aria-pressed", String(v === "live"));
+    $("view-cmp").setAttribute("aria-pressed", String(v === "cmp"));
+    $("lg-live").hidden = v !== "live";
+    $("lg-cmp").hidden = v !== "cmp";
+  }
+
+  function runStepTest() {
+    stepTest();
+    const [from, to] = M.test.step;
+    run = { from, to, t0: s.t, gains: { ...gains[mechKey] }, profile: opts.profile, pts: [], done: false, pinned: false };
+    setView("cmp");
+    updateRunUI();
+  }
+
+  function recordRun() {
+    if (!run || run.done) return;
+    const dt = s.t - run.t0;
+    run.pts.push([dt, s.pos, s.sp]);
+    if (dt >= RUN_LEN) {
+      run.done = true;
+      run.summary = summarizeRun(run);
+      updateRunUI();
+    }
+  }
+
+  function summarizeRun(r) {
+    const span = r.to - r.from, band = Math.max(0.02 * Math.abs(span), M.tol);
+    let peak = 0, lastOut = 0;
+    for (const [dt, pos] of r.pts) {
+      peak = Math.max(peak, (pos - r.from) / span);
+      if (Math.abs(pos - r.to) > band) lastOut = dt;
+    }
+    const over = (Math.max(0, peak - 1) * 100).toFixed(1) + "% over";
+    return RUN_LEN - lastOut >= 0.5 ? `${over} · settles ${lastOut.toFixed(2)} s` : `${over} · not settled`;
+  }
+
+  function runLabel(r) {
+    const g = r.gains, parts = [`kP ${fmtGain("kP", g.kP)}`];
+    if (g.kD) parts.push(`kD ${fmtGain("kD", g.kD)}`);
+    if (g.kI) parts.push(`kI ${fmtGain("kI", g.kI)}`);
+    if (!g.kG && !g.kS && !g.kV) parts.push("no FF");
+    if (r.profile) parts.push("profiled");
+    return parts.join(" · ");
+  }
+
+  function pinRun() {
+    if (!run || !run.done || run.pinned) return;
+    if (pins.length >= MAX_PINS) pins.shift();
+    const used = new Set(pins.map((p) => p.slot));
+    pins.push({ ...run, slot: [0, 1, 2].find((i) => !used.has(i)) });
+    run.pinned = true;
+    renderPins();
+    updateRunUI();
+  }
+
+  function renderPins() {
+    $("pins").replaceChildren(...pins.map((p) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<i style="border-color:var(--pin${p.slot + 1})"></i><span>${runLabel(p)} · ${p.summary}</span><button aria-label="Remove pinned run">×</button>`;
+      li.querySelector("button").addEventListener("click", () => { pins = pins.filter((x) => x !== p); renderPins(); });
+      return li;
+    }));
+  }
+
+  function updateRunUI() {
+    const b = $("pin-run");
+    b.disabled = !run || !run.done || run.pinned;
+    b.textContent = run && !run.done ? "Recording…" : run && run.pinned ? "Pinned" : "Pin this run";
+    $("lg-latest").textContent = run && run.done ? `Latest run · ${run.summary}` : "Latest run";
+  }
+
+  function niceTicks(lo, hi) {
+    const raw = (hi - lo) / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const st = [1, 2, 5, 10].map((m) => m * mag).find((v) => v >= raw);
+    const out = [];
+    for (let i = Math.ceil(lo / st); i * st <= hi + 1e-9; i++) out.push(Number((i * st).toFixed(6)));
+    return out;
+  }
+
+  function drawCompare(C) {
+    const [a, b] = M.test.step, span = Math.abs(b - a);
+    const lo = Math.min(a, b) - 0.12 * span, hi = Math.max(a, b) + 0.3 * span;
+    const series = [{ pts: [[0, b], [RUN_LEN, b]], color: C.goal, w: 1.75, dash: [6, 4] }];
+    for (const p of pins) series.push({ pts: p.pts.map(([t, pos]) => [t, pos]), color: C.pins[p.slot], w: 1.75 });
+    if (run) {
+      if (run.profile) series.push({ pts: run.pts.map(([t, , sp]) => [t, sp]), color: C.setp, w: 1.25 });
+      series.push({ pts: run.pts.map(([t, pos]) => [t, pos]), color: C.actual, w: 2.5 });
+    }
+    drawChart($("plot-pos"), {
+      x0: 0, x1: RUN_LEN, xStep: 0.5, min: lo, max: hi, ticks: niceTicks(lo, hi), fmt: M.chart.fmt, series,
+      extra: (ctx, Y, Lp, pw) => {
+        if (run || pins.length) return;
+        ctx.fillStyle = C.muted; ctx.font = `13px ${C.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("Press Run step test to record a run", Lp + pw / 2, Y((lo + hi) / 2));
+      },
+    }, C);
+  }
+
+  function draw() {
+    const C = tokens();
+    const mc = fit($("mech"));
+    ({ arm: drawArm, elevator: drawElevator, flywheel: drawFlywheel })[mechKey](mc.ctx, mc.w, mc.h, C);
+
+    const x1 = Math.max(s.t, WINDOW), x0 = x1 - WINDOW;
+    const vis = hist.filter((p) => p.t >= x0 - 0.1);
+    const col = (key) => vis.map((p) => [p.t, p[key]]);
+
+    if (view === "cmp") drawCompare(C);
+    else drawChart($("plot-pos"), {
+      ...M.chart, x0, x1,
+      series: [
+        { pts: col("goal"), color: C.goal, w: 1.75, dash: [6, 4], step: true },
+        { pts: col("sp"), color: C.setp, w: 1.5, hide: !opts.profile },
+        { pts: col("meas"), color: C.actual, w: 2 },
+      ],
+    }, C);
+
+    drawChart($("plot-volt"), {
+      x0, x1, min: -14, max: 14, ticks: [-12, -6, 0, 6, 12], fmt: (v) => v + " V",
+      extra: (ctx, Y, Lp, pw) => {
+        ctx.strokeStyle = C.warn; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+        for (const v of [-12, 12]) { ctx.beginPath(); ctx.moveTo(Lp, Y(v)); ctx.lineTo(Lp + pw, Y(v)); ctx.stroke(); }
+        ctx.setLineDash([]);
+      },
+      series: [{ pts: col("out"), color: C.volt, w: 1.75 }],
+    }, C);
+
+    updateTerms();
+    updateReadouts();
+    updateWalkthrough();
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const fdt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (!paused) {
+      const end = s.t + fdt * speed;
+      while (s.t < end) {
+        if (s.t >= s.nextCtrl) { control(); s.nextCtrl += CT; }
+        physics(DT);
+        s.t += DT;
+      }
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Controls ----------
+  // Log sliders: position 0 is exactly 0, positions 1–1000 sweep lo → max on a log scale,
+  // so every factor of 10 gets the same slider travel.
+  const LOG_STEPS = 1000;
+  const roundSig = (v) => Number(v.toPrecision(3));
+  const fmtGain = (k, v) => (M.params[k].log ? String(roundSig(v)) : v.toFixed(decimals(M.params[k].step)));
+  function toSlider(p, v) {
+    if (!p.log) return v;
+    if (v <= 0) return 0;
+    return clamp(1 + (LOG_STEPS - 1) * Math.log(v / p.lo) / Math.log(p.max / p.lo), 1, LOG_STEPS);
+  }
+  function fromSlider(p, x) {
+    if (!p.log) return x;
+    if (x <= 0) return 0;
+    return roundSig(p.lo * Math.pow(p.max / p.lo, (x - 1) / (LOG_STEPS - 1)));
+  }
+
+  function gainRow(k) {
+    const p = M.params[k], g = gains[mechKey];
+    const row = document.createElement("div");
+    row.className = p.log ? "row log" : "row";
+    row.dataset.k = k;
+    // Guided mode shows each gain from the step that introduces it; kI is for free play only
+    row.dataset.stepFrom = { kP: "Move", kG: "kG", kS: "kS", kV: "kV", kD: "kD", kI: "free" }[k];
+    const slider = p.log
+      ? `<input type="range" id="${k}-range" min="0" max="${LOG_STEPS}" step="1" aria-label="${k} (log scale)">`
+      : `<input type="range" id="${k}-range" min="0" max="${p.max}" step="${p.step}" aria-label="${k}">`;
+    row.innerHTML = `<label for="${k}-num"><span class="k">${k}</span><span class="u">${p.unit}</span></label>
+      ${p.log ? `<button class="mul" data-f="0.5" aria-label="Halve ${k}">÷2</button>` : ""}
+      ${slider}
+      ${p.log ? `<button class="mul" data-f="2" aria-label="Double ${k}">×2</button>` : ""}
+      <input type="number" id="${k}-num" min="0" step="${p.log ? "any" : p.step}">`;
+    const range = row.querySelector('input[type="range"]'), num = row.querySelector('input[type="number"]');
+    const show = () => { range.value = toSlider(p, g[k]); num.value = fmtGain(k, g[k]); };
+    show();
+    range.addEventListener("input", () => { g[k] = fromSlider(p, +range.value); num.value = fmtGain(k, g[k]); onGainChanged(); });
+    num.addEventListener("input", () => {
+      const v = parseFloat(num.value);
+      if (Number.isFinite(v) && v >= 0) { g[k] = v; range.value = toSlider(p, v); onGainChanged(); }
+    });
+    for (const b of row.querySelectorAll(".mul")) {
+      b.addEventListener("click", () => {
+        const f = +b.dataset.f;
+        if (g[k] === 0) g[k] = f > 1 ? p.seed : 0;
+        else g[k] = g[k] * f < p.lo ? 0 : roundSig(g[k] * f);
+        show();
+        onGainChanged();
+      });
+    }
+    return row;
+  }
+
+  function onGainChanged() {
+    markPreset();
+    if (WT.on && steps()[WT.i].rerun) steps()[WT.i].rerun();
+  }
+
+  function buildGainRows() {
+    $("ff-rows").replaceChildren(...["kG", "kS", "kV"].filter((k) => M.params[k]).map(gainRow));
+    $("pid-rows").replaceChildren(gainRow("kP"), gainRow("kD"), gainRow("kI"));
+    applyLocks();
+  }
+
+  // ---------- Tuning walkthrough ----------
+  const WT = { on: false, i: 0 };
+  const isArm = () => M === MECHS.arm;
+  const plantGain = (k) => (k === "kV" ? M.plant.kV / M.gu(1) : M.plant[k]);
+
+  function teleport(pos, goal) {
+    const vel = M.kind === "velocity" ? pos : 0;
+    Object.assign(s, { pos, vel, sp: pos, spV: 0, integ: 0, prevErr: null, goal });
+    startStep();
+  }
+  const holdTest = () => teleport(M.test.hold, M.test.hold);
+  const creepTest = () => teleport(M.test.creep[0], M.test.creep[1]);
+  // Always the same move, so runs are comparable
+  function stepTest() {
+    const [a, b] = M.test.step;
+    teleport(a, b);
+  }
+  const motion = () => (s.vel < -M.velEps ? "down" : s.vel > M.velEps ? "up" : "still");
+  const overshoot = () => Math.max(0, step.peak - 1) * 100;
+
+  function setProfile(on) {
+    opts.profile = on;
+    $("opt-profile").checked = on;
+    s.sp = s.pos; s.spV = 0;
+    $("lg-setp").hidden = !on;
+  }
+
+  // Steps with `kinds` only appear for those mechanism kinds; title/body/status can branch on isVel()
+  const isVel = () => M.kind === "velocity";
+  const STEPS = [
+    {
+      tag: "Move", title: "Meet kP", unlock: ["kP"],
+      body: () => `<p>${isVel() ? "The wheel levels off below the goal speed. A flywheel needs voltage just to keep spinning against friction and drag" : "It stops short of the goal. Gravity pulls down"}, and P only pushes when there is error. That leftover gap is called steady-state error.</p>
+        <p>Next you start from zero and add one term at a time: feedforward first (${isVel() ? "<code>kS</code>, <code>kV</code>" : "<code>kG</code>, <code>kS</code>, <code>kV</code>"}), then feedback (<code>kP</code>${isVel() ? "" : ", <code>kD</code>"}). Feedforward is the voltage you already know the mechanism needs. Feedback only corrects what feedforward misses. A well-tuned mechanism gets most of its voltage from feedforward. This is the same order as <a href="/docs/software/controls/system-control/pid#tuning-a-pid-controller" target="_top">Tuning a PID Controller</a> in our docs.</p>`,
+      enter: () => {
+        Object.assign(gains[mechKey], M.presets["P only"]);
+        buildGainRows(); markPreset(); setProfile(false);
+        const rest = M.goals[0][1];
+        teleport(rest, rest);
+        WT.g0 = rest;
+      },
+      status: () => {
+        if (Math.abs(s.goal - WT.g0) < 1e-9) return [isVel() ? "Press a goal button or drag the gauge" : "Press a goal button or drag the goal", false];
+        // Settled = the measurement barely changed over the last half second
+        const recent = hist.filter((h) => h.t >= s.t - 0.5).map((h) => h.meas);
+        const band = Math.max(M.tol * 2, 0.01 * Math.abs(s.goal - WT.g0));
+        if (recent.length < 20 || Math.max(...recent) - Math.min(...recent) > band) return ["Moving…", false];
+        return [`${isVel() ? "Leveled off" : "Stopped"} ${fmtPos(Math.abs(s.goal - s.pos))} from the goal`, true];
+      },
+    },
+    {
+      tag: "kG", kinds: ["position"], title: "Hold it up against gravity", unlock: ["kG"], hide: ["kP"],
+      body: () => `<p>${isArm() ? "The arm is placed at level (0 rad), where gravity pulls hardest." : "The carriage is placed at 0.80 m."} Raise <code>kG</code> slowly and the test restarts each time.</p>
+        <p>Write down the value where it <b>stops falling</b>. Keep raising it and write down where it <b>starts rising</b>. Set <code>kG</code> halfway between those two values.</p>`,
+      action: ["Restart hold test", holdTest], rerun: holdTest,
+      status: () => {
+        const m = motion(), close = Math.abs(gains[mechKey].kG - M.plant.kG) <= 0.04;
+        if (m === "down") return ["Falling: kG is too low", false];
+        if (m === "up") return ["Rising: kG is too high", false];
+        return [close ? "Holding, with kG near the middle" : "Holding. Find both edges, then pick the middle", close];
+      },
+    },
+    {
+      tag: "kS", title: "Overcome friction", unlock: ["kS"], hide: ["kP"],
+      body: () => isVel()
+        ? `<p>A wheel at rest needs a little voltage just to break free of friction. That's <code>kS</code>.</p>
+          <p>The goal is set to 30 rad/s. Raise <code>kS</code> until the wheel just starts to spin. Moving the slider restarts the test.</p>`
+        : `<p>The gap between your two kG values comes from friction, and <code>kS</code> is about half that gap.</p>
+          <p>To check it, the goal is set a little ${isArm() ? "above the arm (0.35 rad, 20°)" : "above the carriage (0.95 m)"}. <code>kS</code> pushes toward the goal with a fixed voltage. Raise it until the mechanism just starts to creep toward the goal.</p>`,
+      action: ["Restart creep test", creepTest], rerun: creepTest,
+      status: () => {
+        const close = Math.abs(gains[mechKey].kS - M.plant.kS) <= 0.03;
+        if (isVel()) return motion() === "still" ? ["Not spinning yet", close] : ["Spinning", close];
+        if (Math.abs(s.pos - s.goal) < M.tol * 2) return ["Reached the goal", close];
+        return motion() === "still" ? ["Not moving yet", close] : ["Creeping toward the goal", close];
+      },
+    },
+    {
+      tag: "kV", unlock: ["kV"], hide: ["kP"],
+      title: () => (isVel() ? "Hold a speed with kV" : "Keep up with a moving setpoint"),
+      body: () => isVel()
+        ? `<p>A spinning wheel needs voltage to keep spinning, and the faster it spins, the more it needs. <code>kV</code> is the voltage per rad/s.</p>
+          <p>Press <b>Run step test</b> to spin from 0 to 375 rad/s (about 3,580 RPM) with <code>kP</code> still at 0. Raise <code>kV</code> until the wheel levels off right at the goal instead of short of it or past it.</p>`
+        : `<p>The motion profile is now on. The purple line on the graph is where the mechanism should be at each moment.</p>
+          <p><code>kV</code> adds voltage in proportion to how fast the setpoint is moving. Press <b>Run step test</b> and raise <code>kV</code> until the blue line follows the purple line closely. <code>kP</code> is still 0, so this is feedforward alone.</p>`,
+      enter: () => { setProfile(!isVel()); runStepTest(); },
+      action: ["Run step test", runStepTest],
+      status: () => {
+        const close = Math.abs(gains[mechKey].kV - plantGain("kV")) <= 0.1 * plantGain("kV");
+        if (isVel()) return [`Error now: ${fmtErr(s.goal - s.pos)}`, close];
+        return [`Biggest lag this move: ${fmtPos(step.maxTrack)}`, close];
+      },
+    },
+    {
+      tag: "kP", kinds: ["velocity"], title: "Recover from shots with kP", unlock: ["kP"],
+      body: () => `<p>With kV right, the wheel holds its speed. But every game piece that goes through slows it down, and feedforward doesn't react to that. <code>kP</code> does.</p>
+        <p>Press <b>Shoot a game piece</b> and look at <b>Shot recovery</b> under the graphs. Press <b>×2</b> on <code>kP</code> (the first press from 0 sets it to ${fmtGain("kP", M.params.kP.seed)}) and shoot again after each change. Stop when recovery is quick but the motor output isn't oscillating. Try it with sensor noise on too.</p>`,
+      enter: () => { setProfile(false); teleport(375, 375); },
+      action: ["Shoot a game piece", () => bump()],
+      status: () => {
+        const kp = gains[mechKey].kP, r = s.rec;
+        const text = r && r.time !== null ? `Last recovery: ${r.time.toFixed(2)} s` : r ? "Recovering…" : "Shoot to measure recovery";
+        return [text, kp >= M.test.kpGood[0] && kp <= M.test.kpGood[1]];
+      },
+    },
+    {
+      tag: "kP", kinds: ["position"], title: "Correct what's left with kP", unlock: ["kP"],
+      body: () => `<p>Feedforward gets close, and <code>kP</code> closes the remaining gap. The profile is off again so each step test is a hard jump and easy to read.</p>
+        <p>Press <b>×2</b> on <code>kP</code> (the first press from 0 sets it to ${fmtGain("kP", M.params.kP.seed)}), then <b>Run step test</b>. Keep doubling until the response overshoots and rings, then press <b>÷2</b> once. Doubling finds the right range fast, and the slider fine-tunes from there. On a real robot, start much smaller and creep up (see <a href="/docs/software/controls/system-control/pid#tuning-a-pid-controller" target="_top">PID Controllers</a>).</p>`,
+      enter: () => { setProfile(false); runStepTest(); },
+      action: ["Run step test", runStepTest],
+      status: () => {
+        const kp = gains[mechKey].kP;
+        return [`Last overshoot: ${overshoot().toFixed(1)}%`, kp >= M.test.kpGood[0] && kp <= M.test.kpGood[1]];
+      },
+    },
+    {
+      tag: "kD", kinds: ["position"], title: "Damp the overshoot with kD", unlock: ["kD"],
+      body: () => `<p>If kP alone rings, <code>kD</code> can calm it. It pushes back against fast motion, like a shock absorber. It's now in the Feedback panel. First press <b>Pin this run</b> to keep your kP-only curve for comparison. Then raise kD until the step test overshoots less than 5% and settles.</p>
+        <p>Too much kD makes the motor output plot jumpy, especially with sensor noise on.</p>`,
+      action: ["Run step test", runStepTest],
+      status: () => {
+        const o = overshoot(), settled = s.t - step.lastOut >= 1;
+        return [`Last overshoot: ${o.toFixed(1)}%${settled ? ", settled" : ""}`, gains[mechKey].kD > 0 && o < 5 && settled];
+      },
+    },
+    {
+      tag: "Done", title: "Compare with the reference", unlock: [],
+      body: () => {
+        const g = gains[mechKey], ref = M.presets.Tuned;
+        const tuned = steps().flatMap((x) => x.unlock);
+        const rows = ["kG", "kS", "kV", "kP", "kD"].filter((k) => tuned.includes(k)).map((k) => `<tr><td>${k}</td><td>${fmtGain(k, g[k])}</td><td>${fmtGain(k, ref[k])}</td></tr>`).join("");
+        return `<p>Here are your gains next to the Tuned preset. They don't need to match exactly. Lots of combinations work well.</p>
+          <div style="overflow-x:auto"><table class="wt-table"><tr><th>Gain</th><th>Yours</th><th>Tuned preset</th></tr>${rows}</table></div>
+          <p>On the robot you tune the same gains live from AdvantageScope with the mechanism's NetworkTables tunables, then copy them into your constants (see <a href="/docs/software/robot_dev/mechanisms#tuning-mechanisms" target="_top">Tuning Mechanisms</a> and <b>Copying gains to the robot</b> under Go deeper).</p>`;
+      },
+    },
+  ];
+
+  const steps = () => STEPS.filter((x) => !x.kinds || x.kinds.includes(M.kind));
+
+  // The step card: one action ([0]) and at most two short sentences ([1]). The longer text above goes under "Why?".
+  const thing = () => (isArm() ? "arm" : "carriage");
+  const GUIDE = {
+    Move: () => isVel()
+      ? ["Press a goal button to spin the wheel up", "kP is set for you, so the motor pushes harder the further the wheel is from the goal speed. Watch where it levels off."]
+      : [`Press a goal button to move the ${isArm() ? "arm" : "elevator"}`, `kP is set for you, so the motor pushes harder the further the ${thing()} is from the goal. Watch where it stops.`],
+    kG: () => [`Raise kG until the ${thing()} stops falling`, "Keep raising it until it starts to rise, then set kG halfway between. The FF bar under Motor output shows kG's voltage."],
+    kS: () => isVel()
+      ? ["Raise kS until the wheel starts to spin", "The goal is 30 rad/s. kS is the voltage that breaks free of friction."]
+      : [`Raise kS until the ${thing()} creeps to the goal`, "The goal is set just above it. kS is the voltage that breaks free of friction."],
+    kV: () => isVel()
+      ? ["Run a step test, then raise kV until the wheel holds 375 rad/s", "kV is the voltage per rad/s the wheel needs to keep spinning. kP is still 0, so this is feedforward alone."]
+      : ["Run a step test, then raise kV until blue follows purple", `The purple line is the motion profile: where the ${thing()} should be right now. kV adds voltage in proportion to how fast it moves.`],
+    kP: () => isVel()
+      ? ["Shoot a game piece, then double kP for a faster recovery", "Watch Shot recovery under the graphs. Stop before the motor output starts to chatter."]
+      : ["Double kP and run a step test until it rings", "Then press ÷2 once. Every step test makes the same move, so you can compare them."],
+    kD: () => ["Pin this run, then raise kD until overshoot is under 5%", "kD pushes back against fast motion, like a shock absorber. Too much makes the motor output jumpy."],
+    Done: () => ["You've got it — try Free play", isArm() ? "Try the same steps on the elevator or flywheel, or press Free play to see every control." : "Try another mechanism, or press Free play to see every control."],
+  };
+
+  // Guided mode hides everything a step hasn't introduced yet: data-step-from="kG|kS" means "from the first of these
+  // steps this mechanism has"; a tag it doesn't have (or "free") means free play only.
+  function applyReveal() {
+    const list = steps(), st = list[WT.i], hide = WT.on ? st.hide || [] : [];
+    document.querySelectorAll("[data-step-from]").forEach((el) => {
+      let show = true;
+      if (WT.on) {
+        const from = Math.min(...el.dataset.stepFrom.split("|").map((t) => { const j = list.findIndex((x) => x.tag === t); return j < 0 ? Infinity : j; }));
+        show = WT.i >= from && !hide.includes(el.dataset.k);
+      }
+      el.classList.toggle("not-yet", !show);
+    });
+    const pid = $("pid-rows");
+    pid.closest(".panel").classList.toggle("not-yet", [...pid.children].every((r) => r.classList.contains("not-yet")));
+  }
+
+  function applyLocks() {
+    const hide = WT.on ? steps()[WT.i].hide || [] : [];
+    const allowed = new Set(WT.on ? steps().slice(0, WT.i + 1).flatMap((x) => x.unlock).filter((k) => !hide.includes(k)) : Object.keys(M.params));
+    const focus = WT.on ? steps()[WT.i].unlock[0] : null;
+    document.querySelectorAll(".row[data-k]").forEach((row) => {
+      const ok = allowed.has(row.dataset.k);
+      row.classList.toggle("locked", !ok);
+      row.classList.toggle("focus", row.dataset.k === focus);
+      row.querySelectorAll("input, button").forEach((inp) => { inp.disabled = !ok; });
+    });
+    for (const b of $("presets").children) b.disabled = WT.on;
+    $("opt-profile").disabled = WT.on;
+    applyReveal();
+  }
+
+  function goStep(i) {
+    const prev = WT.i;
+    WT.i = i;
+    const st = steps()[i], n = steps().length;
+    // Leaving "Meet kP" for the tuning steps: start from zero, profile off, mechanism at its test position
+    if (i === 1 && prev === 0) {
+      for (const k of Object.keys(gains[mechKey])) gains[mechKey][k] = 0;
+      buildGainRows(); markPreset(); setProfile(false);
+      isVel() ? teleport(0, 0) : holdTest();
+    }
+    if (st.enter) st.enter();
+    const [say, more] = GUIDE[st.tag]();
+    $("g-count").textContent = `Step ${i + 1} of ${n}`;
+    $("wt-title").textContent = say;
+    $("g-text").textContent = more;
+    const last = i === n - 1;
+    $("g-extra").hidden = !last;
+    $("g-extra").innerHTML = last ? st.body() : "";
+    $("g-why").hidden = last;
+    $("g-why").open = false;
+    $("wt-body").innerHTML = last ? "" : st.body();
+    $("g-act").hidden = !st.action && !st.status;
+    $("wt-action").hidden = !st.action;
+    $("wt-action").textContent = st.action ? st.action[0] : "";
+    $("wt-back").hidden = false;
+    $("wt-back").disabled = i === 0;
+    $("wt-next").hidden = last;
+    $("wt-next").classList.remove("primary");
+    $("wt-status").style.visibility = "hidden";
+    lastStatus = "";
+    applyLocks();
+  }
+
+  const MODE_KEY = "pid-tuning-lab.mode";
+  function saveMode() { try { localStorage.setItem(MODE_KEY, WT.on ? "guided" : "free"); } catch (e) {} }
+
+  function startWalkthrough() {
+    WT.on = true;
+    for (const k of Object.keys(gains[mechKey])) gains[mechKey][k] = 0;
+    $("g-free").setAttribute("aria-pressed", "false");
+    $("g-free").textContent = "Free play";
+    buildGainRows();
+    markPreset();
+    WT.i = 0;
+    goStep(0);
+  }
+
+  function stopWalkthrough() {
+    WT.on = false;
+    $("g-free").setAttribute("aria-pressed", "true");
+    $("g-free").textContent = "Back to steps";
+    $("g-count").textContent = "Free play";
+    $("wt-title").textContent = "Every control is out";
+    $("g-text").textContent = "Switch mechanisms, load a preset under More controls, or pick an idea from Go deeper.";
+    for (const id of ["g-act", "g-extra", "g-why", "wt-back", "wt-next"]) $(id).hidden = true;
+    applyLocks();
+  }
+
+  function toggleMode() {
+    if (WT.on) stopWalkthrough();
+    else { WT.on = true; selectMech("arm"); }
+    saveMode();
+  }
+
+  let lastStatus = "";
+  function updateWalkthrough() {
+    if (!WT.on) return;
+    const st = steps()[WT.i], el = $("wt-status");
+    if (!st.status) { el.style.visibility = "hidden"; return; }
+    const [text, good] = st.status();
+    const key = text + good;
+    if (key === lastStatus) return;
+    lastStatus = key;
+    el.style.visibility = "visible";
+    el.innerHTML = (good ? '<span class="done-mark" aria-hidden="true">✓</span> Good · ' : "") + text;
+    el.title = el.textContent;
+    el.classList.toggle("good", good);
+    $("wt-next").classList.toggle("primary", good);
+  }
+
+  function markPreset() {
+    const g = gains[mechKey];
+    for (const b of $("presets").children) {
+      const pr = M.presets[b.dataset.name];
+      b.setAttribute("aria-pressed", String(Object.keys(pr).every((k) => Math.abs(pr[k] - g[k]) < 1e-9)));
+    }
+  }
+
+  function buildMechUI() {
+    $("mech-title").textContent = M.title;
+    $("mech-arm").setAttribute("aria-pressed", String(mechKey === "arm"));
+    $("mech-elevator").setAttribute("aria-pressed", String(mechKey === "elevator"));
+    $("mech-flywheel").setAttribute("aria-pressed", String(mechKey === "flywheel"));
+    $("bump").textContent = M.bumpLabel;
+    $("m-rec-label").textContent = M.recLabel;
+
+    $("goals").replaceChildren(...M.goals.map(([name, v]) => {
+      const b = document.createElement("button");
+      b.innerHTML = `${name}<small>${M.goalFmt(v)}</small>`;
+      b.addEventListener("click", () => setGoal(v));
+      return b;
+    }));
+
+    $("presets").replaceChildren(...Object.keys(M.presets).map((name) => {
+      const b = document.createElement("button");
+      b.textContent = name; b.dataset.name = name;
+      b.addEventListener("click", () => {
+        Object.assign(gains[mechKey], M.presets[name]);
+        buildGainRows();
+        markPreset();
+      });
+      return b;
+    }));
+
+    buildGainRows();
+    markPreset();
+    const compareTry = "Press <b>Run step test</b>, then <b>Pin this run</b>. Change one gain, run it again, and compare the curves on the <b>Step tests</b> graph. Change only one thing at a time so you know what made the difference.";
+    $("try-list").innerHTML = [...M.tries, compareTry].map((t) => `<li>${t}</li>`).join("");
+    const P = M.plant;
+    const consts = [`<code>kS ${P.kS} V</code>`, P.kG !== undefined && `<code>kG ${P.kG} V</code>`,
+      `<code>kV ${M.plantShown.kV}</code>`, `<code>kA ${M.plantShown.kA}</code>`].filter(Boolean);
+    $("robot-units").innerHTML = M.robot;
+    $("plant-consts").innerHTML = `What SysId would measure on this mechanism: ${consts.join(", ")}.`;
+    updateNoiseLabel();
+  }
+
+  function selectMech(k) {
+    mechKey = k; M = MECHS[k];
+    WT.i = 0;
+    run = null; pins = [];
+    renderPins(); updateRunUI(); setView("live");
+    buildMechUI();
+    resetSim();
+    if (WT.on) startWalkthrough();
+  }
+
+  function updateNoiseLabel() {
+    const n = opts.noise * M.noiseMax;
+    $("noise-val").textContent = n === 0 ? "off" : "σ = " + M.noiseFmt(n);
+  }
+
+  function pointerGoal(e) {
+    const r = $("mech").getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    if (!geom) return;
+    if (geom.type === "arm") {
+      let a = Math.atan2(geom.cy - y, x - geom.cx);
+      if (a < -Math.PI / 2) a += 2 * Math.PI;
+      setGoal(Math.round(a * 100) / 100);
+    } else if (geom.type === "gauge") {
+      let a = Math.atan2(geom.cy - y, x - geom.cx) / DEG;
+      if (a < -90) a += 360;
+      setGoal(Math.round(((GA0 - a) / (GA0 - GA1)) * M.max / 5) * 5);
+    } else {
+      const p = ((geom.bot - geom.ch / 2 - y) / geom.span) * M.max;
+      setGoal(Math.round(p * 100) / 100);
+    }
+  }
+
+  const mech = $("mech");
+  let dragging = false;
+  mech.addEventListener("pointerdown", (e) => { dragging = true; mech.setPointerCapture(e.pointerId); pointerGoal(e); });
+  mech.addEventListener("pointermove", (e) => { if (dragging) pointerGoal(e); });
+  mech.addEventListener("pointerup", () => { dragging = false; });
+  mech.addEventListener("pointercancel", () => { dragging = false; });
+
+  $("mech-arm").addEventListener("click", () => selectMech("arm"));
+  $("mech-elevator").addEventListener("click", () => selectMech("elevator"));
+  $("pause").addEventListener("click", (e) => {
+    paused = !paused;
+    e.currentTarget.setAttribute("aria-pressed", String(paused));
+    e.currentTarget.textContent = paused ? "Resume" : "Pause";
+  });
+  $("slow").addEventListener("click", (e) => {
+    speed = speed === 1 ? 0.25 : 1;
+    e.currentTarget.setAttribute("aria-pressed", String(speed !== 1));
+  });
+  $("reset").addEventListener("click", resetSim);
+  $("bump").addEventListener("click", bump);
+  $("mech-flywheel").addEventListener("click", () => selectMech("flywheel"));
+  $("opt-profile").addEventListener("change", (e) => setProfile(e.target.checked));
+  $("run-step").addEventListener("click", runStepTest);
+  $("pin-run").addEventListener("click", pinRun);
+  $("view-live").addEventListener("click", () => setView("live"));
+  $("view-cmp").addEventListener("click", () => setView("cmp"));
+  $("g-free").addEventListener("click", toggleMode);
+  $("wt-back").addEventListener("click", () => goStep(Math.max(0, WT.i - 1)));
+  $("wt-next").addEventListener("click", () => goStep(Math.min(steps().length - 1, WT.i + 1)));
+  $("wt-action").addEventListener("click", () => { const a = steps()[WT.i].action; if (a) a[1](); });
+  $("opt-noise").addEventListener("input", (e) => { opts.noise = +e.target.value; updateNoiseLabel(); });
+
+  buildTerms();
+  buildMechUI();
+  resetSim();
+  // First visit opens the guided steps; a returning student gets the mode they last used
+  let mode = null;
+  try { mode = localStorage.getItem(MODE_KEY); } catch (e) {}
+  if (mode === "free") stopWalkthrough(); else startWalkthrough();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

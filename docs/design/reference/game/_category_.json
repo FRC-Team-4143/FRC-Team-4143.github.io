@@ -1,0 +1,9 @@
+{
+  "label": "Game Challenges",
+  "position": 2,
+  "link": {
+    "type": "doc",
+    "id": "design/reference/game/index"
+  },
+  "collapsed": false
+}

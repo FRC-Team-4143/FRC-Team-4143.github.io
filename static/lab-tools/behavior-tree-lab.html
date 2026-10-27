@@ -1,0 +1,1807 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><!-- the site defaults to dark -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Behavior Tree Lab</title>
+<link rel="stylesheet" href="lab-base.css">
+<script src="lab-theme.js"></script>
+<style>
+/* Aliases of the lab colours, resolved on :root, so the Arborist viewer (whose own tokens are also called --panel,
+   --grid, --muted ...) can use them without a var() cycle. */
+:root {
+  --l-bg: var(--bg); --l-panel: var(--panel); --l-field: var(--field); --l-ink: var(--ink); --l-muted: var(--muted);
+  --l-line: var(--line); --l-grid: var(--grid); --l-accent: var(--accent);
+  --l-running: var(--running); --l-success: var(--success); --l-failure: var(--failure); --l-idle: var(--idle);
+}
+/* Arborist (Arbor's viewer) inside our panel: our surfaces and status colours, Arbor's node-type colours. */
+#viewer .arbor-viewer, #viewer .arbor-viewer[data-theme] {
+  --canvas: var(--l-bg); --node-bg: var(--l-panel); --panel: var(--l-panel); --panel-2: var(--l-grid); --hover: var(--l-grid);
+  --border: var(--l-line); --text: var(--l-ink); --muted: var(--l-muted); --grid: var(--l-line); --accent: var(--l-accent);
+  --st-running: var(--l-running); --st-success: var(--l-success); --st-failure: var(--l-failure);
+  font-family: var(--f-body);
+}
+#viewer { position: relative; height: clamp(360px, 62vh, 660px); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--bg); }
+.viewer-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+
+.runbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.runbar select { width: auto; }
+.runbar label { font-size: 13px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+#play { min-width: 84px; }
+.clock { font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.clock b { color: var(--ink); font-weight: 500; }
+.chip { display: inline-block; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .03em; padding: 0 6px; border-radius: 99px; border: 1px solid currentColor; line-height: 1.6; }
+.st-RUNNING { color: var(--running); } .st-SUCCESS { color: var(--success); } .st-FAILURE { color: var(--failure); } .st-IDLE, .st-SKIPPED { color: var(--idle); }
+.legend .chip { margin-right: 4px; }
+.tree-bar { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between; font-size: 13px; color: var(--muted); min-height: 1.6em; }
+.tree-bar .msg { min-width: 0; }
+.tree-bar .msg.err { color: var(--failure); font-weight: 500; }
+.tree-bar .msg.ok { color: var(--success); }
+#back-main { font-size: 13px; padding: 3px 10px; }
+.selinfo { font-size: 13px; color: var(--muted); margin: 0; min-height: 1.5em; }
+.selinfo b { color: var(--ink); font-weight: 600; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "guide" "tree" "right"; gap: 16px; align-items: start; }
+.stage > .guide { grid-area: guide; } .stage > .tree-panel { grid-area: tree; } .stage > .right { grid-area: right; display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 640px) { .stage { grid-template-areas: "tree" "guide" "right"; } }
+@media (min-width: 1000px) { .stage { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); grid-template-areas: "guide guide" "tree right"; } }
+.readout.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.readout.two b { font-size: 15px; }
+.log-sum { cursor: pointer; font-weight: 600; font-size: 15px; }
+#log-box[open] { display: grid; gap: 8px; }
+#log-box[open] > summary { margin-bottom: 2px; }
+.try-list { padding-left: 22px; display: grid; gap: 8px; margin: 0 0 4px; }
+.deeper ul { padding-left: 20px; display: grid; gap: 6px; }
+.deeper p { margin: 0 0 8px; }
+.guide-nav .ready { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+#field { width: 100%; aspect-ratio: 11.3 / 8.07; max-height: 46vh; border-radius: var(--radius); background: var(--field); }
+
+/* Live log, like Arbor's Live log tab */
+.logbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.logbar .check { font-size: 13px; color: var(--muted); align-items: center; }
+.logbar .check input { margin-top: 0; }
+#log { height: 280px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: var(--f-mono); font-size: 12px; }
+.log-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--grid); border-radius: 0; padding: 3px 8px; font-family: var(--f-mono); font-size: 12px; font-weight: 400; color: var(--ink); }
+.log-row:hover { background: var(--panel); }
+.log-row .t { color: var(--muted); font-variant-numeric: tabular-nums; }
+.log-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-row .nm small { color: var(--muted); font-size: 11px; }
+.log-row .tr { white-space: nowrap; }
+.log-row .halt { font-family: var(--f-body); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--warn); border: 1px solid var(--warn); border-radius: 99px; padding: 0 5px; margin-left: 4px; }
+.log-row.flash { outline: 2px solid var(--accent); outline-offset: -2px; }
+.log-empty { padding: 10px; color: var(--muted); font-family: var(--f-body); font-size: 13px; }
+
+/* XML panel */
+.xmlbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.xmlbar select { width: auto; max-width: 100%; }
+#xml-text { width: 100%; min-height: 320px; resize: vertical; font-size: 13px; line-height: 1.5; tab-size: 2; white-space: pre; overflow: auto; }
+#diags { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+#diags li button { width: 100%; text-align: left; font-weight: 400; font-size: 13px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
+#diags .sev { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+#diags .error .sev { color: var(--failure); } #diags .warning .sev { color: var(--running); } #diags .info .sev { color: var(--muted); }
+#diags .error button { border-color: var(--failure); }
+.okline { font-size: 13px; color: var(--success); margin: 0; }
+.palette { font-size: 13px; margin: 0; display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 4px 12px; color: var(--ink); }
+.palette dt { font-family: var(--f-mono); font-size: 12.5px; }
+.palette dd { margin: 0; color: var(--muted); }
+.palette h4 { grid-column: 1 / -1; margin: 8px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+.tun { display: grid; gap: 8px; }
+.inj .check { font-size: 14px; }
+.inj { display: grid; gap: 4px; }
+pre.code { margin: 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); font-family: var(--f-mono); font-size: 12.5px; line-height: 1.5; overflow-x: auto; color: var(--ink); }
+.links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
+.nojs { border-color: var(--warn); }
+@media (max-width: 520px) {
+  #viewer { height: 420px; }
+  #log { height: 260px; }
+  .seg.examples button { padding-inline: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Software · Controls</p>
+      <h1>Behavior Tree Lab</h1>
+      <p class="lede short">Watch a behavior tree drive a pretend robot, one tick at a time.</p>
+    </div>
+    <div class="toolbar" data-step-from="5">
+      <div class="seg examples" role="group" aria-label="Example tree">
+        <button data-ex="DriveAimShoot" aria-pressed="true">Drive, aim, shoot</button>
+        <button data-ex="PickupAndScore" aria-pressed="false">Pickup and score</button>
+        <button data-ex="CitrusSynergy" aria-pressed="false">Real auto</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="panel nojs" id="nojs" hidden>
+    <h2>The tree viewer did not load</h2>
+    <p class="note">This lab loads Arborist as a JavaScript module, which browsers block for files opened straight from disk. Open it through the docs site, or serve the folder with <code>python3 -m http.server</code>.</p>
+  </section>
+
+  <div class="stage">
+    <section class="guide" id="guide" aria-live="polite">
+      <span class="guide-count" id="g-count">Step 1 of 6</span>
+      <h2 id="g-title"></h2>
+      <p id="g-text"></p>
+      <div class="guide-nav">
+        <button id="g-action" hidden></button>
+        <button id="g-back">Back</button>
+        <button id="g-next">Next</button>
+        <button id="g-free" aria-pressed="false">Free play</button>
+      </div>
+    </section>
+
+    <section class="panel tree-panel">
+      <div class="panel-head">
+        <h2 id="tree-title">The tree</h2>
+        <div class="runbar">
+          <button id="step">Step one tick</button>
+          <button id="play" class="primary" data-step-from="2">Play</button>
+          <button id="reset" data-step-from="2">Reset</button>
+          <label data-step-from="2">Speed <select id="speed" aria-label="Simulation speed">
+            <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
+          </select></label>
+        </div>
+      </div>
+      <div class="tree-bar">
+        <span class="legend"><span class="chip st-RUNNING">RUNNING</span><span class="chip st-SUCCESS">SUCCESS</span><span class="chip st-FAILURE">FAILURE</span><span class="chip st-IDLE">IDLE</span></span>
+        <span class="clock">t = <b id="clk-t">0.00</b> s · tick <b id="clk-n">0</b> · tree <b id="clk-s">IDLE</b></span>
+      </div>
+      <div id="viewer" aria-label="Behavior tree diagram. Drag to pan, scroll or pinch to zoom, press + on a SubTree to draw it inline."><div class="viewer-msg" id="viewer-msg">Loading the Arborist viewer…</div></div>
+      <div class="tree-bar"><span class="msg" id="run-msg" aria-live="polite"></span><button id="back-main" hidden>Back to the main tree</button></div>
+      <p class="selinfo" id="selinfo" data-step-from="2"></p>
+      <details class="more" data-step-from="7">
+        <summary>More controls</summary>
+        <div class="runbar">
+          <button id="fit" title="Zoom to fit the whole tree">Fit the tree</button>
+          <label class="check" style="align-items:center"><input type="checkbox" id="explain" style="margin-top:0"> Explain edges in words</label>
+        </div>
+      </details>
+    </section>
+
+    <div class="right">
+      <section class="panel">
+        <div class="panel-head"><h2>Robot</h2><span class="hint">2026 field, blue half</span></div>
+        <canvas id="field" role="img" aria-label="Top-down view of the blue half of the field with the robot, its path, the hub and the fuel"></canvas>
+        <div class="readout two">
+          <div><span>Robot state</span><b id="ro-system">AUTO</b></div>
+          <div><span>Fuel scored</span><b id="ro-scored">0</b></div>
+        </div>
+        <div class="inj">
+          <label class="check" data-step-from="3"><input type="checkbox" id="inj-camera"><span>Camera can't see the target</span></label>
+          <label class="check" data-step-from="5"><input type="checkbox" id="inj-jam"><span>Intake jams</span></label>
+          <label class="check" data-step-from="7"><input type="checkbox" id="inj-block"><span>Another robot blocks the path</span></label>
+        </div>
+        <details class="more" data-step-from="7">
+          <summary>More readouts</summary>
+          <div class="readout two">
+            <div><span>Wanted state</span><b id="ro-wanted">AUTO</b></div>
+            <div><span>Fuel held</span><b id="ro-fuel">8</b></div>
+            <div><span>Intake</span><b id="ro-intake">STORE</b></div>
+            <div><span>Shooter</span><b id="ro-shooter">IDLE</b></div>
+          </div>
+          <div class="legend">
+            <span><i class="sw" style="border-color:var(--setp)"></i>path being followed</span>
+            <span><i class="sw dash" style="border-color:var(--muted)"></i>other paths in the tree</span>
+            <span><i class="sw" style="border-color:var(--goal)"></i>fuel</span>
+          </div>
+          <div id="tun-panel" hidden>
+            <p class="label">Tunable values (ports of the main tree, used from the next Reset)</p>
+            <div class="tun" id="tun"></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" data-step-from="4">
+        <details id="log-box">
+          <summary class="log-sum">Show the log</summary>
+          <div class="logbar">
+            <input type="text" id="log-filter" placeholder="Filter by node or status…" aria-label="Filter the log">
+            <label class="check"><input type="checkbox" id="log-follow" checked> Follow</label>
+          </div>
+          <div id="log" role="list" aria-label="Status transitions"></div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" id="xml-panel" data-step-from="6">
+    <div class="panel-head"><h2>Tree XML</h2><span class="hint">The same files Arbor opens</span></div>
+    <div class="xmlbar">
+      <select id="xml-file" aria-label="File"></select>
+      <button id="xml-run" class="primary">Run this XML</button>
+      <button id="xml-revert">Undo my edits</button>
+    </div>
+    <textarea id="xml-text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="XML of the selected file"></textarea>
+    <div id="diag-box"></div>
+    <details class="more" data-step-from="7">
+      <summary>More: copy, download, node list</summary>
+      <div class="xmlbar">
+        <button id="xml-copy">Copy XML</button>
+        <button id="xml-zip">Download for Arbor</button>
+      </div>
+      <p class="note">The download is an Arbor project: <code>bt_project.json</code>, <code>nodes.xml</code> and <code>trees/</code>. Unzip it and open the folder in Arbor.</p>
+      <dl class="palette" id="palette"></dl>
+    </details>
+  </section>
+
+  <section class="deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>Things to try</summary>
+      <ol class="try-list">
+        <li><b>One node stays orange forever.</b> On <b>Drive, aim, shoot</b>, blind the camera. <code>RetryUntilSuccessful</code> asks forever. That is why <b>Pickup and score</b> wraps it in a Timeout.</li>
+        <li><b>Stuck behind a robot.</b> Tick "Another robot blocks the path". FollowTrajectory gives up after <code>max_paused_sec</code> (3 s) and the Sequence fails. Wrap it in <code>&lt;ForceSuccess&gt;</code> and the auto carries on.</li>
+        <li><b>ParallelDeadline.</b> In the <b>Real auto</b>, watch <code>DriveP1</code>: when the path ends, <code>IntakeOnEvent</code> is halted if it is still waiting. Then try a <code>middle_wait_msec</code> of 0 (under More readouts).</li>
+        <li><b>Reactive vs. plain.</b> Change a <code>Sequence</code> to <code>ReactiveSequence</code>. Every tick starts from the first child, and finished children are reset, so Drive path starts over and over. Reactive is for conditions, not steps.</li>
+        <li><b>Typos are errors.</b> Change <code>AIM</code> to <code>AIMM</code>, or add a node that doesn't exist. The lab marks the node and won't run it.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>What the four colours mean</summary>
+      <ul>
+        <li><span class="chip st-RUNNING">RUNNING</span> not done yet, ask again next tick.</li>
+        <li><span class="chip st-SUCCESS">SUCCESS</span> done, and it worked.</li>
+        <li><span class="chip st-FAILURE">FAILURE</span> done, and it didn't work.</li>
+        <li><span class="chip st-IDLE">IDLE</span> not started yet, halted, or reset by its parent. After a parent finishes, its children go back to IDLE; the viewer keeps their last result, faded, until the next run.</li>
+      </ul>
+      <p>The tree is drawn by <b>Arborist</b>, the viewer inside Arbor, so it looks exactly like Arbor's live view of the real robot.</p>
+    </details>
+    <details>
+      <summary>The pretend robot</summary>
+      <p>Trees only <i>ask</i> for a state with <code>SetWantedState</code> (instant). The robot's state machine decides when it is really there, which <code>IsSystemState</code> checks. It is written the way our <code>RobotContainer</code> is: every condition in <code>handleStateTransition()</code>, and <code>updateLogic()</code> only asks subsystems for states.</p>
+<pre class="code">handleStateTransition():
+  switch (wanted):
+    AIM   -> system = aimed ? AIM : AIMING
+    SHOOT -> system = ready ? SHOOT_FEED
+                            : SHOOT_WAIT
+    else  -> system = wanted
+
+updateLogic():
+  switch (system):
+    AIMING, AIM -> shooter AIMING
+    SHOOT_WAIT  -> shooter SHOOT
+    SHOOT_FEED  -> shooter SHOOT, intake SQUEEZE
+    INTAKE      -> intake INTAKE
+    AUTO        -> nothing (the auto
+                   sets subsystems)</pre>
+      <p>Aiming takes 0.8 s and needs the camera, except right in front of the hub. The flywheel takes 0.6 s to spin up. The robot is never in SHOOT itself, so <code>IsSystemState SHOOT</code> never succeeds; that is why <code>ShootFor</code> uses a Sleep. The <code>AIMING</code> step state is made up for this lab. The robot runs each 20 ms loop before the tree, and the auto period ends at 20 s.</p>
+    </details>
+    <details>
+      <summary>Read more in the docs</summary>
+      <div class="links">
+        <a href="/docs/software/controls/behavior-trees" target="_top">Behavior Trees</a>
+        <a href="/docs/software/tools/arbor" target="_top">Arbor</a>
+        <a href="/docs/software/robot_dev/autonomous" target="_top">Autonomous</a>
+        <a href="/docs/software/controls/state-machines" target="_top">State Machines</a>
+      </div>
+    </details>
+  </section>
+  <footer class="foot">MARS/WARS · FRC Team 4143 · Tree viewer: <a href="https://github.com/coalman321/Arbor">Arborist</a> (MIT)</footer>
+</div>
+
+<script>
+  // ES modules don't load from file://. If the module never starts, say why instead of showing an empty box.
+  setTimeout(function () { if (!window.__btLabReady) { var n = document.getElementById("nojs"); if (n) n.hidden = false; var m = document.getElementById("viewer-msg"); if (m) m.textContent = "The tree viewer could not load."; } }, 6000);
+</script>
+<script type="module">
+import {
+  createTreeViewer, modelFor, allowedChildren, literalProblem, RESERVED_ATTRS, PRE_POST_CONDITIONS, walk, BUILTIN_MODELS,
+} from "./vendor/arborist/arborist-mount.js";
+
+const $ = (id) => document.getElementById(id);
+const DT = 0.02; // robot loop, s
+const AUTO_LENGTH = 20; // s
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// ===================================================================================== the project files
+// The node spec (Arbor's nodes.xml): MW-Lib's shared nodes plus the robot's own, as the 2026 robot registers them,
+// with the enum values so Arbor (and this lab) can check port values.
+const RobotStates = ["IDLE", "DRIVE", "TRACK", "AUTO", "AIM", "SHOOT", "SHOOT_WAIT", "SHOOT_FEED", "SHOOT_FEED_BRAKED", "SHOOT_PASS_INTAKE", "MANUAL_HUB", "MANUAL_PASS", "INTAKE", "OUTTAKE", "BRAKE", "MAINTENANCE"];
+const IntakeStates = ["STORE", "DEPLOYED", "PIVOT_HOMING", "INTAKE", "OUTTAKE", "IDLE", "SQUEEZE", "SQUEEZE_WAIT", "SQUEEZE_HOLD", "TUNING"];
+const ShooterStates = ["SHOOT_WAIT", "DUMP", "SHOOT", "IDLE", "TRACKING", "TUNING", "MANUAL_HUB", "MANUAL_PASS", "SPIN_DOWN", "AIMING", "HOOD_HOMING"];
+const SwerveStates = ["ROBOT_CENTRIC", "FIELD_CENTRIC", "CHOREO_PATH", "TRACTOR_BEAM", "CHASSIS_SPEEDS", "CRAWL_ROBOT_CENTRIC", "CRAWL_FIELD_CENTRIC", "ROBOT_CENTRIC_ROTATION_LOCK", "FIELD_CENTRIC_ROTATION_LOCK", "CHOREO_PATH_ROTATION_LOCK", "CHASSIS_SPEEDS_ROTATION_LOCK", "CRAWL_ROBOT_CENTRIC_ROTATION_LOCK", "CRAWL_FIELD_CENTRIC_ROTATION_LOCK", "BRAKE", "TUNING", "IDLE"];
+const SHOOTER_TARGETS = ["HUB", "LEFT_PASS", "RIGHT_PASS"];
+const enumXml = (type, values) => `    <Enum type="${type}">\n${values.map((v) => `      <Value name="${v}"/>`).join("\n")}\n    </Enum>`;
+
+const SPEC_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<!-- Every node an auto can use, for Arbor and Groot2: MW-Lib's shared nodes, then the 2026 robot's nodes.
+     Made by the MARS/WARS Behavior Tree Lab from the robot's nodes.xml. -->
+<root BTCPP_format="4">
+  <TreeNodesModel>
+    <!-- MW-Lib shared nodes (com.marswars.bt) -->
+    <Control ID="ParallelDeadline">
+      <description>Run all children until the first one finishes, then halt the rest and return its result</description>
+    </Control>
+    <Action ID="FollowTrajectory">
+      <input_port name="trajectory" type="trajectory">Choreo trajectory name (deploy/choreo/&lt;name&gt;.traj)</input_port>
+      <input_port name="path_state" type="SwerveStates" default="CHOREO_PATH">Swerve state used while following (CHOREO_PATH or CHOREO_PATH_ROTATION_LOCK)</input_port>
+      <input_port name="end_state" type="SwerveStates" default="IDLE">Swerve state requested when the path finishes, gives up or is halted</input_port>
+      <input_port name="min_time" type="double" default="0">Minimum seconds on the path before it may succeed</input_port>
+      <input_port name="max_paused_sec" type="double" default="3">Fail once the path timer has been paused this long (the robot is stuck behind the path); 0 never gives up</input_port>
+      <description>Follow a Choreo trajectory until its end setpoint is reached</description>
+    </Action>
+    <Action ID="WaitForChoreoEvent">
+      <input_port name="event" type="std::string">Choreo event marker name</input_port>
+      <description>Wait until the running trajectory passes a Choreo event marker (use next to a FollowTrajectory in a ParallelDeadline)</description>
+    </Action>
+    <Action ID="SetSwerveState">
+      <input_port name="state" type="SwerveStates">State to request</input_port>
+      <description>Request a swerve state</description>
+    </Action>
+    <Condition ID="IsAtChoreoSetpoint">
+      <description>The swerve reached the end of its Choreo trajectory</description>
+    </Condition>
+    <Condition ID="HasChoreoTimeElapsed">
+      <input_port name="seconds" type="double">Seconds on the path</input_port>
+      <description>At least \`seconds\` of the current Choreo trajectory have run</description>
+    </Condition>
+    <Condition ID="HasChoreoEventPassed">
+      <input_port name="event" type="std::string">Choreo event marker name</input_port>
+      <description>The running trajectory passed a Choreo event marker</description>
+    </Condition>
+    <Condition ID="IsChassisStationary">
+      <description>The chassis is not moving</description>
+    </Condition>
+
+    <!-- Robot nodes (frc.robot.autos.bt.AutoNodes) -->
+    <Action ID="SetWantedState">
+      <input_port name="state" type="RobotStates">Robot state to request</input_port>
+      <description>Request a robot state (instant: succeeds at once)</description>
+    </Action>
+    <Condition ID="IsSystemState">
+      <input_port name="state" type="RobotStates">Robot state to check</input_port>
+      <description>The robot is in the given state</description>
+    </Condition>
+    <Action ID="SetIntakeState">
+      <input_port name="state" type="IntakeStates">State to request</input_port>
+      <description>Request an intake state</description>
+    </Action>
+    <Action ID="SetShooterState">
+      <input_port name="state" type="ShooterStates">State to request</input_port>
+      <description>Request a shooter state</description>
+    </Action>
+    <Action ID="SetShooterTarget">
+      <input_port name="target" type="std::string" default="HUB">Field target to aim at (HUB, LEFT_PASS, RIGHT_PASS)</input_port>
+      <description>Point the shooter at a named field target</description>
+    </Action>
+    <Condition ID="IsShooterReady">
+      <description>Flywheel, hood and aim are within tolerance</description>
+    </Condition>
+  </TreeNodesModel>
+
+  <Enums>
+${enumXml("RobotStates", RobotStates)}
+${enumXml("IntakeStates", IntakeStates)}
+${enumXml("ShooterStates", ShooterStates)}
+${enumXml("SwerveStates", SwerveStates)}
+  </Enums>
+</root>
+`;
+
+// common.xml: the robot's shared subtrees, as they are in deploy/autos/trees/common.xml.
+const COMMON_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Building blocks shared by every auto (pulled in with <include path="common.xml"/>).
+  It is a library, not an auto: it defines several trees and no main_tree_to_execute.
+-->
+<root BTCPP_format="4">
+  <!-- Waits for a Choreo event on the running path, then requests an intake state. Put it in a
+       ParallelDeadline after the FollowTrajectory: the path decides when the group ends (and halts
+       this branch if the event never came). -->
+  <BehaviorTree ID="IntakeOnEvent">
+    <Sequence>
+      <WaitForChoreoEvent event="{event}"/>
+      <SetIntakeState state="{state}"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Shoots for a fixed time with the robot's SHOOT state (spin up, aim, and feed once the
+       shooter is ready), then back to AUTO. SHOOT keeps going until something asks for another
+       state, so the Sleep decides when it ends. -->
+  <BehaviorTree ID="ShootFor">
+    <Sequence>
+      <ParallelDeadline>
+        <Sleep msec="{duration_msec}"/>
+        <SetWantedState state="SHOOT"/>
+      </ParallelDeadline>
+      <SetWantedState state="AUTO"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <SubTree ID="IntakeOnEvent">
+      <input_port name="event" type="std::string">Choreo event marker to wait for</input_port>
+      <input_port name="state" type="IntakeStates" default="INTAKE">Intake state to request when it passes</input_port>
+      <description>Run next to a FollowTrajectory in a ParallelDeadline: set the intake state when the event passes</description>
+    </SubTree>
+    <SubTree ID="ShootFor">
+      <input_port name="duration_msec" type="int" default="2000">How long to shoot</input_port>
+      <description>Robot SHOOT for a fixed time (feeds once the shooter is ready), then back to AUTO</description>
+    </SubTree>
+  </TreeNodesModel>
+</root>
+`;
+
+const EXAMPLES = {
+  DriveAimShoot: {
+    title: "Drive, aim, shoot",
+    files: [{ path: "trees/DriveAimShoot.xml", xml: `<?xml version="1.0" encoding="UTF-8"?>
+<!-- A Sequence: drive to the shooting spot, ask for AIM and wait until the robot is aimed, then shoot. -->
+<root BTCPP_format="4" main_tree_to_execute="DriveAimShoot">
+  <include path="common.xml"/>
+
+  <BehaviorTree ID="DriveAimShoot">
+    <Sequence>
+      <FollowTrajectory name="Drive path" trajectory="ToShootSpot"/>
+      <SetWantedState state="AIM"/>
+      <!-- keep asking until the robot is aimed (no time limit!) -->
+      <RetryUntilSuccessful num_attempts="-1">
+        <IsSystemState state="AIM"/>
+      </RetryUntilSuccessful>
+      <SubTree ID="ShootFor" duration_msec="2000"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
+` }, { path: "trees/common.xml", xml: COMMON_XML }],
+  },
+  PickupAndScore: {
+    title: "Pickup and score",
+    files: [{ path: "trees/PickupAndScore.xml", xml: `<?xml version="1.0" encoding="UTF-8"?>
+<!-- The example from the Behavior Trees page: drive to the pickup, aim for at most 3 s,
+     and if aiming fails, drive to the backup spot in front of the hub instead. Then shoot. -->
+<root BTCPP_format="4" main_tree_to_execute="PickupAndScore">
+  <BehaviorTree ID="PickupAndScore">
+    <Sequence>
+      <FollowTrajectory trajectory="ToPickup"/>
+      <SetWantedState state="AIM"/>
+      <Fallback>
+        <Timeout msec="3000">
+          <RetryUntilSuccessful num_attempts="-1">
+            <IsSystemState state="AIM"/>
+          </RetryUntilSuccessful>
+        </Timeout>
+        <FollowTrajectory trajectory="ToBackup"/>
+      </Fallback>
+      <SetWantedState state="SHOOT"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
+` }],
+  },
+  CitrusSynergy: {
+    title: "Real auto: CitrusSynergy",
+    files: [{ path: "trees/CitrusSynergy.xml", xml: `<?xml version="1.0" encoding="UTF-8"?>
+<!-- The 2026 robot's CitrusSynergy auto. Center start: drive out (intake on "Intake Out"),
+     wait for partners, drive back, shoot. -->
+<root BTCPP_format="4" main_tree_to_execute="CitrusSynergy">
+  <include path="common.xml"/>
+
+  <BehaviorTree ID="CitrusSynergy">
+    <Sequence>
+      <SetShooterTarget target="HUB"/>
+      <SetShooterState state="IDLE"/>
+      <SetIntakeState state="STORE"/>
+      <Sleep name="Settle" msec="1000"/>
+
+      <ParallelDeadline name="DriveP1">
+        <FollowTrajectory trajectory="SynergyP1" end_state="IDLE"/>
+        <SubTree ID="IntakeOnEvent" event="Intake Out" state="INTAKE"/>
+      </ParallelDeadline>
+
+      <Delay name="MiddleWait" delay_msec="{middle_wait_msec}">
+        <FollowTrajectory trajectory="SynergyP2" end_state="IDLE"/>
+      </Delay>
+
+      <SubTree ID="ShootFor" duration_msec="2000"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <SubTree ID="CitrusSynergy">
+      <input_port name="middle_wait_msec" type="int" default="3000">Wait for other robots to clear the middle before SynergyP2</input_port>
+    </SubTree>
+  </TreeNodesModel>
+</root>
+` }, { path: "trees/common.xml", xml: COMMON_XML }],
+  },
+};
+
+// ===================================================================================== paths (Choreo-like)
+// Samples [t s, x m, y m, heading rad], blue-alliance field coordinates. SynergyP1/P2 are the real 2026 Choreo
+// paths, thinned out; the others are made up for this lab.
+const PATHS = {
+  ToShootSpot: { pts: [[0, 3.55, 6.45, 0], [0.4, 3.38, 6.32, -0.1], [0.8, 3.02, 5.95, -0.3], [1.2, 2.72, 5.55, -0.45], [1.6, 2.55, 5.3, -0.53]], events: [] },
+  ToPickup: { pts: [[0, 3.55, 6.9, Math.PI], [0.5, 3.2, 6.86, Math.PI], [1.0, 2.5, 6.62, Math.PI], [1.5, 1.72, 6.22, Math.PI], [2.0, 1.12, 6.0, Math.PI], [2.3, 0.88, 5.95, Math.PI]], events: [] },
+  ToBackup: { pts: [[0, 0.88, 5.95, Math.PI], [0.4, 1.2, 5.62, 2.4], [0.8, 1.8, 5.02, 1.2], [1.2, 2.5, 4.42, 0.4], [1.6, 3.05, 4.1, 0.1], [1.9, 3.35, 4.03, 0]], events: [] },
+  SynergyP1: { pts: [[0, 3.55, 7.4, -1.57], [0.14, 3.62, 7.4, -1.57], [0.28, 3.84, 7.4, -1.57], [0.42, 4.2, 7.4, -1.57], [0.55, 4.7, 7.39, -1.57], [0.69, 5.34, 7.38, -1.57], [0.83, 6.02, 7.38, -1.57], [0.97, 6.72, 7.38, -1.57], [1.11, 7.32, 7.39, -1.57], [1.26, 7.77, 7.39, -1.57], [1.4, 8.07, 7.39, -1.57], [1.54, 8.22, 7.39, -1.57], [1.61, 8.23, 7.39, -1.57]], events: [["Intake Out", 1.609]] },
+  SynergyP2: { pts: [[0, 8.28, 7.41, -1.57], [0.46, 8.34, 6.6, -1.44], [0.93, 8.42, 4.53, -1.5], [1.26, 8.08, 3.54, -2.49], [1.52, 7.6, 3.29, 3.0], [1.83, 6.99, 3.62, 2.52], [2.14, 6.54, 4.6, 2.71], [2.42, 6.31, 5.28, 3.08], [2.84, 5.25, 5.53, -2.97], [3.29, 3.3, 5.41, -3.13], [3.81, 2.24, 4.29, 3.12], [4.07, 2.19, 4.04, 3.14]], events: [] },
+};
+for (const p of Object.values(PATHS)) p.duration = p.pts[p.pts.length - 1][0];
+const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+function samplePath(p, t) {
+  const pts = p.pts;
+  if (t <= 0) return { x: pts[0][1], y: pts[0][2], h: pts[0][3] };
+  for (let i = 1; i < pts.length; i++) {
+    if (t <= pts[i][0]) {
+      const a = pts[i - 1], b = pts[i], u = (t - a[0]) / (b[0] - a[0] || 1);
+      return { x: a[1] + (b[1] - a[1]) * u, y: a[2] + (b[2] - a[2]) * u, h: a[3] + wrapAngle(b[3] - a[3]) * u };
+    }
+  }
+  const e = pts[pts.length - 1];
+  return { x: e[1], y: e[2], h: e[3] };
+}
+
+// ===================================================================================== the pretend robot
+const HUB = { x: 4.63, y: 4.03 };
+const FIXED_SPOT = { x: 3.35, y: 4.03 }; // right in front of the hub: the shot works from odometry alone
+const START_DEFAULT = { x: 3.55, y: 4.03, h: 0 };
+const CAPACITY = 30, PRELOAD = 8;
+const inj = { camera: false, jam: false, block: false };
+
+function makeFuel() {
+  // Loose fuel in the neutral zone and in our depot, from a fixed seed so every run is the same.
+  let s = 4143;
+  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const out = [];
+  for (let i = 0; i < 170; i++) out.push({ x: 6.7 + rnd() * 3.2, y: 0.7 + rnd() * 6.7 });
+  for (let i = 0; i < 24; i++) out.push({ x: 0.08 + (i % 4) * 0.14, y: 5.5 + Math.floor(i / 4) * 0.16, depot: true });
+  return out;
+}
+
+const R = {
+  reset(start) {
+    this.wanted = "AUTO"; this.system = "AUTO";
+    this.intake = "STORE"; this.shooter = "IDLE"; this.swerve = "IDLE"; this.target = "HUB";
+    this.pose = { ...start }; this.speed = 0;
+    this.traj = null; this.trajName = ""; this.pathT = 0; this.paused = false; this.offset = { x: 0, y: 0, h: 0 };
+    this.aim = 0; this.spin = 0; this.fuel = PRELOAD; this.scored = 0; this.feedTimer = 0; this.pickTimer = 0;
+    this.shots = []; this.fuelField = makeFuel();
+  },
+  setWantedState(s) { this.wanted = s; },
+  isIn(s) { return this.system === s; },
+  atFixedSpot() { return Math.hypot(this.pose.x - FIXED_SPOT.x, this.pose.y - FIXED_SPOT.y) < 0.35; },
+  canSeeTarget() { return !inj.camera || this.atFixedSpot(); },
+  aimed() { return this.aim >= 1; },
+  shooterReady() { return this.aim >= 1 && this.spin >= 1; },
+
+  // RobotContainer: every condition here...
+  handleStateTransition() {
+    switch (this.wanted) {
+      case "AIM": this.system = this.aimed() ? "AIM" : "AIMING"; break;
+      case "SHOOT": this.system = this.shooterReady() ? "SHOOT_FEED" : "SHOOT_WAIT"; break;
+      default: this.system = this.wanted;
+    }
+  },
+  // ...and none here: a switch that asks the subsystems for states.
+  updateLogic() {
+    switch (this.system) {
+      case "IDLE": case "DRIVE": this.shooter = "IDLE"; this.intake = "DEPLOYED"; break;
+      case "TRACK": this.shooter = "TRACKING"; break;
+      case "AIMING": case "AIM": this.shooter = "AIMING"; break;
+      case "SHOOT_WAIT": this.shooter = "SHOOT"; break;
+      case "SHOOT_FEED": case "SHOOT_FEED_BRAKED": this.shooter = "SHOOT"; this.intake = "SQUEEZE"; break;
+      case "MANUAL_HUB": this.shooter = "MANUAL_HUB"; this.intake = "SQUEEZE"; break;
+      case "INTAKE": case "SHOOT_PASS_INTAKE": this.shooter = this.system === "INTAKE" ? "IDLE" : "SHOOT"; this.intake = "INTAKE"; break;
+      case "OUTTAKE": this.intake = "OUTTAKE"; break;
+      case "BRAKE": this.swerve = "BRAKE"; break;
+      default: break; // AUTO, MAINTENANCE: hands off
+    }
+  },
+
+  // Swerve subsystem, as FollowTrajectory and the Choreo conditions see it
+  setTrajectory(name) {
+    this.traj = PATHS[name]; this.trajName = name; this.pathT = 0; this.paused = false;
+    const s0 = samplePath(this.traj, 0);
+    this.offset = { x: this.pose.x - s0.x, y: this.pose.y - s0.y, h: wrapAngle(this.pose.h - s0.h) };
+  },
+  following() { return !!this.traj && (this.swerve === "CHOREO_PATH" || this.swerve === "CHOREO_PATH_ROTATION_LOCK"); },
+  isAtChoreoSetpoint() { return this.following() && this.pathT >= this.traj.duration; },
+  hasChoreoTimeElapsed(s) { return !!this.traj && this.pathT >= s; },
+  // The event tracker is updated by the swerve's periodic while the path runs, and keeps its result until the next path.
+  hasChoreoEventBeenPassed(ev) { return !!this.traj && this.traj.events.some(([n, t]) => n === ev && this.pathT >= t); },
+  isChoreoTimerPaused() { return this.following() && this.paused; },
+  isChassisStationary() { return this.speed < 0.05; },
+
+  periodic(dt) {
+    this.handleStateTransition();
+    this.updateLogic();
+    // drive
+    const before = { x: this.pose.x, y: this.pose.y };
+    if (this.following()) {
+      const done = this.pathT >= this.traj.duration;
+      this.paused = inj.block && !done;
+      if (!this.paused && !done) this.pathT = Math.min(this.traj.duration, this.pathT + dt);
+      const s = samplePath(this.traj, this.pathT), k = Math.max(0, 1 - this.pathT / 0.6);
+      this.pose = { x: s.x + this.offset.x * k, y: s.y + this.offset.y * k, h: s.h + this.offset.h * k };
+    }
+    this.speed = Math.hypot(this.pose.x - before.x, this.pose.y - before.y) / dt;
+    // shooter: aiming needs the camera (or the fixed spot); the flywheel spins up while the shooter is on
+    const aiming = ["AIMING", "SHOOT", "TRACKING", "SHOOT_WAIT"].includes(this.shooter);
+    if (aiming && this.canSeeTarget()) this.aim = Math.min(1, this.aim + dt / 0.8);
+    else if (!aiming) this.aim = Math.max(0, this.aim - dt / 0.5);
+    if (aiming && !this.canSeeTarget()) this.aim = Math.min(this.aim, 0);
+    const spinning = ["SHOOT", "TRACKING", "MANUAL_HUB", "SHOOT_WAIT", "AIMING"].includes(this.shooter);
+    this.spin = spinning ? Math.min(1, this.spin + dt / 0.6) : Math.max(0, this.spin - dt / 1.0);
+    // feeding: the intake squeezes fuel into a ready shooter
+    const canFire = this.intake === "SQUEEZE" && this.fuel > 0 && ((this.shooter === "SHOOT" && this.shooterReady()) || (this.shooter === "MANUAL_HUB" && this.spin >= 1));
+    this.feedTimer -= dt;
+    if (canFire && this.feedTimer <= 0) {
+      this.feedTimer = 0.2; this.fuel--;
+      const hit = this.shooter === "SHOOT" || this.atFixedSpot();
+      this.shots.push({ x0: this.pose.x, y0: this.pose.y, x1: hit ? HUB.x : HUB.x - 1.2 + Math.random() * 0.6, y1: hit ? HUB.y : HUB.y + (Math.random() - 0.5) * 2, t: 0, hit });
+    }
+    for (const sh of this.shots) { sh.t += dt / 0.6; if (sh.t >= 1 && !sh.done) { sh.done = true; if (sh.hit) this.scored++; } }
+    this.shots = this.shots.filter((s) => s.t < 1.15);
+    // intake: picks up fuel it drives over, unless it is jammed
+    this.pickTimer -= dt;
+    if (this.intake === "INTAKE" && !inj.jam && this.fuel < CAPACITY && this.pickTimer <= 0) {
+      const fx = this.pose.x + Math.cos(this.pose.h) * 0.45, fy = this.pose.y + Math.sin(this.pose.h) * 0.45;
+      let best = -1, bd = 0.62;
+      this.fuelField.forEach((f, i) => { const d = Math.min(Math.hypot(f.x - fx, f.y - fy), Math.hypot(f.x - this.pose.x, f.y - this.pose.y)); if (d < bd) { bd = d; best = i; } });
+      if (best >= 0) { this.fuelField.splice(best, 1); this.fuel++; this.pickTimer = 0.06; }
+    }
+  },
+};
+
+// ===================================================================================== the BT engine
+// Follows BehaviorTree.CPP v4 as MW-Lib (com.marswars.bt) implements it: same node logic, same status rules
+// (only resetStatus() goes back to IDLE; halting a node resets it; control nodes reset their children when they
+// finish), same preorder UIDs (BT::Tree::applyVisitor order, SubTrees expanded).
+class BtError extends Error {}
+let emit = () => {};
+let clockNow = () => 0;
+const isPointer = (v) => typeof v === "string" && /^\{[^{}]+\}$/.test(v.trim());
+const pointerKey = (v, port) => { const k = v.trim().slice(1, -1); return k === "=" ? port : k; };
+
+class Blackboard {
+  constructor(parent = null) { this.parent = parent; this.store = new Map(); this.remap = new Map(); this.autoremap = false; }
+  has(k) { if (this.remap.has(k)) return this.parent.has(this.remap.get(k)); if (this.store.has(k)) return true; return this.autoremap && !!this.parent && this.parent.has(k); }
+  get(k) { if (this.remap.has(k)) return this.parent.get(this.remap.get(k)); if (this.store.has(k)) return this.store.get(k); if (this.autoremap && this.parent) return this.parent.get(k); return undefined; }
+  set(k, v) { if (this.remap.has(k)) return this.parent.set(this.remap.get(k), v); if (!this.store.has(k) && this.autoremap && this.parent && this.parent.has(k)) return this.parent.set(k, v); this.store.set(k, v); }
+  unset(k) { if (this.remap.has(k)) return this.parent.unset(this.remap.get(k)); if (this.store.has(k)) return this.store.delete(k); if (this.autoremap && this.parent) this.parent.unset(k); }
+}
+
+class TNode {
+  constructor(def, ctx) {
+    this.def = def; this.type = def.type; this.attrs = def.attrs; this.model = ctx.model; this.bb = ctx.bb;
+    this.path = ctx.path; this.treeId = ctx.treeId; this.children = []; this.status = "IDLE"; this.uid = 0;
+    this.name = def.attrs.name || (def.type === "SubTree" ? def.attrs.ID || "SubTree" : def.type);
+  }
+  label() { return this.type === "SubTree" ? `SubTree ${this.attrs.ID}` : this.name === this.type ? this.type : `${this.type} "${this.name}"`; }
+  setStatus(s) { if (s === this.status) return; const p = this.status; this.status = s; emit(this, p, s); }
+  resetStatus() { if (this.status === "IDLE") return; const p = this.status; this.status = "IDLE"; emit(this, p, "IDLE"); }
+  executeTick() {
+    const r = this.tick();
+    if (!r || r === "IDLE") throw new BtError(`${this.label()} returned IDLE from tick()`);
+    if (r === "SKIPPED") { if (this.status !== "IDLE") this.resetStatus(); } else this.setStatus(r);
+    return r;
+  }
+  halt() { this.resetStatus(); }
+  haltNode() { this.halt(); if (this.status !== "IDLE") this.resetStatus(); }
+  now() { return clockNow(); }
+  raw(port) { let v = this.attrs[port]; if (v === undefined) v = this.model?.ports.find((p) => p.name === port)?.default; return v; }
+  input(port) {
+    const raw = this.raw(port);
+    if (raw === undefined) return undefined;
+    if (isPointer(raw)) {
+      const k = pointerKey(raw, port);
+      if (!this.bb.has(k)) throw new BtError(`${this.label()}: blackboard entry {${k}} is not set`);
+      return this.bb.get(k);
+    }
+    return raw;
+  }
+  str(port, fb) { const v = this.input(port); if (v === undefined) { if (fb !== undefined) return fb; throw new BtError(`Missing input port "${port}" on ${this.label()}`); } return String(v); }
+  num(port, fb) {
+    const v = this.input(port);
+    if (v === undefined || v === "") { if (fb !== undefined) return fb; throw new BtError(`Missing input port "${port}" on ${this.label()}`); }
+    const n = Number(v); if (!Number.isFinite(n)) throw new BtError(`${this.label()}: "${v}" is not a number (port "${port}")`);
+    return n;
+  }
+}
+class Control extends TNode {
+  child(i) { return this.children[i]; }
+  haltChild(i) { const c = this.children[i]; if (c.status === "RUNNING") c.haltNode(); c.resetStatus(); }
+  haltChildren(from = 0) { for (let i = from; i < this.children.length; i++) this.haltChild(i); }
+  resetChildren() { this.haltChildren(0); }
+  halt() { this.resetChildren(); this.resetStatus(); }
+}
+class Decorator extends TNode {
+  get child() { return this.children[0]; }
+  haltChild() { const c = this.children[0]; if (!c) return; if (c.status === "RUNNING") c.haltNode(); c.resetStatus(); }
+  resetChild() { this.haltChild(); }
+  halt() { this.resetChild(); this.resetStatus(); }
+}
+class Stateful extends TNode {
+  tick() {
+    const prev = this.status;
+    if (prev === "IDLE") { this.setStatus("RUNNING"); return this.onStart(); }
+    if (prev === "RUNNING") return this.onRunning();
+    return prev;
+  }
+  halt() { if (this.status === "RUNNING") this.onHalted(); this.resetStatus(); }
+  onHalted() {}
+}
+const syncNode = (fn) => class extends TNode {
+  tick() { const r = fn(this); if (r === "RUNNING") throw new BtError(`${this.label()} is instant and must not return RUNNING`); return r; }
+};
+const condition = (fn) => syncNode((n) => (fn(n) ? "SUCCESS" : "FAILURE"));
+
+// --- controls
+class Sequence extends Control {
+  idx = 0; skipped = 0;
+  tick() {
+    const count = this.children.length;
+    if (this.status === "IDLE") this.skipped = 0;
+    this.setStatus("RUNNING");
+    while (this.idx < count) {
+      const s = this.child(this.idx).executeTick();
+      if (s === "RUNNING") return "RUNNING";
+      if (s === "FAILURE") { this.resetChildren(); this.idx = 0; this.skipped = 0; return "FAILURE"; }
+      if (s === "SKIPPED") this.skipped++;
+      this.idx++;
+    }
+    const allSkipped = this.skipped === count;
+    this.resetChildren(); this.idx = 0; this.skipped = 0;
+    return allSkipped ? "SKIPPED" : "SUCCESS";
+  }
+  halt() { this.idx = 0; this.skipped = 0; super.halt(); }
+}
+class SequenceWithMemory extends Control {
+  idx = 0; skipped = 0;
+  tick() {
+    const count = this.children.length;
+    if (this.status === "IDLE") this.skipped = 0;
+    this.setStatus("RUNNING");
+    while (this.idx < count) {
+      const s = this.child(this.idx).executeTick();
+      if (s === "RUNNING") return "RUNNING";
+      if (s === "FAILURE") { this.haltChildren(this.idx); return "FAILURE"; } // resume here next time
+      if (s === "SKIPPED") this.skipped++;
+      this.idx++;
+    }
+    const allSkipped = this.skipped === count;
+    this.resetChildren(); this.idx = 0; this.skipped = 0;
+    return allSkipped ? "SKIPPED" : "SUCCESS";
+  }
+}
+class Fallback extends Control {
+  idx = 0; skipped = 0;
+  tick() {
+    const count = this.children.length;
+    if (this.status === "IDLE") this.skipped = 0;
+    this.setStatus("RUNNING");
+    while (this.idx < count) {
+      const s = this.child(this.idx).executeTick();
+      if (s === "RUNNING") return "RUNNING";
+      if (s === "SUCCESS") { this.resetChildren(); this.idx = 0; this.skipped = 0; return "SUCCESS"; }
+      if (s === "SKIPPED") this.skipped++;
+      this.idx++;
+    }
+    const allSkipped = this.skipped === count;
+    this.resetChildren(); this.idx = 0; this.skipped = 0;
+    return allSkipped ? "SKIPPED" : "FAILURE";
+  }
+  halt() { this.idx = 0; this.skipped = 0; super.halt(); }
+}
+function reactive(stopOn) {
+  return class extends Control {
+    tick() {
+      let allSkipped = true;
+      this.setStatus("RUNNING");
+      for (let i = 0; i < this.children.length; i++) {
+        const s = this.child(i).executeTick();
+        allSkipped = allSkipped && s === "SKIPPED";
+        if (s === "RUNNING") { for (let j = 0; j < this.children.length; j++) if (j !== i) this.haltChild(j); return "RUNNING"; }
+        if (s === stopOn) { this.resetChildren(); return stopOn; }
+        if (s === "SKIPPED") this.haltChild(i);
+      }
+      this.resetChildren();
+      return allSkipped ? "SKIPPED" : stopOn === "FAILURE" ? "SUCCESS" : "FAILURE";
+    }
+  };
+}
+const ReactiveSequence = reactive("FAILURE"), ReactiveFallback = reactive("SUCCESS");
+const threshold = (v, n) => (v < 0 ? Math.max(n + v + 1, 0) : v);
+class Parallel extends Control {
+  done = new Set(); ok = 0; bad = 0;
+  tick() {
+    const sT = this.num("success_count", -1), fT = this.num("failure_count", 1), n = this.children.length;
+    const needS = threshold(sT, n), needF = threshold(fT, n);
+    if (n < needS) throw new BtError(`${this.label()}: fewer children than success_count, so it can never succeed`);
+    if (n < needF) throw new BtError(`${this.label()}: fewer children than failure_count, so it can never fail`);
+    this.setStatus("RUNNING");
+    let skipped = 0;
+    for (let i = 0; i < n; i++) {
+      if (!this.done.has(i)) {
+        const s = this.child(i).executeTick();
+        if (s === "SKIPPED") skipped++;
+        else if (s === "SUCCESS") { this.done.add(i); this.ok++; }
+        else if (s === "FAILURE") { this.done.add(i); this.bad++; }
+      }
+      if (this.ok >= needS || (sT < 0 && this.ok + skipped >= needS)) { this.clear(); this.resetChildren(); return "SUCCESS"; }
+      if (n - this.bad < needS || this.bad === needF) { this.clear(); this.resetChildren(); return "FAILURE"; }
+    }
+    return skipped === n ? "SKIPPED" : "RUNNING";
+  }
+  clear() { this.done.clear(); this.ok = 0; this.bad = 0; }
+  halt() { this.clear(); super.halt(); }
+}
+class ParallelAll extends Control {
+  done = new Set(); bad = 0;
+  tick() {
+    const n = this.children.length, maxF = threshold(this.num("max_failures", 1), n);
+    if (n < maxF) throw new BtError(`${this.label()}: fewer children than max_failures, so it can never fail`);
+    this.setStatus("RUNNING");
+    let skipped = 0;
+    for (let i = 0; i < n; i++) {
+      if (this.done.has(i)) continue;
+      const s = this.child(i).executeTick();
+      if (s === "SUCCESS") this.done.add(i);
+      else if (s === "FAILURE") { this.done.add(i); this.bad++; }
+      else if (s === "SKIPPED") skipped++;
+    }
+    if (skipped === n) return "SKIPPED";
+    if (skipped + this.done.size >= n) { this.haltChildren(); this.done.clear(); const r = this.bad >= maxF ? "FAILURE" : "SUCCESS"; this.bad = 0; return r; }
+    return "RUNNING";
+  }
+  halt() { this.done.clear(); this.bad = 0; super.halt(); }
+}
+// MW-Lib: the first child is the deadline. The others run alongside; one that finishes is not ticked again.
+class ParallelDeadline extends Control {
+  done = new Set();
+  tick() {
+    if (!this.children.length) throw new BtError(`${this.label()} needs at least one child`);
+    this.setStatus("RUNNING");
+    let deadline = "RUNNING";
+    for (let i = 0; i < this.children.length; i++) {
+      if (this.done.has(i)) continue;
+      const s = this.child(i).executeTick();
+      if (i === 0) deadline = s;
+      else if (s === "SUCCESS" || s === "FAILURE" || s === "SKIPPED") this.done.add(i);
+    }
+    if (deadline === "RUNNING") return "RUNNING";
+    this.done.clear();
+    this.resetChildren(); // halts the children still running
+    return deadline;
+  }
+  halt() { this.done.clear(); super.halt(); }
+}
+class IfThenElse extends Control {
+  idx = 0;
+  tick() {
+    const n = this.children.length;
+    this.setStatus("RUNNING");
+    if (this.idx === 0) {
+      const c = this.child(0).executeTick();
+      if (c === "RUNNING") return "RUNNING";
+      if (c === "SUCCESS") this.idx = 1;
+      else if (c === "FAILURE") { if (n === 3) this.idx = 2; else return "FAILURE"; }
+      else throw new BtError(`${this.label()}: condition returned ${c}`);
+    }
+    const s = this.child(this.idx).executeTick();
+    if (s === "RUNNING") return "RUNNING";
+    this.resetChildren(); this.idx = 0;
+    return s;
+  }
+  halt() { this.idx = 0; super.halt(); }
+}
+class WhileDoElse extends Control {
+  tick() {
+    const n = this.children.length;
+    this.setStatus("RUNNING");
+    const c = this.child(0).executeTick();
+    if (c === "RUNNING") return "RUNNING";
+    let s;
+    if (c === "SUCCESS") { if (n === 3) this.haltChild(2); s = this.child(1).executeTick(); }
+    else if (c === "FAILURE") { if (n === 3) { this.haltChild(1); s = this.child(2).executeTick(); } else s = "FAILURE"; }
+    else throw new BtError(`${this.label()}: condition returned ${c}`);
+    if (s === "RUNNING") return "RUNNING";
+    this.resetChildren();
+    return s;
+  }
+}
+// --- decorators
+const mapDecorator = (f) => class extends Decorator {
+  tick() { this.setStatus("RUNNING"); const s = this.child.executeTick(); const r = f(s); if (s === "SUCCESS" || s === "FAILURE") this.resetChild(); return r; }
+};
+const Inverter = mapDecorator((s) => (s === "SUCCESS" ? "FAILURE" : s === "FAILURE" ? "SUCCESS" : s));
+const ForceSuccess = mapDecorator((s) => (s === "SUCCESS" || s === "FAILURE" ? "SUCCESS" : s));
+const ForceFailure = mapDecorator((s) => (s === "SUCCESS" || s === "FAILURE" ? "FAILURE" : s));
+class KeepRunningUntilFailure extends Decorator {
+  tick() {
+    this.setStatus("RUNNING");
+    const s = this.child.executeTick();
+    if (s === "FAILURE") { this.resetChild(); return "FAILURE"; }
+    if (s === "SUCCESS") { this.resetChild(); return "RUNNING"; }
+    return s === "RUNNING" ? "RUNNING" : this.status;
+  }
+}
+class Repeat extends Decorator {
+  count = 0;
+  tick() {
+    const n = this.num("num_cycles");
+    let loop = this.count < n || n === -1;
+    this.setStatus("RUNNING");
+    while (loop) {
+      const s = this.child.executeTick();
+      if (s === "SUCCESS") { this.count++; loop = this.count < n || n === -1; this.resetChild(); if (n === -1) return "RUNNING"; }
+      else if (s === "FAILURE") { this.count = 0; this.resetChild(); return "FAILURE"; }
+      else if (s === "RUNNING") return "RUNNING";
+      else { this.resetChild(); return "SKIPPED"; }
+    }
+    this.count = 0;
+    return "SUCCESS";
+  }
+  halt() { this.count = 0; super.halt(); }
+}
+class RetryUntilSuccessful extends Decorator {
+  tries = 0; allSkipped = true;
+  tick() {
+    const max = this.num("num_attempts");
+    let loop = this.tries < max || max === -1;
+    if (this.status === "IDLE") this.allSkipped = true;
+    this.setStatus("RUNNING");
+    while (loop) {
+      const s = this.child.executeTick();
+      this.allSkipped = this.allSkipped && s === "SKIPPED";
+      if (s === "SUCCESS") { this.tries = 0; this.resetChild(); return "SUCCESS"; }
+      if (s === "FAILURE") { this.tries++; loop = this.tries < max || max === -1; this.resetChild(); if (max === -1) return "RUNNING"; continue; }
+      if (s === "RUNNING") return "RUNNING";
+      this.resetChild(); return "SKIPPED";
+    }
+    this.tries = 0;
+    return this.allSkipped ? "SKIPPED" : "FAILURE";
+  }
+  halt() { this.tries = 0; super.halt(); }
+}
+class Timeout extends Decorator {
+  started = false; t0 = 0;
+  tick() {
+    const msec = this.num("msec");
+    if (!this.started) { this.started = true; this.t0 = this.now(); this.setStatus("RUNNING"); }
+    if (msec > 0 && this.child.status === "RUNNING" && (this.now() - this.t0) * 1000 >= msec - 1e-6) {
+      this.haltChild(); this.started = false; return "FAILURE";
+    }
+    const s = this.child.executeTick();
+    if (s === "SUCCESS" || s === "FAILURE") { this.started = false; this.resetChild(); }
+    return s;
+  }
+  halt() { this.started = false; super.halt(); }
+}
+class Delay extends Decorator {
+  started = false; t0 = 0;
+  tick() {
+    const msec = this.num("delay_msec");
+    if (!this.started) { this.started = true; this.t0 = this.now(); this.setStatus("RUNNING"); }
+    if ((this.now() - this.t0) * 1000 < msec - 1e-6) return "RUNNING";
+    const s = this.child.executeTick();
+    if (s === "SUCCESS" || s === "FAILURE") { this.started = false; this.resetChild(); }
+    return s;
+  }
+  halt() { this.started = false; super.halt(); }
+}
+class RunOnce extends Decorator {
+  ticked = false; result = "IDLE";
+  tick() {
+    const skip = this.str("then_skip", "true") !== "false";
+    if (this.ticked) return skip ? "SKIPPED" : this.result;
+    this.setStatus("RUNNING");
+    const s = this.child.executeTick();
+    if (s === "SUCCESS" || s === "FAILURE") { this.ticked = true; this.result = s; this.resetChild(); }
+    return s;
+  }
+}
+class SubTree extends Decorator {
+  tick() {
+    if (this.status === "IDLE") this.setStatus("RUNNING");
+    const s = this.child.executeTick();
+    if (s === "SUCCESS" || s === "FAILURE") this.resetChild();
+    return s;
+  }
+}
+// --- leaves
+class Sleep extends Stateful {
+  end = 0;
+  onStart() { const d = this.num("msec") / 1000; if (d <= 0) return "SUCCESS"; this.end = this.now() + d; return "RUNNING"; }
+  onRunning() { return this.now() >= this.end - 1e-9 ? "SUCCESS" : "RUNNING"; }
+}
+class FollowTrajectory extends Stateful {
+  onStart() {
+    this.trajName = this.str("trajectory");
+    if (!PATHS[this.trajName]) throw new BtError(`${this.label()}: no path named "${this.trajName}"`);
+    this.endState = this.str("end_state"); this.minTime = this.num("min_time"); this.maxPaused = this.num("max_paused_sec");
+    this.pauseStart = NaN;
+    R.setTrajectory(this.trajName);
+    R.swerve = this.str("path_state");
+    return "RUNNING";
+  }
+  onRunning() {
+    if (this.maxPaused > 0) {
+      if (!R.isChoreoTimerPaused()) this.pauseStart = NaN;
+      else if (Number.isNaN(this.pauseStart)) this.pauseStart = this.now();
+      else if (this.now() - this.pauseStart >= this.maxPaused - 1e-9) { R.swerve = this.endState; note(`${this.label()} gave up on ${this.trajName}: path timer paused for ${this.maxPaused} s`); return "FAILURE"; }
+    }
+    if (R.isAtChoreoSetpoint() && R.hasChoreoTimeElapsed(this.minTime)) { R.swerve = this.endState; return "SUCCESS"; }
+    return "RUNNING";
+  }
+  onHalted() { R.swerve = this.endState; }
+}
+class WaitForChoreoEvent extends Stateful {
+  onStart() { return this.onRunning(); }
+  onRunning() { return R.hasChoreoEventBeenPassed(this.str("event")) ? "SUCCESS" : "RUNNING"; }
+}
+
+const NODES = {
+  Sequence, SequenceWithMemory, ReactiveSequence, Fallback, ReactiveFallback, Parallel, ParallelAll, ParallelDeadline, IfThenElse, WhileDoElse,
+  Inverter, ForceSuccess, ForceFailure, KeepRunningUntilFailure, Repeat, RetryUntilSuccessful, Timeout, Delay, RunOnce, SubTree,
+  AlwaysSuccess: syncNode(() => "SUCCESS"),
+  AlwaysFailure: syncNode(() => "FAILURE"),
+  Sleep,
+  SetBlackboard: syncNode((n) => { const key = isPointer(n.attrs.output_key) ? pointerKey(n.attrs.output_key) : n.attrs.output_key; const raw = n.attrs.value; n.bb.set(key, isPointer(raw) ? n.bb.get(pointerKey(raw, "value")) : raw); return "SUCCESS"; }),
+  UnsetBlackboard: syncNode((n) => { n.bb.unset(n.str("key")); return "SUCCESS"; }),
+  FollowTrajectory, WaitForChoreoEvent,
+  SetSwerveState: syncNode((n) => { R.swerve = n.str("state"); return "SUCCESS"; }),
+  IsAtChoreoSetpoint: condition(() => R.isAtChoreoSetpoint()),
+  HasChoreoTimeElapsed: condition((n) => R.hasChoreoTimeElapsed(n.num("seconds"))),
+  HasChoreoEventPassed: condition((n) => R.hasChoreoEventBeenPassed(n.str("event"))),
+  IsChassisStationary: condition(() => R.isChassisStationary()),
+  SetWantedState: syncNode((n) => { R.setWantedState(n.str("state")); return "SUCCESS"; }),
+  IsSystemState: condition((n) => R.isIn(n.str("state"))),
+  SetIntakeState: syncNode((n) => { R.intake = n.str("state"); return "SUCCESS"; }),
+  SetShooterState: syncNode((n) => { R.shooter = n.str("state"); return "SUCCESS"; }),
+  SetShooterTarget: syncNode((n) => { R.target = n.str("target"); return "SUCCESS"; }),
+  IsShooterReady: condition(() => R.shooterReady()),
+};
+// BT.CPP v4 nodes MW-Lib deliberately leaves out (scripting, queues, Groot helpers).
+const UNSUPPORTED = new Set(["Script", "ScriptCondition", "Precondition", "Switch2", "Switch3", "Switch4", "Switch5", "Switch6", "LoopInt", "LoopDouble", "LoopString", "LoopBool", "ConsumeQueue", "PopFromQueue", "QueueSize", "ManualSelector", "TestNode", "SkipUnlessUpdated", "WaitValueUpdate", "WasEntryUpdated", "EntryUpdated"]);
+
+/** Builds a running tree: nodes in BT.CPP's preorder (uid = index + 1), SubTrees expanded, plus the btlive "tree" list. */
+function buildTree(mainId, trees, models, seeds) {
+  const nodes = [], runtime = [];
+  const main = trees.get(mainId);
+  const rootBB = new Blackboard();
+  for (const p of main.ports) if (p.default !== undefined) rootBB.set(p.name, p.default);
+  for (const [k, v] of Object.entries(seeds || {})) rootBB.set(k, v);
+  const build = (def, tree, prefix, bb, parentUid) => {
+    const path = prefix ? `${prefix}/${def.uid}` : def.uid;
+    const Cls = NODES[def.type];
+    const node = new Cls(def, { model: modelFor(def, models), bb, path, treeId: tree.id });
+    node.uid = nodes.length + 1;
+    nodes.push(node);
+    const category = def.type === "SubTree" ? "SubTree" : models.get(def.type)?.category;
+    runtime.push({ uid: node.uid, parent: parentUid, type: def.type, name: node.name, category, ...(def.type === "SubTree" ? { subtree: def.attrs.ID } : {}) });
+    if (def.type === "SubTree") {
+      const sub = trees.get(def.attrs.ID);
+      const cbb = new Blackboard(bb);
+      cbb.autoremap = def.attrs._autoremap === "true";
+      for (const [k, v] of Object.entries(def.attrs)) {
+        if (k === "ID" || k === "name" || k.startsWith("_")) continue;
+        if (isPointer(v)) cbb.remap.set(k, pointerKey(v, k)); else cbb.store.set(k, v);
+      }
+      for (const p of sub.ports) if (p.default !== undefined && !cbb.remap.has(p.name) && !cbb.store.has(p.name)) cbb.store.set(p.name, p.default);
+      node.children.push(build(sub.root, sub, path, cbb, node.uid));
+    } else {
+      for (const c of def.children) node.children.push(build(c, tree, prefix, bb, node.uid));
+    }
+    return node;
+  };
+  const root = build(main.root, main, "", rootBB, null);
+  return { root, nodes, runtime, byUid: new Map(nodes.map((n) => [n.uid, n])) };
+}
+
+// ===================================================================================== checks before a run
+// What MW-Lib's factory rejects when an auto loads: unknown nodes, unknown or missing ports, bad values,
+// wrong child counts, unknown or recursive SubTrees, {entries} nothing sets, paths that don't exist.
+function validate(trees, models, enums, mainId) {
+  const out = [];
+  const main = trees.get(mainId);
+  if (!mainId) out.push({ severity: "error", message: `No main tree: add main_tree_to_execute="..." to <root>` });
+  else if (!main) out.push({ severity: "error", message: `main_tree_to_execute "${mainId}" is not a tree in these files` });
+  const reaches = (from, target, seen = new Set()) => {
+    if (from === target) return true;
+    if (seen.has(from)) return false;
+    seen.add(from);
+    let found = false;
+    walk(trees.get(from)?.root ?? null, (n) => { if (!found && n.type === "SubTree" && n.attrs.ID && reaches(n.attrs.ID, target, seen)) found = true; });
+    return found;
+  };
+  for (const tree of trees.values()) {
+    const at = (n, message, severity = "error") => out.push({ severity, message, file: tree.file, treeId: tree.id, ...(n ? { nodeUid: n.uid } : {}) });
+    if (!tree.root) { at(null, `Tree "${tree.id}" is empty`); continue; }
+    // blackboard entries this tree can read: its own ports, and anything a SetBlackboard in it writes
+    const known = new Set(tree.ports.map((p) => p.name));
+    walk(tree.root, (n) => { if (n.type === "SetBlackboard" && n.attrs.output_key) known.add(isPointer(n.attrs.output_key) ? pointerKey(n.attrs.output_key) : n.attrs.output_key); });
+    walk(tree.root, (node) => {
+      const label = node.type === "SubTree" ? `SubTree ${node.attrs.ID ?? ""}`.trim() : node.attrs.name ? `${node.type} "${node.attrs.name}"` : node.type;
+      const model = modelFor(node, models);
+      if (node.type === "SubTree") {
+        const target = node.attrs.ID;
+        if (!target) return at(node, "SubTree has no ID");
+        if (!trees.has(target)) return at(node, `SubTree "${target}" is not defined in these files. Shared subtrees live in common.xml`);
+        if (reaches(target, tree.id)) return at(node, `SubTree "${target}" includes "${tree.id}" again (a loop)`);
+      } else if (UNSUPPORTED.has(node.type)) {
+        return at(node, `${node.type} is a BehaviorTree.CPP node, but MW-Lib doesn't run it (no scripting or queues)`);
+      } else if (!NODES[node.type]) {
+        return at(node, model ? `${node.type} is a BehaviorTree.CPP node, but MW-Lib doesn't have it` : `Unknown node "${node.type}". Check the spelling, or see "Nodes this robot knows" below`);
+      }
+      const [min, max] = allowedChildren(node, models);
+      const n = node.children.length;
+      if (n < min || n > max) {
+        const want = min === max ? `${min}` : max === Infinity ? `at least ${min}` : `${min} to ${max}`;
+        at(node, `${label} must have ${want} child${want === "1" ? "" : "ren"}, it has ${n}`);
+      }
+      if (!model) return;
+      const ports = new Map(model.ports.map((p) => [p.name, p]));
+      const remapAll = node.type === "SubTree" && node.attrs._autoremap === "true";
+      for (const p of model.ports) {
+        const v = node.attrs[p.name];
+        if (v === undefined && p.default === undefined && p.direction !== "output" && !remapAll && !(node.type === "SetBlackboard")) at(node, `${label}: input port "${p.name}" is not set`);
+        if (v === undefined || isPointer(v)) continue;
+        if (p.direction !== "output" && node.type !== "SetBlackboard") {
+          const problem = literalProblem(p.type, v, enums);
+          if (problem) at(node, `${label}: "${v}" is ${problem} (port "${p.name}")`);
+        }
+        if (node.type === "FollowTrajectory" && p.name === "trajectory" && !PATHS[v]) at(node, `${label}: no path named "${v}". Paths in this lab: ${Object.keys(PATHS).join(", ")}`);
+        if (node.type === "SetShooterTarget" && p.name === "target" && !SHOOTER_TARGETS.includes(v)) at(node, `${label}: "${v}" is not a target (${SHOOTER_TARGETS.join(", ")})`);
+      }
+      for (const [attr, v] of Object.entries(node.attrs)) {
+        if (PRE_POST_CONDITIONS.some((c) => c.name === attr)) { at(node, `${label}: "${attr}" needs BT.CPP scripting, which MW-Lib doesn't support`); continue; }
+        if (isPointer(v)) {
+          const key = pointerKey(v, attr);
+          if (!known.has(key) && !key.startsWith("@")) at(node, `${label}: reads {${key}}, but nothing in tree "${tree.id}" sets it. A typo? Or declare it as a port of the tree in <TreeNodesModel>`);
+        }
+        if (RESERVED_ATTRS.has(attr) || ports.has(attr)) continue;
+        if (node.type === "SubTree" && model.ports.length === 0) continue;
+        at(node, `${label}: "${attr}" is not a port of ${model.id}`);
+      }
+    });
+  }
+  return out;
+}
+
+// ===================================================================================== state
+const S = {
+  example: "DriveAimShoot", files: [], drafts: {}, edited: false, fileSel: "",
+  trees: new Map(), models: null, enums: new Map(), mainId: "", diags: [], runnable: false,
+  bt: null, time: 0, ticks: 0, started: false, done: false, result: "", error: "",
+  playing: false, speed: 1, pending: [], log: [], tunables: {}, selection: null, runCount: 0, customRuns: 0,
+  flags: {}, ever: {}, // things the guided steps watch for
+};
+let viewer = null;
+let hostSel = false;
+emit = (node, prev, status) => {
+  const t = Math.round(S.time * 1000);
+  S.pending.push([t, node.uid, prev, status]);
+  S.log.push({ t: S.time, tick: S.ticks, uid: node.uid, prev, status });
+  if (node.type === "FollowTrajectory" && status === "SUCCESS" && node.attrs.trajectory === "ToBackup") S.flags.backup = S.ever.backup = true;
+  if (prev === "RUNNING" && status === "IDLE") S.flags.halts = (S.flags.halts || 0) + 1;
+};
+clockNow = () => S.time;
+function note(msg) { S.note = msg; }
+
+// ===================================================================================== loading trees
+function loadProject(files, mainHint) {
+  const loaded = viewer.load({ spec: { path: "nodes.xml", xml: SPEC_XML }, files });
+  S.trees = new Map(loaded.trees.map((t) => [t.id, t]));
+  S.models = loaded.models;
+  S.enums = new Map(loaded.specEnums.map((e) => [e.type, e]));
+  const mainFile = loaded.files.find((f) => f.mainTree);
+  S.mainId = mainFile?.mainTree ?? mainHint ?? "";
+  const parseDiags = loaded.diagnostics.filter((d) => d.severity !== "info");
+  S.diags = [...parseDiags, ...(S.trees.size ? validate(S.trees, S.models, S.enums, S.mainId) : [])];
+  S.runnable = !S.diags.some((d) => d.severity === "error") && S.trees.has(S.mainId);
+  viewer.setOptions({ diagnostics: S.diags.filter((d) => d.nodeUid) });
+  if (S.trees.has(S.mainId)) { if (shownTree && shownTree !== S.mainId) backToMain(); else viewer.showTree(S.mainId); shownTree = S.mainId; }
+  $("tree-title").textContent = S.mainId ? `The tree: ${S.mainId}` : "The tree";
+  $("back-main").hidden = true;
+  S.selection = null; hostSel = false;
+  buildTunables();
+  renderDiags();
+  resetRun();
+  setTimeout(() => viewer.fit(), 80);
+}
+
+function loadExample(name) {
+  S.example = name; S.edited = false;
+  S.files = EXAMPLES[name].files.map((f) => ({ ...f }));
+  S.drafts = Object.fromEntries(S.files.map((f) => [f.path, f.xml]));
+  S.fileSel = S.files[0].path;
+  document.querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === name)));
+  fillFileSelect();
+  loadProject(S.files);
+}
+
+function firstPathStart(def, trees, seen = 0) {
+  if (!def || seen > 32) return null;
+  if (def.type === "FollowTrajectory" && PATHS[def.attrs.trajectory]) { const s = samplePath(PATHS[def.attrs.trajectory], 0); return { x: s.x, y: s.y, h: s.h }; }
+  if (def.type === "SubTree") return firstPathStart(trees.get(def.attrs.ID)?.root, trees, seen + 1);
+  for (const c of def.children) { const r = firstPathStart(c, trees, seen); if (r) return r; }
+  return null;
+}
+
+function resetRun() {
+  pause();
+  S.time = 0; S.ticks = 0; S.started = false; S.done = false; S.result = ""; S.error = ""; S.note = "";
+  S.pending = []; S.log = []; S.flags = {};
+  const main = S.trees.get(S.mainId);
+  R.reset((main && firstPathStart(main.root, S.trees)) || START_DEFAULT);
+  if (S.runnable) {
+    try {
+      S.bt = buildTree(S.mainId, S.trees, S.models, S.tunables[S.mainId]);
+      viewer.setRuntimeTree(S.mainId, S.bt.runtime);
+      if (viewer.mismatches.length) console.warn("Runtime tree does not match the XML:", viewer.mismatches);
+    } catch (e) {
+      S.bt = null; S.error = e.message;
+    }
+  } else {
+    S.bt = null;
+    viewer.clearStatuses();
+  }
+  renderLog(true);
+  updateUi();
+  drawField();
+}
+
+// ===================================================================================== running
+function stepOnce() {
+  if (S.time >= AUTO_LENGTH - 1e-9) return;
+  S.time = Math.round((S.time + DT) * 1000) / 1000;
+  S.ticks++;
+  R.periodic(DT); // subsystems run before commands in the robot loop
+  if (S.bt && !S.done && !S.error) {
+    S.started = true;
+    try {
+      const r = S.bt.root.executeTick();
+      if (r !== "RUNNING") {
+        S.done = true; S.result = r; S.doneAt = S.time;
+        if (r === "SUCCESS" && S.mainId === "DriveAimShoot") S.ever.seqDone = true;
+        if (S.mainId === "CitrusSynergy" && inj.jam && !S.edited) S.ever.jamRun = true;
+      }
+    } catch (e) {
+      S.error = e instanceof BtError ? e.message : String(e);
+      pause();
+    }
+  }
+  if (S.time >= AUTO_LENGTH - 1e-9) {
+    if (S.bt && !S.done) { haltTree(); S.done = true; S.result = "HALTED"; S.doneAt = S.time; }
+    pause();
+  }
+}
+function haltTree() {
+  S.bt.root.haltNode();
+  for (const n of S.bt.nodes) if (n.status !== "IDLE") n.haltNode();
+}
+function flush() {
+  if (S.pending.length) { viewer.applyStatusChanges(S.pending); S.pending = []; }
+  renderLog(false);
+  updateUi();
+}
+
+let lastFrame = 0, acc = 0;
+function frame(ts) {
+  const dt = Math.min(0.1, (ts - (lastFrame || ts)) / 1000);
+  lastFrame = ts;
+  if (S.playing) {
+    acc += dt * S.speed;
+    let n = 0;
+    while (acc >= DT && n < 40 && S.playing) { stepOnce(); acc -= DT; n++; }
+    if (n) flush();
+    drawField();
+  } else if (R.shots.length) {
+    drawField();
+  }
+  requestAnimationFrame(frame);
+}
+function play() {
+  if (!S.runnable || S.error) return;
+  if (S.time >= AUTO_LENGTH - 1e-9) resetRun();
+  S.playing = true; acc = 0; S.runCount++;
+  updateUi();
+}
+function pause() { S.playing = false; if (viewer) updateUi(); }
+
+// ===================================================================================== UI: readouts
+function rootStatus() { return S.bt ? S.bt.root.status : "IDLE"; }
+function updateUi() {
+  $("clk-t").textContent = S.time.toFixed(2);
+  $("clk-n").textContent = S.ticks;
+  const rs = S.done ? S.result : rootStatus();
+  const cs = $("clk-s"); cs.textContent = rs; cs.className = `st-${rs === "HALTED" ? "IDLE" : rs}`;
+  const pl = $("play"); pl.textContent = S.playing ? "Pause" : "Play"; pl.disabled = !S.runnable || !!S.error;
+  $("step").disabled = !S.runnable || !!S.error || S.time >= AUTO_LENGTH - 1e-9;
+  $("ro-wanted").textContent = R.wanted; $("ro-system").textContent = R.system;
+  $("ro-intake").textContent = R.intake + (inj.jam && R.intake === "INTAKE" ? " (jammed)" : "");
+  $("ro-shooter").textContent = R.shooter;
+  $("ro-fuel").textContent = R.fuel; $("ro-scored").textContent = R.scored;
+  const m = $("run-msg");
+  m.className = "msg";
+  if (!S.runnable) { m.textContent = "This XML has errors, so it can't run. See the list under the XML."; m.classList.add("err"); }
+  else if (S.error) { m.textContent = `Stopped: ${S.error}`; m.classList.add("err"); }
+  else if (S.done && S.result === "HALTED") m.textContent = `The auto ended at ${AUTO_LENGTH} s with the tree still running, so it was halted.`;
+  else if (S.done) { m.textContent = `The tree finished with ${S.result} at ${S.doneAt.toFixed(2)} s.`; m.classList.add(S.result === "SUCCESS" ? "ok" : "err"); if (S.result === "FAILURE") m.classList.remove("ok"); }
+  else if (S.note) m.textContent = S.note;
+  else if (!S.started) m.textContent = "One tick = one 20 ms robot loop.";
+  else m.textContent = S.playing ? "Running…" : "Paused.";
+  updateSelInfo();
+  renderGuide();
+}
+
+function buildTunables() {
+  const main = S.trees.get(S.mainId);
+  const ports = main ? main.ports.filter((p) => p.direction !== "output") : [];
+  $("tun-panel").hidden = !ports.length;
+  const box = $("tun"); box.innerHTML = "";
+  S.tunables[S.mainId] = S.tunables[S.mainId] || {};
+  for (const p of ports) {
+    const id = `tun-${p.name}`;
+    const val = S.tunables[S.mainId][p.name] ?? p.default ?? "";
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<label for="${id}"><span class="k">${esc(p.name)}</span><span class="u">${esc(p.type || "")}${p.default !== undefined ? `, default ${esc(p.default)}` : ""}</span></label>
+      <input type="range" min="0" max="8000" step="250" value="${esc(val)}" aria-label="${esc(p.name)} slider"><input type="number" id="${id}" value="${esc(val)}" step="250">`;
+    const [rng, num] = row.querySelectorAll("input");
+    const isNum = /int|double|float|unsigned/.test(p.type || "int");
+    if (!isNum) rng.hidden = true;
+    const set = (v) => { S.tunables[S.mainId][p.name] = String(v); rng.value = v; num.value = v; if (!S.started) resetRun(); };
+    rng.addEventListener("input", () => set(rng.value));
+    num.addEventListener("change", () => set(num.value));
+    if (p.description) { const d = document.createElement("p"); d.className = "note"; d.style.gridColumn = "1 / -1"; d.textContent = p.description; row.appendChild(d); }
+    box.appendChild(row);
+  }
+}
+
+// ===================================================================================== UI: live log
+const LOG_SHOW = 400;
+let logRendered = 0;
+function nodeOf(uid) { return S.bt?.byUid.get(uid); }
+function logLabel(n) {
+  if (!n) return "?";
+  const inSub = n.path.includes("/") ? ` <small>in ${esc(subtreeOf(n))}</small>` : "";
+  return `${esc(n.label())}${inSub}`;
+}
+function subtreeOf(n) {
+  const prefix = n.path.split("/").slice(0, -1).join("/");
+  const st = S.bt.nodes.find((x) => x.path === prefix && x.type === "SubTree");
+  return st ? st.attrs.ID : "SubTree";
+}
+function logMatches(e, f) {
+  if (!f) return true;
+  const n = nodeOf(e.uid);
+  return (n ? `${n.type} ${n.name} ${n.attrs.trajectory || ""} ${n.attrs.state || ""}` : "").toLowerCase().includes(f) || e.status.toLowerCase().includes(f) || e.prev.toLowerCase().includes(f);
+}
+function logRow(e, i) {
+  const n = nodeOf(e.uid);
+  const b = document.createElement("button");
+  b.className = "log-row"; b.setAttribute("role", "listitem"); b.dataset.i = i;
+  const halted = e.prev === "RUNNING" && e.status === "IDLE";
+  b.title = `tick ${e.tick}, node uid ${e.uid}${halted ? ": halted by its parent while RUNNING" : ""}. Click to find it in the tree.`;
+  b.innerHTML = `<span class="t">${e.t.toFixed(2)}</span><span class="nm">${logLabel(n)}</span><span class="tr"><span class="chip st-${e.prev}">${e.prev}</span> → <span class="chip st-${e.status}">${e.status}</span>${halted ? '<span class="halt">halted</span>' : ""}</span>`;
+  return b;
+}
+function renderLog(full) {
+  const box = $("log");
+  const f = $("log-filter").value.trim().toLowerCase();
+  if (full || f) {
+    box.innerHTML = "";
+    const rows = [];
+    for (let i = 0; i < S.log.length; i++) if (logMatches(S.log[i], f)) rows.push(i);
+    const frag = document.createDocumentFragment();
+    for (const i of rows.slice(-LOG_SHOW)) frag.appendChild(logRow(S.log[i], i));
+    box.appendChild(frag);
+    logRendered = S.log.length;
+    if (!S.log.length) box.innerHTML = `<div class="log-empty">No transitions yet. Each line will be one node changing status, like Arbor's Live log tab.</div>`;
+  } else if (S.log.length > logRendered) {
+    if (logRendered === 0) box.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    for (let i = logRendered; i < S.log.length; i++) frag.appendChild(logRow(S.log[i], i));
+    box.appendChild(frag);
+    logRendered = S.log.length;
+    while (box.children.length > LOG_SHOW) box.removeChild(box.firstChild);
+  }
+  if ($("log-follow").checked) box.scrollTop = box.scrollHeight;
+}
+$("log").addEventListener("click", (ev) => {
+  const row = ev.target.closest(".log-row");
+  if (!row) return;
+  const e = S.log[Number(row.dataset.i)];
+  const n = nodeOf(e?.uid);
+  if (!n) return;
+  if (e.prev === "RUNNING" && e.status === "IDLE") S.ever.clickedHalt = true;
+  revealNode(n);
+  renderGuide();
+});
+$("log-filter").addEventListener("input", () => renderLog(true));
+$("log-follow").addEventListener("change", () => renderLog(false));
+$("log-box").addEventListener("toggle", () => { if ($("log-box").open && $("log-follow").checked) $("log").scrollTop = $("log").scrollHeight; });
+
+function revealNode(n) {
+  if (shownTree !== S.mainId) backToMain();
+  const parts = n.path.split("/");
+  // A node inside a SubTree is only drawn when that SubTree is expanded (+): center the SubTree first, then the
+  // node itself (reveal() does nothing for a node that isn't drawn).
+  for (let i = 1; i <= parts.length; i++) viewer.reveal(parts.slice(0, i).join("/"));
+  S.selection = n.path; hostSel = true;
+  viewer.setOptions({ selection: n.path });
+  updateSelInfo(n.path.includes("/") ? ` It is inside SubTree ${subtreeOf(n)}: press + on that node to draw it inline.` : "");
+}
+
+function updateSelInfo(extra = "") {
+  const box = $("selinfo");
+  if (!S.selection) { if (!extra) box.textContent = "Click a node to see what it does."; return; }
+  const n = S.bt?.nodes.find((x) => x.path === S.selection);
+  if (!n) return;
+  const desc = n.model?.description || "";
+  box.innerHTML = `<b>${esc(n.label())}</b> <span class="chip st-${n.status}">${n.status}</span> ${esc(desc)}${extra ? esc(extra) : ""}`;
+}
+
+// ===================================================================================== UI: XML panel
+function fillFileSelect() {
+  const sel = $("xml-file");
+  sel.innerHTML = S.files.map((f) => `<option value="${esc(f.path)}">${esc(f.path)}</option>`).join("");
+  sel.value = S.fileSel;
+  $("xml-text").value = S.drafts[S.fileSel];
+}
+$("xml-file").addEventListener("change", () => {
+  S.drafts[S.fileSel] = $("xml-text").value;
+  S.fileSel = $("xml-file").value;
+  $("xml-text").value = S.drafts[S.fileSel];
+});
+$("xml-text").addEventListener("input", () => { S.drafts[S.fileSel] = $("xml-text").value; });
+function currentFiles() { return S.files.map((f) => ({ path: f.path, xml: S.drafts[f.path] ?? f.xml })); }
+$("xml-run").addEventListener("click", () => {
+  S.drafts[S.fileSel] = $("xml-text").value;
+  S.edited = true;
+  loadProject(currentFiles(), S.mainId);
+  if (S.runnable) { S.customRuns++; S.ever.customRun = true; S.lastCustomXml = S.drafts[S.files[0].path]; play(); }
+  else $("diag-box").scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+});
+$("xml-revert").addEventListener("click", () => loadExample(S.example));
+$("xml-copy").addEventListener("click", async () => {
+  const txt = $("xml-text").value;
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) {
+    const ta = $("xml-text"); ta.focus(); ta.select(); try { ok = document.execCommand("copy"); } catch (e2) {}
+  }
+  flashButton($("xml-copy"), ok ? "Copied" : "Select and copy by hand");
+});
+function flashButton(b, text) { const old = b.dataset.label || b.textContent; b.dataset.label = old; b.textContent = text; setTimeout(() => (b.textContent = old), 1500); }
+
+function renderDiags() {
+  const box = $("diag-box");
+  if (!S.diags.length) { box.innerHTML = `<p class="okline">No problems: every node and port is one the robot knows.</p>`; return; }
+  const n = S.diags.filter((d) => d.severity === "error").length;
+  box.innerHTML = `<p class="note" style="color:var(--failure)">${n ? `${n} error${n === 1 ? "" : "s"}: the robot would refuse to load this auto.` : "Warnings only: it runs."} Click one to find the node.</p><ul id="diags"></ul>`;
+  const ul = $("diags");
+  S.diags.forEach((d) => {
+    const li = document.createElement("li"); li.className = d.severity;
+    li.innerHTML = `<button><span class="sev">${esc(d.severity)}</span><span>${esc(d.message)}${d.file ? ` <span class="hint">(${esc(d.file)})</span>` : ""}</span></button>`;
+    li.querySelector("button").addEventListener("click", () => {
+      if (d.treeId && d.treeId !== S.mainId) { viewer.showTree(d.treeId); shownTree = d.treeId; $("back-main").hidden = false; } else if (d.treeId && shownTree !== S.mainId) backToMain();
+      if (d.nodeUid) setTimeout(() => { hostSel = true; viewer.setOptions({ selection: d.nodeUid }); viewer.reveal(d.nodeUid); }, 60);
+    });
+    ul.appendChild(li);
+  });
+}
+
+function buildPalette() {
+  const models = S.models;
+  const groups = { Control: [], Decorator: [], Action: [], Condition: [] };
+  for (const id of Object.keys(NODES)) {
+    if (id === "SubTree") continue;
+    const m = models.get(id);
+    if (m && groups[m.category]) groups[m.category].push(m);
+  }
+  const port = (p) => `${p.name}${p.default !== undefined ? `=${p.default}` : ""}`;
+  let html = "";
+  for (const [cat, list] of Object.entries(groups)) {
+    html += `<h4>${cat}s</h4>`;
+    for (const m of list) html += `<dt>${esc(m.id)}${m.ports.length ? ` <span class="hint">${esc(m.ports.map(port).join(", "))}</span>` : ""}</dt><dd>${esc(m.description || "")}</dd>`;
+  }
+  html += `<h4>SubTrees</h4><dt>SubTree ID="ShootFor"</dt><dd>duration_msec=2000. From common.xml</dd><dt>SubTree ID="IntakeOnEvent"</dt><dd>event, state=INTAKE. From common.xml</dd>`;
+  html += `<h4>Paths</h4><dt>trajectory=</dt><dd>${Object.keys(PATHS).join(", ")}</dd>`;
+  html += `<h4>Robot states</h4><dt>state=</dt><dd>${RobotStates.join(", ")}</dd>`;
+  $("palette").innerHTML = html;
+}
+
+// Arbor project as a .zip (stored, no compression): bt_project.json, nodes.xml, trees/*.xml
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+function makeZip(entries) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const e of entries) {
+    const name = enc.encode(e.name), data = enc.encode(e.text), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint16(10, 0, true); h.setUint16(12, 0x21, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true);
+    h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(new Uint8Array(h.buffer), name, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint16(10, 0, true); c.setUint16(12, 0, true); c.setUint16(14, 0x21, true); c.setUint32(16, crc, true);
+    c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true);
+    c.setUint32(42, offset, true);
+    central.push(new Uint8Array(c.buffer), name);
+    offset += 30 + name.length + data.length;
+  }
+  const cdSize = central.reduce((s, a) => s + a.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: "application/zip" });
+}
+$("xml-zip").addEventListener("click", () => {
+  S.drafts[S.fileSel] = $("xml-text").value;
+  const dir = (S.mainId || "behavior-tree-lab").replace(/[^\w.-]/g, "_");
+  const project = { name: dir, nodes: "nodes.xml", trees: "trees", live: { url: "ws://localhost:1670" } };
+  const entries = [
+    { name: `${dir}/bt_project.json`, text: JSON.stringify(project, null, 2) + "\n" },
+    { name: `${dir}/nodes.xml`, text: SPEC_XML },
+    ...currentFiles().map((f) => ({ name: `${dir}/${f.path}`, text: f.xml })),
+  ];
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(makeZip(entries));
+  a.download = `${dir}-arbor.zip`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  flashButton($("xml-zip"), "Downloaded");
+});
+
+// ===================================================================================== field drawing
+const VIEW = { w: 11.3, h: 8.07 };
+let C = {};
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  const g = (n) => cs.getPropertyValue(n).trim();
+  C = { field: g("--field"), panel: g("--panel"), ink: g("--ink"), muted: g("--muted"), line: g("--line"), grid: g("--grid"), blue: g("--blue-alliance"), red: g("--red-alliance"), fuel: g("--goal"), path: g("--setp"), running: g("--running"), success: g("--success"), failure: g("--failure"), warn: g("--warn") };
+}
+function sizeCanvas(cv) {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  return { w: r.width, h: r.height, dpr };
+}
+function treePaths() {
+  const out = new Set();
+  if (!S.bt) return out;
+  for (const n of S.bt.nodes) if (n.type === "FollowTrajectory" && PATHS[n.attrs.trajectory]) out.add(n.attrs.trajectory);
+  return out;
+}
+function drawField() {
+  const cv = $("field");
+  const { w, h, dpr } = sizeCanvas(cv);
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const k = Math.min(w / VIEW.w, h / VIEW.h);
+  const X = (x) => x * k, Y = (y) => h - y * k; // +y up, blue wall on the left
+  ctx.fillStyle = C.field; ctx.fillRect(0, 0, w, h);
+  // zones
+  ctx.globalAlpha = 0.10; ctx.fillStyle = C.blue; ctx.fillRect(X(0), Y(8.07), X(4.03), 8.07 * k); ctx.globalAlpha = 1;
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(8.27), 0); ctx.lineTo(X(8.27), h); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(X(4.03), 0); ctx.lineTo(X(4.03), h); ctx.stroke();
+  // bumps and trenches beside the hub
+  ctx.fillStyle = C.grid;
+  for (const [y0, y1] of [[1.45, 3.43], [4.63, 6.62]]) { ctx.fillRect(X(4.03), Y(y1), X(1.2), (y1 - y0) * k); }
+  ctx.strokeStyle = C.line;
+  for (const [y0, y1] of [[0, 1.29], [6.78, 8.07]]) { ctx.strokeRect(X(4.03), Y(y1), X(1.2), (y1 - y0) * k); }
+  // hub
+  ctx.fillStyle = C.blue; ctx.globalAlpha = 0.85; ctx.fillRect(X(HUB.x - 0.6), Y(HUB.y + 0.6), 1.2 * k, 1.2 * k); ctx.globalAlpha = 1;
+  // depot
+  ctx.strokeStyle = C.blue; ctx.strokeRect(X(0), Y(6.5), X(0.62), 1.05 * k);
+  // labels
+  ctx.fillStyle = C.muted; ctx.font = `${Math.max(9, Math.min(12, k * 0.3))}px system-ui, sans-serif`; ctx.textAlign = "center";
+  ctx.fillText("BUMP", X(4.63), Y(2.4)); ctx.fillText("BUMP", X(4.63), Y(5.6));
+  ctx.fillText("TRENCH", X(4.63), Y(0.6)); ctx.fillText("TRENCH", X(4.63), Y(7.4));
+  ctx.fillText("NEUTRAL ZONE", X(8.27), Y(0.25)); ctx.fillText("DEPOT", X(0.9), Y(6.75));
+  ctx.textAlign = "left"; ctx.fillText("BLUE ALLIANCE ZONE", X(0.12), Y(0.25));
+  ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = `bold ${Math.max(9, Math.min(12, k * 0.3))}px system-ui, sans-serif`; ctx.fillText("HUB", X(HUB.x), Y(HUB.y) + 4);
+  // fuel
+  ctx.fillStyle = C.fuel;
+  const fr = Math.max(1.6, 0.075 * k);
+  for (const f of R.fuelField) { ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), fr, 0, Math.PI * 2); ctx.fill(); }
+  // paths: every path in the tree (dashed), the one being followed (solid)
+  const drawPath = (p) => { ctx.beginPath(); p.pts.forEach((s, i) => (i ? ctx.lineTo(X(s[1]), Y(s[2])) : ctx.moveTo(X(s[1]), Y(s[2])))); ctx.stroke(); };
+  ctx.lineWidth = 1.5; ctx.strokeStyle = C.muted; ctx.setLineDash([5, 5]);
+  for (const name of treePaths()) if (name !== R.trajName || !R.following()) drawPath(PATHS[name]);
+  ctx.setLineDash([]);
+  if (R.traj && R.following()) {
+    ctx.strokeStyle = C.path; ctx.lineWidth = 3; drawPath(R.traj);
+    for (const [ev, t] of R.traj.events) { const s = samplePath(R.traj, t); ctx.fillStyle = C.path; ctx.beginPath(); ctx.arc(X(s.x), Y(s.y), 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = C.ink; ctx.textAlign = "left"; ctx.font = "11px system-ui, sans-serif"; ctx.fillText(ev, X(s.x) + 6, Y(s.y) + 12); }
+  }
+  // aim line
+  const aimingNow = ["AIMING", "SHOOT", "SHOOT_WAIT"].includes(R.shooter);
+  if (aimingNow) {
+    const blind = !R.canSeeTarget();
+    ctx.strokeStyle = blind ? C.failure : R.aim >= 1 ? C.success : C.running;
+    ctx.setLineDash(blind ? [3, 5] : [6, 3]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(X(R.pose.x), Y(R.pose.y)); ctx.lineTo(X(HUB.x), Y(HUB.y)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = ctx.strokeStyle; ctx.textAlign = "left"; ctx.font = "600 11px system-ui, sans-serif";
+    ctx.fillText(blind ? "no target" : R.aim >= 1 ? "aimed" : "aiming…", X(R.pose.x) + 0.55 * k, Y(R.pose.y) - 0.5 * k);
+  }
+  // blocker
+  if (inj.block && R.following() && R.paused) {
+    const s = samplePath(R.traj, Math.min(R.traj.duration, R.pathT + 0.25));
+    const dx = s.x - R.pose.x, dy = s.y - R.pose.y, d = Math.hypot(dx, dy) || 1;
+    drawRobot(ctx, X, Y, k, { x: R.pose.x + (dx / d) * 0.95, y: R.pose.y + (dy / d) * 0.95, h: Math.atan2(dy, dx) + Math.PI }, C.red, false);
+  }
+  drawRobot(ctx, X, Y, k, R.pose, C.blue, true);
+  // shots
+  for (const sh of R.shots) {
+    const u = Math.min(1, sh.t);
+    const x = sh.x0 + (sh.x1 - sh.x0) * u, y = sh.y0 + (sh.y1 - sh.y0) * u;
+    const lift = reduceMotion ? 0 : Math.sin(Math.PI * u) * 0.5;
+    ctx.fillStyle = C.fuel; ctx.beginPath(); ctx.arc(X(x), Y(y + lift), fr * (1 + lift), 0, Math.PI * 2); ctx.fill();
+  }
+}
+function drawRobot(ctx, X, Y, k, p, color, ours) {
+  const s = 0.86 * k;
+  ctx.save(); ctx.translate(X(p.x), Y(p.y)); ctx.rotate(-p.h);
+  ctx.fillStyle = color; ctx.fillRect(-s / 2, -s / 2, s, s);
+  ctx.fillStyle = C.panel; ctx.fillRect(-s / 2 + 0.1 * k, -s / 2 + 0.1 * k, s - 0.2 * k, s - 0.2 * k);
+  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.moveTo(s * 0.32, 0); ctx.lineTo(-s * 0.12, s * 0.2); ctx.lineTo(-s * 0.12, -s * 0.2); ctx.closePath(); ctx.fill();
+  if (ours && ["INTAKE", "DEPLOYED", "SQUEEZE", "OUTTAKE"].includes(R.intake)) {
+    ctx.fillStyle = inj.jam && R.intake === "INTAKE" ? C.failure : R.intake === "INTAKE" ? C.success : C.muted;
+    ctx.fillRect(s / 2, -s / 2, 0.14 * k, s);
+  }
+  ctx.restore();
+  if (ours) {
+    ctx.fillStyle = C.ink; ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(`${R.fuel} fuel`, X(p.x), Y(p.y) + s / 2 + 13);
+  }
+}
+
+// ===================================================================================== controls
+$("play").addEventListener("click", () => (S.playing ? pause() : play()));
+$("step").addEventListener("click", () => { pause(); stepOnce(); flush(); drawField(); });
+$("reset").addEventListener("click", () => resetRun());
+$("speed").addEventListener("change", () => { S.speed = Number($("speed").value); });
+$("fit").addEventListener("click", () => viewer.fit());
+$("explain").addEventListener("change", () => viewer.setOptions({ explainEdges: $("explain").checked }));
+for (const [id, key] of [["inj-camera", "camera"], ["inj-jam", "jam"], ["inj-block", "block"]]) {
+  $(id).addEventListener("change", () => { inj[key] = $(id).checked; updateUi(); drawField(); });
+}
+document.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => loadExample(b.dataset.ex)));
+let shownTree = "";
+function backToMain() {
+  // showTree() with the ID the viewer already has doesn't close a SubTree the user opened, so step away first.
+  viewer.setOptions({ treeId: "__lab_none__" });
+  setTimeout(() => { viewer.showTree(S.mainId); shownTree = S.mainId; $("back-main").hidden = true; }, 0);
+}
+$("back-main").addEventListener("click", backToMain);
+
+// ===================================================================================== guided steps
+// Guided mode (the default) shows one step and only the controls it has introduced (data-step-from="N").
+// Free play shows everything. The choice is remembered per lab.
+const MODE_KEY = "lab-mode:behavior-tree-lab";
+const G = { free: false, i: 0 };
+const camera = (on) => { inj.camera = on; $("inj-camera").checked = on; };
+const jam = (on) => { inj.jam = on; $("inj-jam").checked = on; };
+const showHalt = () => {
+  const i = S.log.findIndex((e) => e.prev === "RUNNING" && e.status === "IDLE" && nodeOf(e.uid)?.type === "RetryUntilSuccessful");
+  $("log-box").open = true;
+  if (i < 0) { camera(true); if (S.example !== "PickupAndScore") loadExample("PickupAndScore"); else resetRun(); S.speed = 4; $("speed").value = "4"; play(); return; }
+  $("log-filter").value = ""; renderLog(true);
+  const row = $("log").querySelector(`[data-i="${i}"]`);
+  if (row) { row.scrollIntoView({ block: "nearest" }); row.classList.add("flash"); row.focus(); }
+};
+const STEPS = [
+  {
+    title: "Press Step one tick five times.",
+    text: "Each tick starts at the top of the tree. Orange means RUNNING: not done yet, ask again next tick.",
+    enter() { camera(false); jam(false); loadExample("DriveAimShoot"); },
+    check: () => S.ticks >= 5,
+  },
+  {
+    title: "Press Play and watch the Sequence.",
+    text: "It ticks Drive path again each tick until it succeeds, then moves on to the next child in the same tick.",
+    enter() { camera(false); jam(false); if (S.example !== "DriveAimShoot" || S.edited) loadExample("DriveAimShoot"); },
+    check: () => S.ever.seqDone,
+  },
+  {
+    title: "The camera is blind. Press Play.",
+    text: "Aiming can't finish, so after 3 s the Fallback tries plan B: drive to the spot right in front of the hub.",
+    enter() { camera(true); jam(false); loadExample("PickupAndScore"); },
+    check: () => S.ever.backup,
+  },
+  {
+    title: "Open the log and click a line marked “halted”.",
+    text: "When the 3 s ran out, Timeout halted its child: RUNNING straight back to IDLE, with no result.",
+    enter() { $("log-box").open = true; if (S.example !== "PickupAndScore") { camera(true); loadExample("PickupAndScore"); } },
+    action: ["Show me", showHalt],
+    check: () => S.ever.clickedHalt,
+  },
+  {
+    title: "Run the real auto, then run it again with the intake jammed.",
+    text: "The tree turns green both times, but the jammed robot scores only the 8 fuel it started with.",
+    enter() { camera(false); jam(false); loadExample("CitrusSynergy"); },
+    check: () => S.ever.jamRun,
+  },
+  {
+    title: "In the XML, change msec=\"3000\" to \"1000\", then Run this XML.",
+    text: "Plan B starts 2 s sooner. Try a typo too: the lab won't run it, just like the robot.",
+    enter() { if (S.example !== "PickupAndScore" || S.edited) { camera(true); jam(false); loadExample("PickupAndScore"); } },
+    action: ["Show me", () => { const ta = $("xml-text"); ta.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" }); const i = ta.value.indexOf('msec="3000"'); ta.focus({ preventScroll: true }); if (i >= 0) ta.setSelectionRange(i + 6, i + 10); }],
+    check: () => S.ever.customRun,
+  },
+];
+function nodeByType(t) { return S.bt?.nodes.find((n) => n.type === t); }
+function applyReveal() {
+  const upTo = G.free ? Infinity : G.i + 1;
+  document.querySelectorAll("[data-step-from]").forEach((el) => el.classList.toggle("not-yet", Number(el.dataset.stepFrom) > upTo));
+}
+function renderGuide() {
+  const last = G.i === STEPS.length - 1;
+  $("g-free").setAttribute("aria-pressed", String(G.free));
+  $("g-free").textContent = G.free ? "Back to steps" : "Free play";
+  if (G.free) {
+    $("g-count").textContent = "Free play";
+    $("g-title").textContent = "Everything is switched on.";
+    $("g-text").textContent = "Pick a tree, break the robot, edit the XML. Ideas are under Go deeper.";
+    $("g-action").hidden = true; $("g-back").hidden = true; $("g-next").hidden = true;
+    return;
+  }
+  const st = STEPS[G.i], done = !!st.check();
+  $("g-back").hidden = false; $("g-next").hidden = last;
+  $("g-count").innerHTML = `Step ${G.i + 1} of ${STEPS.length}${done ? ' <span class="done-mark">✓ done</span>' : ""}`;
+  $("g-title").textContent = st.title;
+  $("g-text").textContent = done && last ? "You've got it. Try Free play to use every tree and failure." : st.text;
+  $("g-action").hidden = !st.action || done;
+  if (st.action) $("g-action").textContent = st.action[0];
+  $("g-back").disabled = G.i === 0;
+  $("g-next").classList.toggle("ready", done);
+  $("g-free").classList.toggle("ready", done && last);
+}
+function goStep(i) {
+  G.i = Math.max(0, Math.min(STEPS.length - 1, i));
+  applyReveal();
+  STEPS[G.i].enter?.();
+  renderGuide();
+  setTimeout(() => { viewer.fit(); drawField(); }, 80);
+}
+function setFree(on) {
+  G.free = on;
+  try { localStorage.setItem(MODE_KEY, on ? "free" : "guided"); } catch (e) {}
+  if (on) { applyReveal(); renderGuide(); setTimeout(() => { viewer.fit(); drawField(); }, 80); }
+  else goStep(G.i);
+}
+function wtStatus() { renderGuide(); }
+$("g-action").addEventListener("click", () => { STEPS[G.i].action?.[1](); renderGuide(); });
+$("g-back").addEventListener("click", () => goStep(G.i - 1));
+$("g-next").addEventListener("click", () => goStep(G.i + 1));
+$("g-free").addEventListener("click", () => setFree(!G.free));
+
+// ===================================================================================== start
+const themeNow = () => (document.documentElement.dataset.theme === "light" ? "light" : document.documentElement.dataset.theme === "dark" ? "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+readColors();
+$("viewer").innerHTML = "";
+const narrow = window.matchMedia("(max-width: 600px)");
+viewer = createTreeViewer($("viewer"), {
+  theme: themeNow(),
+  dir: narrow.matches ? "LR" : "TB", // phones: grow the tree downward, not sideways
+  // The viewer keeps its own selection; the log and the error list take it over briefly with
+  // setOptions({ selection }) and hand it back on the next click.
+  onSelect: (p) => { S.selection = p; if (hostSel) { hostSel = false; viewer.setOptions({ selection: undefined }); } updateSelInfo(); },
+  onTreeChange: (id) => { shownTree = id; $("back-main").hidden = id === S.mainId; },
+});
+window.__btLabReady = true;
+new MutationObserver(() => { readColors(); viewer.setOptions({ theme: themeNow() }); drawField(); })
+  .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+window.addEventListener("resize", () => drawField());
+narrow.addEventListener("change", () => viewer.setOptions({ dir: narrow.matches ? "LR" : "TB" }));
+let savedMode = "guided";
+try { savedMode = localStorage.getItem(MODE_KEY) || "guided"; } catch (e) {}
+loadExample("DriveAimShoot");
+shownTree = S.mainId;
+buildPalette();
+if (savedMode === "free") setFree(true); else goStep(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

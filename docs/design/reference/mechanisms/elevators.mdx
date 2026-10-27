@@ -1,0 +1,63 @@
+---
+title: Elevators
+description: Elevators and linear slides for lifting game pieces straight up, the principles behind them, and the robots to study.
+sidebar_position: 4
+---
+
+import RobotClips from '@site/src/components/RobotClips';
+
+An elevator lifts a game piece straight up (or out, as a horizontal slide) on rails. It keeps the game piece at the same
+angle the whole way, which makes it easy to control and fast to score at several heights. In FTC, elevators are usually
+called **linear slides**.
+
+## Principles
+
+- **Keep the carriage light.** Every pound on the carriage slows the elevator and adds load on the motors. Move weight
+  down into the robot when you can.
+- **Gear for speed and holding.** The gear ratio sets how fast it moves and whether it can hold still under load. Check
+  with [ReCalc's linear mechanism calculator](https://www.reca.lc/linear).
+- **Counterbalance.** Constant-force springs or gas springs take the weight of the carriage so the motor can accelerate
+  faster and hold position with less current.
+- **Stiffness.** Rails flex and rack when extended. Use bearing blocks with little play, overlap each stage enough, and
+  space the rails wide.
+- **Rigging tension.** Belts, chain, or rope that go slack make the elevator jump. Add a tensioner and check it often.
+- **Hard stops and sensors.** A hard stop gives a known zero. Limit switches or encoders keep the code from driving past
+  the end of travel.
+- **Center of gravity.** A tall elevator with a load on top can tip the robot. Limit acceleration when extended.
+
+## Types
+
+- **Continuous rigging:** One rope or belt drives everything; the carriage rises first, then the stages.
+- **Cascade rigging:** Each stage is pulled by the one below it, so every stage moves at once.
+- **Single stage:** One carriage on fixed rails. Simplest and stiffest, with limited height.
+- **Horizontal slide:** An elevator on its side, to reach out without changing height.
+- **Linear slides (FTC):** Off-the-shelf drawer slides pulled by string. Light and cheap, less stiff.
+
+## On Real Robots
+
+Short clips from the teams' own robot videos, mostly Behind the Bumpers close-ups. Fast clips are slowed down. Each one links to the full video.
+
+<RobotClips items={[
+  {clip: "elevator-4907-2025", team: "4907 Thunderstamps, 2025", program: "FRC", text: "The elevator rises to its full height.", video: "https://www.youtube.com/watch?v=freDDOnPhyY&t=305s"},
+  {clip: "elevator-1323-2025", team: "1323 MadTown Robotics, 2025", program: "FRC", text: "The elevator lifts an algae ball high above the robot and brings it back down. Slowed to 75%.", video: "https://www.youtube.com/watch?v=Kdzjr_WtiFU&t=199s"},
+  {clip: "elevator-254-2023", team: "254 The Cheesy Poofs, 2023", program: "FRC", text: "The elevator lifts a cone to the top while a slide carries the gripper out, then drops back down. Slowed to 60%.", video: "https://www.youtube.com/watch?v=D_-aiikeOH8&t=578s"},
+]}/>
+
+## Robots to Study
+
+| Robot | Game piece | What to look at | Links |
+|---|---|---|---|
+| FRC 254, 2018 | [Boxes](../game/pieces/boxes.mdx) | Fast elevator carrying the intake and wrist. | [Tech binder](https://www.chiefdelphi.com/t/team-254-presents-lockdown-technical-binder-2018/166515) |
+| FRC 254, 2023 | [Cones](../game/pieces/cones.mdx), [Boxes](../game/pieces/boxes.mdx) | Elevator plus a horizontal slide carrying the gripper. | [Tech binder & code](https://www.chiefdelphi.com/t/team-254-presents-2023-breakdown-technical-binder-code-q-a/443167) |
+| FRC 6328, 2025 | [Tubes](../game/pieces/tubes.mdx) | Three-stage elevator. | [Open Alliance build thread](https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-2025-build-thread/477314) |
+| FRC 254, 2025 | [Tubes](../game/pieces/tubes.mdx) | Elevator and end effector fed by an indexer. | [Behind the Bumpers](https://www.youtube.com/watch?v=oAOJTfFOP9I) · [Tech binder](https://media.team254.com/2025/09/985607eb-2025-Tech-Binder-254.pdf) |
+| FRC 254, 2019 | [Rings & discs](../game/pieces/rings-discs.mdx) | Turreted elevator with a wrist. | [Tech binder](https://media.team254.com/resources/Team_254_Tech_Binder_2019.pdf) |
+| FRC 254, 2011 | [Rings & discs](../game/pieces/rings-discs.mdx) | Roller claw on an elevator. | [Robot page](https://team254.com/?p=585) |
+| FTC 7244, 2019-20 | [Boxes](../game/pieces/boxes.mdx) | Five-stage lift with a virtual four-bar. | [Robot write-up](https://www.coroflot.com/LanderHolsinger/FIRST-FTC-Robotics-Team-7244-Out-of-the-Box-Robotics-Skystone-Challenge-2019-2020) |
+| FTC 16379, 2023-24 | [Rings & discs](../game/pieces/rings-discs.mdx) | Telescoping slide extension. | [Behind the Bot](https://www.youtube.com/watch?v=wKMcQ8iUJUU) |
+
+## More Reading
+
+- [FIRST guide to extenders, lifts, and reach](https://www.firstinspires.org/hubfs/lms/frc-guided-experience/m2/l4-extenders-lift-reach-climb-pdf.pdf?hsLang=en)
+- [FRCDesign mechanism examples](https://www.frcdesign.org/mechanism-examples/) include elevators in Onshape.
+- Compare with [Arms](./arms.mdx): an arm reaches over things, an elevator goes straight up.

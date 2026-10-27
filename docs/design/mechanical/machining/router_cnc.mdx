@@ -1,0 +1,92 @@
+---
+title: CNC Router
+sidebar_position: 3
+description: Safety, startup, setup, and run procedure for the CNC router.
+---
+
+Computer numerical control (CNC) routing is a form of [milling](./milling_manual) with an emphasis on cutting 2D shapes
+out of sheet material.
+
+## CNC Router Safety
+
+A CNC router is a dangerous piece of industrial equipment, and safety must be considered during operation. Review the
+general [shop safety rules](./safety) first.
+
+:::danger Hazards
+
+**High Rotational Energy** (moderate risk)
+- **Harm:** Lacerations.
+- **Cause:** Contact with the tooling.
+- **Prevention:** Use a brush, not your hands, to move material away from the tool. For large cutouts that could jam the
+  spindle, use a wooden plank to clear debris or hold down material.
+
+**Flying Debris** (minor risk)
+- **Harm:** Minor lacerations and eye injury from metal, plastic, or wood shavings, parted-off pieces, or shattered
+  tooling.
+- **Prevention:** Always **wear safety glasses** near an operating CNC router, and confirm the shield is in place.
+
+**Sharp Edges** (minor risk)
+- **Harm:** Minor lacerations from shavings, cutting surfaces, and machined edges.
+- **Prevention:** Never handle shavings with bare hands; use cleaning tools and gloves. Sand or file machined parts to
+  remove sharp edges.
+
+:::
+
+:::warning Gloves
+**Gloves must never be worn while the CNC router is running** due to the risk of entanglement. Only put on gloves to
+handle parts once the spindle has come to a complete stop.
+:::
+
+## Machine Startup
+
+1. Raise the router spindle above the bed.
+2. Twist the **E-Stop** to switch the router ON.
+3. Power up the connected PC.
+4. Log in as **LanClub**.
+5. Launch **Carbide Motion**.
+6. Press **Initialize Machine**.
+    - The machine homes to the back right corner.
+    - The machine then asks to calibrate the tool height.
+
+## Program Setup
+
+To begin, load the G-code file from a flash drive prepared by the Fusion programmer.
+
+{/* TODO: confirm the exact button name for step 1 */}
+1. Open the file loader in Carbide Motion.
+2. Navigate to the G-code file on the right side.
+3. Open the file.
+4. Click **Top View** and check the part orientation and origin.
+5. Go to the **Jog** menu.
+6. Position the spindle above the desired origin point.
+7. Click **Set Zero X & Y** and confirm the origin point is set.
+
+:::note
+Only set Z zero if you believe the height is off.
+:::
+
+Unlike the CNC mill, the part sits on the **positive side of the X and Y axes**, and **Z zero is on top of the part**.
+
+## Securing Material
+
+1. Place the material on the bed.
+2. Use the green clamps to hold the material in place.
+3. Make sure the material is secure and will not move during operation.
+
+:::warning
+Material that is not secured can damage the machine and injure the operator.
+:::
+
+## Confirm Setup
+
+{/* TODO */}
+*Coming soon.*
+
+## Run Program
+
+When all setup checks are complete, the program is ready to run. Step through the start of the program and each
+machining operation to check for issues.
+
+- Reduce the **speed to 10%** to confirm the depth of the first pass.
+
+{/* TODO: remaining run steps */}

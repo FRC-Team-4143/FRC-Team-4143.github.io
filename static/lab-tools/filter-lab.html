@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><!-- the site defaults to dark -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Filter Lab</title>
+<link rel="stylesheet" href="lab-base.css">
+<script src="lab-theme.js"></script>
+<style>
+.seg.signals { flex-wrap: wrap; }
+@media (max-width: 520px) { .seg.signals button { padding-inline: 10px; } }
+#chart { width: 100%; height: 320px; }
+.rows { display: grid; gap: 12px; }
+.fcard { border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: var(--radius); padding: 8px 10px; display: grid; gap: 8px; background: var(--bg); }
+.fcard.off { border-left-color: var(--line); }
+.fcard.off .fbody { display: none; }
+.fcard .check { font-weight: 600; }
+.fcard .check .sw { border-color: var(--c); }
+.jline { display: block; font-family: var(--f-mono); font-size: 12px; color: var(--ink); background: var(--panel); border: 1px solid var(--grid); border-radius: var(--radius); padding: 4px 6px; overflow-wrap: anywhere; }
+.fbody { display: grid; gap: 8px; }
+.drive { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.drive:empty { display: none; }
+.stick { display: grid; grid-template-columns: auto minmax(0, 1fr) 64px; gap: 8px; align-items: center; width: 100%; }
+.stick output { font-family: var(--f-mono); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+.slams { display: flex; flex-wrap: wrap; gap: 8px; }
+.big { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px 16px; padding-top: 4px; border-top: 1px solid var(--grid); }
+.big b { font-size: 26px; line-height: 1.2; }
+.big span i.sw { margin-right: 5px; }
+.tablewrap { overflow-x: auto; }
+table.res { border-collapse: collapse; width: 100%; font-size: 13px; }
+table.res th { text-align: left; font-weight: 500; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.res td { padding: 5px 12px 5px 0; font-family: var(--f-mono); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.res td:first-child { font-family: var(--f-body); font-weight: 600; }
+table.res td.bad { color: var(--warn); }
+table.res td.ok { color: var(--volt); }
+pre.code { margin: 0 0 8px; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; overflow-x: auto; white-space: pre; }
+pre.code .c { color: var(--muted); }
+.deeper ul, .deeper ol { margin: 0 0 8px; padding-left: 22px; display: grid; gap: 6px; }
+.deeper p { margin: 0 0 8px; }
+.deeper code { font-size: 13px; }
+.guide .done-mark[hidden] { display: none; }
+.guide .guide-count { display: flex; gap: 10px; align-items: baseline; }
+@media (min-width: 1000px) { .app > .main { grid-column: 2; grid-row: 1; } .app > .side { grid-column: 1; grid-row: 1; } }
+@media (max-width: 999px) { .main > .guide { order: 1; } .main > .chartp { order: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Software · Controls</p>
+      <h1>Signal Filter Lab</h1>
+      <p class="lede short">See how filters clean up noisy sensor readings, and how much delay each one adds.</p>
+    </div>
+    <div class="toolbar">
+      <button id="pause" aria-pressed="false">Pause</button>
+      <button id="reset">Reset</button>
+    </div>
+  </header>
+
+  <div class="app">
+    <main class="main">
+      <section class="guide" id="guide" aria-live="polite">
+        <span class="guide-count"><span id="g-count">Step 1 of 7</span><span class="done-mark" id="g-done" hidden>✓ Done</span></span>
+        <h2 id="g-title"></h2>
+        <p id="g-text"></p>
+        <div class="guide-nav">
+          <button id="g-back">Back</button>
+          <button id="g-next">Next</button>
+          <button id="g-free" aria-pressed="false">Free play</button>
+        </div>
+      </section>
+
+      <section class="panel chartp">
+        <div class="panel-head">
+          <h2 id="chart-title">Distance sensor</h2>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="seg signals" role="group" aria-label="Signal source" data-step-from="g" data-g="modes">
+          <button data-mode="distance" aria-pressed="true">Distance</button>
+          <button data-mode="current" aria-pressed="false">Current</button>
+          <button data-mode="beam" aria-pressed="false">Beam break</button>
+          <button data-mode="joystick" aria-pressed="false">Joystick</button>
+        </div>
+        <canvas id="chart" role="img" aria-label="Strip chart of the raw reading and each filter's output over the last 8 seconds"></canvas>
+        <div class="drive" id="drive"></div>
+        <div class="readout big" id="big" aria-live="off"></div>
+        <details class="more">
+          <summary>Show all numbers</summary>
+          <div class="tablewrap"><table class="res" id="results"></table></div>
+          <p class="note">How each number is measured is under Go deeper.</p>
+        </details>
+      </section>
+    </main>
+
+    <aside class="side" aria-label="Signal and filter controls">
+      <div class="panel">
+        <h2>Controls</h2>
+        <div class="rows" id="sig-rows"></div>
+        <div class="rows" id="filter-cards"></div>
+        <details class="more">
+          <summary>More controls</summary>
+          <label class="check" for="auto"><input type="checkbox" id="auto" checked><span id="auto-label">Auto: make a real change every few seconds</span></label>
+          <div class="toolbar"><button id="step">Make a change now</button><button id="slow" aria-pressed="false">Slow motion</button><button id="reset-counts">Reset counts</button></div>
+        </details>
+      </div>
+    </aside>
+  </div>
+
+  <section class="deeper" aria-label="Go deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>In robot code</summary>
+      <pre class="code" id="code" tabindex="0" aria-label="Java code for the filters that are on"></pre>
+      <p>Make each filter once, as a field. Then call <code>calculate()</code> exactly once every loop. These filters assume a 20 ms loop: call one twice a loop, or skip loops, and its timing is wrong.</p>
+    </details>
+    <details>
+      <summary>Where our code uses these</summary>
+      <ul>
+        <li>MW-Lib mechanisms (arm, elevator, roller, flywheel) smooth motor current with <code>LinearFilter.singlePoleIIR(0.1, 0.02)</code>.</li>
+        <li>The 2026 shooter smooths flywheel speed with <code>singlePoleIIR(0.15, 0.02)</code>.</li>
+        <li>"Shooter ready" uses <code>new Debouncer(0.1, DebounceType.kRising)</code>: flywheel, hood and heading must all be on target for 0.1 s.</li>
+        <li>"Is shooting" uses <code>new Debouncer(0.65, DebounceType.kFalling)</code>: it stays true for 0.65 s after the flywheel speed dip ends.</li>
+        <li>Motor, gyro and battery "connected" flags use <code>new Debouncer(0.5)</code> (Rising is the default), so one bad packet does not raise an alert.</li>
+        <li>The launch calculator averages hood angle over 0.1 s and heading over 0.8 s with <code>LinearFilter.movingAverage(...)</code>.</li>
+        <li>Swerve teleop limits speed changes with MW-Lib's <code>DynamicSlewRateLimiter</code> (a <code>SlewRateLimiter</code> whose limit can change), 40 m/s² by default.</li>
+      </ul>
+      <p>The WPILib class is <code>Debouncer</code>. Read more on the <a href="/docs/software/controls/filters" target="_top">Signal Filtering</a> page.</p>
+    </details>
+    <details>
+      <summary>How the numbers are measured</summary>
+      <ul>
+        <li><b>Time to 90%</b>: how long after a real step the output got 90% of the way there. The circles on the chart mark it.</li>
+        <li><b>Rule of thumb</b>: moving average ≈ 0.9 × taps × 20 ms. IIR ≈ 2.3 × time constant. Median ≈ half the window. Slew rate ≈ 0.9 × step size ÷ rate. Debouncer = the debounce time.</li>
+        <li><b>Wobble left</b>: how far the output still jumps around once the true value has been steady for 1 s (RMS error). Less wobble usually costs more time.</li>
+        <li><b>Delay on / off</b>: how long after the real change the true/false output switched, the last time it happened.</li>
+        <li><b>False trigger</b>: the output switched to something that isn't true, like a bounce counting as a second piece.</li>
+        <li><b>Missed</b>: a real piece came and went and the output never saw it.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Things to try in free play</summary>
+      <ol>
+        <li><b>Average vs. median.</b> On Distance, turn spikes up to 2 per second and compare the two lines.</li>
+        <li><b>Lag grows with smoothing.</b> Drag moving-average taps from 5 to 50. Time to 90% goes from about 80 ms to about 880 ms.</li>
+        <li><b>Rising vs. falling.</b> On Beam break, switch the Debouncer between Rising, Falling and Both. Watch Delay on / off under Show all numbers.</li>
+        <li><b>Different on and off times.</b> On Current or Beam break, turn on Rising + falling: two chained debouncers, as in the docs.</li>
+        <li><b>Slew rate is not a smoother.</b> On Joystick, turn jitter up. The slew rate limiter passes small jitter straight through.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>The Kalman filter</summary>
+      <p>The Signal Filtering page also covers the Kalman filter. It mixes several sensors into one best guess, which is what WPILib's pose estimator does with odometry, the gyro and vision. Try it in the <a href="/labs/pose-estimator-lab" target="_top">Pose Estimator Lab</a>.</p>
+    </details>
+  </section>
+  <footer class="foot">MARS/WARS · FRC Team 4143</footer>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const DT = 0.02, WINDOW = 8, MAXS = Math.round(WINDOW / DT) + 2;
+  const gauss = () => { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+  const round = (x, n) => Number(x.toFixed(n));
+
+  // ---------- Filter implementations (same maths as WPILib) ----------
+  function makeMovingAverage(taps, x0) {
+    const buf = new Array(taps).fill(x0);
+    return (x) => { buf.pop(); buf.unshift(x); return buf.reduce((a, b) => a + b, 0) / taps; };
+  }
+  function makeIIR(tc, x0) {                       // LinearFilter.singlePoleIIR(tc, 0.02)
+    const g = Math.exp(-DT / tc); let y = x0;
+    return (x) => (y = (1 - g) * x + g * y);
+  }
+  function makeMedian(n, x0) {
+    const buf = [x0];
+    return (x) => { buf.push(x); if (buf.length > n) buf.shift(); const s = [...buf].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  }
+  function makeSlew(rate, x0) {
+    let y = x0;
+    return (x) => (y += clamp(x - y, -rate * DT, rate * DT));
+  }
+  function makeDebouncer(time, type) {             // edu.wpi.first.math.filter.Debouncer
+    let baseline = type === "Falling", prev = sim.t;
+    return (input) => {
+      if (input === baseline) prev = sim.t;
+      if (sim.t - prev >= time - 1e-9) {
+        if (type === "Both") { baseline = input; prev = sim.t; }
+        return input;
+      }
+      return baseline;
+    };
+  }
+
+  // ---------- Filters shown in the side panel ----------
+  const FILTERS = {
+    ma:    { name: "Moving average", short: "Avg", color: "--actual", kind: "analog",
+             good: "Averages the last few readings. Good for steady jitter. A spike gets smeared into a bump, not removed. More taps: smoother, but later." },
+    iir:   { name: "Single-pole IIR", short: "IIR", color: "--volt", kind: "analog",
+             good: "Each new reading nudges the output a little toward it. Smooth and cheap. MW-Lib uses singlePoleIIR(0.1, 0.02) on motor current. It reaches 90% in about 2.3 time constants." },
+    med:   { name: "Median", short: "Median", color: "--setp", kind: "analog",
+             good: "Sorts the readings in the window and takes the middle one, so one bad reading never wins. Removes spikes and keeps steps sharp." },
+    slew:  { name: "Slew rate limiter", short: "Slew", color: "--pin2", kind: "analog",
+             good: "Limits how fast the value may change, in units per second. For driver inputs and setpoints. It does not remove noise: small jitter passes straight through." },
+    deb:   { name: "Debouncer", short: "Debounce", color: "--pin3", kind: "digital",
+             good: "A true/false input must hold its new value for the debounce time before the output follows. Rising delays only turning on, Falling delays only turning off, Both delays each change." },
+    chain: { name: "Rising + falling", short: "Rise+Fall", color: "--pin2", kind: "digital",
+             good: "WPILib's Both mode uses one time for both edges. Chain a falling and a rising debouncer to give turning on and turning off different times." },
+  };
+
+  const MODES = {
+    distance: {
+      title: "Distance sensor", unit: "m", dp: 2, yMin: 0, yMax: 3, yStep: 0.5, analog: true, stepMin: 0.1,
+      about: "A time-of-flight distance sensor (in meters) pointed at a target that moves. Readings jitter, and now and then one is way off (a spike).",
+      filters: ["ma", "iir", "med", "slew"], slew: { min: 0.5, max: 20, step: 0.5, unit: "m/s" },
+      sig: { noise: { label: "Noise", min: 0, max: 0.15, step: 0.005, unit: "m", def: 0.03 },
+             spikes: { label: "Spikes", min: 0, max: 3, step: 0.1, unit: "per s", def: 0 } },
+      defaults: { ma: { on: true, taps: 5 }, iir: { on: true, tc: 0.1 }, med: { on: false, size: 5 }, slew: { on: false, rate: 4 } },
+      levels: [0.6, 1.8, 1.0, 2.4], every: 3,
+    },
+    current: {
+      title: "Intake motor current", unit: "A", dp: 1, yMin: 0, yMax: 45, yStep: 10, analog: true, threshold: true, stepMin: 5,
+      about: "An intake roller draws about 5 A spinning free and about 25 A when it grabs a game piece. Code says \"has piece\" when current is above the threshold.",
+      filters: ["iir", "ma", "med", "deb", "chain"],
+      sig: { noise: { label: "Noise", min: 0, max: 6, step: 0.1, unit: "A", def: 1.5 },
+             spikes: { label: "Spikes", min: 0, max: 3, step: 0.1, unit: "per s", def: 0.6 },
+             thr: { label: "Threshold", min: 8, max: 22, step: 0.5, unit: "A", def: 15 } },
+      defaults: { iir: { on: true, tc: 0.1 }, ma: { on: false, taps: 5 }, med: { on: false, size: 5 }, deb: { on: true, time: 0.1, type: "Rising" }, chain: { on: false, rise: 0.1, fall: 0.3 } },
+      every: 2,
+    },
+    beam: {
+      title: "Beam break", analog: false,
+      about: "A beam-break sensor in the indexer. It reads true while a game piece blocks the light. Contacts and vibration make it chatter (bounce) right after each change.",
+      filters: ["deb", "chain"],
+      sig: { bounce: { label: "Bounce", min: 0, max: 0.2, step: 0.01, unit: "s", def: 0.06 },
+             glitch: { label: "Glitches", min: 0, max: 3, step: 0.1, unit: "per s", def: 0.4 },
+             piece: { label: "Piece time", min: 0.1, max: 1.5, step: 0.05, unit: "s", def: 0.6 } },
+      defaults: { deb: { on: true, time: 0.1, type: "Both" }, chain: { on: false, rise: 0.05, fall: 0.2 } },
+      every: 2.5,
+    },
+    joystick: {
+      title: "Driver joystick", unit: "", dp: 2, yMin: -1.1, yMax: 1.1, yStep: 0.5, analog: true, stepMin: 0.3,
+      about: "A driver stick axis from −1 (full reverse) to 1 (full forward). Drag the stick under the chart (arrow keys work on it) or use the slam buttons.",
+      filters: ["slew", "iir", "ma"], slew: { min: 0.5, max: 10, step: 0.5, unit: "/s" },
+      sig: { noise: { label: "Stick jitter", min: 0, max: 0.1, step: 0.005, unit: "", def: 0.01 } },
+      defaults: { slew: { on: true, rate: 2 }, iir: { on: false, tc: 0.1 }, ma: { on: false, taps: 5 } },
+      levels: [1, -1, 0], every: 2,
+    },
+  };
+
+  // ---------- State ----------
+  let mode = "distance";
+  const params = {}, sigs = {};
+  function initMode(m) {
+    params[m] = JSON.parse(JSON.stringify(MODES[m].defaults));
+    sigs[m] = {}; for (const [k, d] of Object.entries(MODES[m].sig)) sigs[m][k] = d.def;
+    sigs[m].auto = true;
+  }
+  Object.keys(MODES).forEach(initMode);
+
+  const sim = { t: 0, samples: [], truth: 0, truthB: false, prevTruth: 0, prevTruthB: false, lastChange: -99,
+                level: 0, nextAuto: 1, pieceUntil: -1, lastEdge: -99, spikeLeft: 0, spikeVal: 0, stick: 0, real: 0,
+                run: {}, stats: {}, lastStepSize: null };
+  let paused = false, slow = false;
+
+  function laneKeys() { return ["raw", ...MODES[mode].filters.filter((f) => params[mode][f].on)]; }
+
+  function newStats() { return { lag: null, pend: null, e2: null, delayOn: null, delayOff: null, dpend: null, out: null,
+                                 counted: 0, falseT: 0, missed: 0, saw: false, real: 0, marks: [] }; }
+
+  function buildRunner(f) {
+    const p = params[mode][f], x0 = sim.lastRaw ?? sim.truth;
+    if (f === "ma") return makeMovingAverage(p.taps, x0);
+    if (f === "iir") return makeIIR(p.tc, x0);
+    if (f === "med") return makeMedian(p.size, x0);
+    if (f === "slew") return makeSlew(p.rate, x0);
+    if (f === "deb") return makeDebouncer(p.time, p.type);
+    if (f === "chain") { const r = makeDebouncer(p.rise, "Rising"), fa = makeDebouncer(p.fall, "Falling"); return (x) => r(fa(x)); }
+  }
+  function rebuild(f) { sim.run[f] = buildRunner(f); sim.stats[f] = newStats(); }
+
+  function resetSim() {
+    const M = MODES[mode];
+    sim.t = 0; sim.samples = []; sim.level = 0; sim.nextAuto = 1; sim.pieceUntil = -1; sim.lastEdge = -99;
+    sim.spikeLeft = 0; sim.real = 0; sim.lastChange = -99; sim.lastStepSize = null; sim.lastRaw = null;
+    if (mode === "distance") sim.truth = M.levels[0];
+    else if (mode === "current") sim.truth = 5;
+    else if (mode === "joystick") { sim.truth = 0; sim.stick = 0; setStickUI(0); }
+    else sim.truth = 0;
+    sim.truthB = false; sim.prevTruth = sim.truth; sim.prevTruthB = false;
+    sim.lastRaw = sim.truth;
+    sim.run = {}; sim.stats = { raw: newStats() };
+    for (const f of M.filters) rebuild(f);
+  }
+
+  function resetCounts() {
+    sim.real = 0;
+    for (const s of Object.values(sim.stats)) { s.counted = 0; s.falseT = 0; s.missed = 0; s.real = 0; }
+  }
+
+  // ---------- Signal sources ----------
+  function stepTruth() {             // the "make a real change happen" button
+    const M = MODES[mode];
+    if (mode === "distance") { sim.level = (sim.level + 1) % M.levels.length; sim.truth = M.levels[sim.level]; }
+    else if (mode === "current") sim.truthB = !sim.truthB;
+    else if (mode === "beam") sim.pieceUntil = sim.t + sigs.beam.piece;
+    else if (mode === "joystick") { sim.level = (sim.level + 1) % M.levels.length; setStick(M.levels[sim.level]); }
+    updateDriveLabel();
+  }
+
+  function tick() {
+    const M = MODES[mode], S = sigs[mode];
+    sim.t = round(sim.t + DT, 6);
+    if (S.auto && sim.t >= sim.nextAuto) { stepTruth(); sim.nextAuto = sim.t + M.every; }
+    else if (!S.auto) sim.nextAuto = sim.t + 1;
+
+    let raw, rawB;
+    if (mode === "beam") sim.truthB = sim.t < sim.pieceUntil;
+    if (mode === "current") sim.truth = sim.truthB ? 25 : 5;
+    if (mode === "joystick") sim.truth = sim.stick;
+    const edge = mode === "beam" || mode === "current" ? sim.truthB !== sim.prevTruthB : false;
+    if (edge) sim.lastEdge = sim.t;
+
+    if (mode === "beam") {
+      rawB = sim.truthB;
+      if (sim.t - sim.lastEdge < S.bounce) rawB = Math.random() < 0.5 ? sim.truthB : !sim.truthB;
+      else if (Math.random() < S.glitch * DT) rawB = !sim.truthB;
+      raw = rawB ? 1 : 0;
+    } else {
+      raw = sim.truth + gauss() * S.noise;
+      if (S.spikes) {
+        if (sim.spikeLeft > 0) { sim.spikeLeft--; raw = sim.spikeVal + gauss() * S.noise; }
+        else if (Math.random() < S.spikes * DT) {
+          if (mode === "distance") { sim.spikeVal = Math.random() < 0.5 ? 0.05 + Math.random() * 0.2 : 2.6 + Math.random() * 0.4; sim.spikeLeft = 0; }
+          else { sim.spikeVal = sim.truth + 10 + Math.random() * 15; sim.spikeLeft = 1 + Math.floor(Math.random() * 3); }
+          raw = sim.spikeVal;
+        }
+      }
+      if (mode === "joystick") raw = clamp(raw, -1, 1);
+      if (mode === "distance") raw = Math.max(0, raw);
+      rawB = M.threshold ? raw > S.thr : null;
+    }
+    sim.lastRaw = raw;
+
+    // a real analog step: start a time-to-90% measurement for every series
+    const jump = M.analog ? sim.truth - sim.prevTruth : 0;
+    if (M.analog && Math.abs(jump) > M.stepMin) {
+      sim.lastStepSize = Math.abs(jump);
+      for (const s of Object.values(sim.stats)) s.pend = { t0: sim.t, from: sim.prevTruth, to: sim.truth };
+    }
+    if (M.analog && Math.abs(jump) > 1e-9) sim.lastChange = sim.t;
+    if (edge) {
+      if (sim.truthB) sim.real++;
+      for (const s of Object.values(sim.stats)) {
+        s.dpend = { t0: sim.t, want: sim.truthB };
+        if (sim.truthB) { s.real++; s.saw = false; }
+        else if (!s.saw && s.real > 0) s.missed++;
+      }
+    }
+
+    const sample = { t: sim.t, truth: sim.truth, truthB: sim.truthB, raw, rawB, a: {}, d: {} };
+    const settled = sim.t - sim.lastChange > 1.0;
+    for (const k of laneKeys()) {
+      const s = sim.stats[k], kind = k === "raw" ? (M.analog ? "analog" : "digital") : FILTERS[k].kind;
+      let y = null, b = null;
+      if (k === "raw") { y = M.analog ? raw : null; b = rawB; }
+      else if (kind === "analog") { y = sim.run[k](raw); b = M.threshold ? y > S.thr : null; }
+      else b = sim.run[k](rawB);
+      if (y !== null) {
+        sample.a[k] = y;
+        if (s.pend) {
+          const p = s.pend, target = p.from + 0.9 * (p.to - p.from);
+          if ((p.to > p.from && y >= target) || (p.to < p.from && y <= target)) {
+            s.lag = sim.t - p.t0; s.pend = null; s.marks.push({ t: sim.t, v: y });
+            if (s.marks.length > 8) s.marks.shift();
+          }
+        }
+        if (settled) { const e = (y - sim.truth) ** 2; s.e2 = s.e2 === null ? e : s.e2 + 0.03 * (e - s.e2); }
+      }
+      if (b !== null) {
+        sample.d[k] = b;
+        if (s.out !== null && b !== s.out) {
+          if (b) s.counted++;
+          if (b !== sim.truthB) s.falseT++;
+        }
+        if (b && sim.truthB) s.saw = true;
+        if (s.dpend && b === s.dpend.want) {
+          const d = sim.t - s.dpend.t0;
+          if (s.dpend.want) s.delayOn = d; else s.delayOff = d;
+          s.dpend = null;
+        }
+        s.out = b;
+      }
+    }
+    sim.prevTruth = sim.truth; sim.prevTruthB = sim.truthB;
+    sim.samples.push(sample);
+    if (sim.samples.length > MAXS) sim.samples.shift();
+  }
+
+  // ---------- Expected time to 90% (rule of thumb shown next to the measurement) ----------
+  function expected(f) {
+    const p = params[mode][f];
+    if (f === "ma") return (Math.ceil(0.9 * p.taps - 1e-9) - 1) * DT;
+    if (f === "iir") return Math.max(0, Math.ceil(Math.log(0.1) / Math.log(Math.exp(-DT / p.tc)) - 1e-9) - 1) * DT;
+    if (f === "med") return Math.floor(p.size / 2) * DT;
+    if (f === "slew") { const step = sim.lastStepSize ?? (mode === "joystick" ? 1 : 1.2); return Math.ceil(0.9 * step / (p.rate * DT) - 1e-9) * DT - DT; }
+    return null;
+  }
+
+  // ---------- Side panel: signal sliders ----------
+  function fmtVal(v, d) { const dec = d.step < 0.01 ? 3 : d.step < 0.1 ? 2 : d.step < 1 ? 1 : 0; return v.toFixed(dec); }
+  function buildSignalRows() {
+    const M = MODES[mode];
+    let h = "";
+    for (const [k, d] of Object.entries(M.sig)) {
+      h += `<div class="row" data-step-from="g" data-g="sig:${k}"><label for="sig-${k}"><span>${d.label}</span><span class="u"><span class="k" id="sig-${k}-v">${fmtVal(sigs[mode][k], d)}</span> ${d.unit}</span></label>
+        <input type="range" id="sig-${k}" data-k="${k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${sigs[mode][k]}" style="grid-column:1/-1"></div>`;
+    }
+    h += `<details class="why" data-step-from="g" data-g="about"><summary>What is this sensor?</summary><p class="note">${M.about}</p></details>`;
+    $("sig-rows").innerHTML = h;
+    $("sig-rows").querySelectorAll("input").forEach((inp) => inp.addEventListener("input", () => {
+      const k = inp.dataset.k, d = M.sig[k];
+      sigs[mode][k] = Number(inp.value);
+      $(`sig-${k}-v`).textContent = fmtVal(sigs[mode][k], d);
+      if (k === "thr") updateCode();
+    }));
+    applyVis();
+  }
+  function setSig(k, v) { sigs[mode][k] = v; const inp = $(`sig-${k}`); if (inp) { inp.value = v; $(`sig-${k}-v`).textContent = fmtVal(v, MODES[mode].sig[k]); } }
+
+  // ---------- Side panel: filter cards ----------
+  function paramDefs(f) {
+    const M = MODES[mode];
+    if (f === "ma") return [{ k: "taps", label: "Taps", min: 1, max: 50, step: 1, unit: "", note: (v) => `last ${v * 20} ms` }];
+    if (f === "iir") return [{ k: "tc", label: "Time constant", min: 0.02, max: 1, step: 0.01, unit: "s" }];
+    if (f === "med") return [{ k: "size", label: "Window size", min: 1, max: 25, step: 1, unit: "", note: (v) => `last ${v * 20} ms` }];
+    if (f === "slew") return [{ k: "rate", label: "Rate limit", ...M.slew }];
+    if (f === "deb") return [{ k: "time", label: "Debounce time", min: 0, max: 1, step: 0.02, unit: "s" }];
+    if (f === "chain") return [{ k: "rise", label: "Rising (turn-on) time", min: 0, max: 1, step: 0.02, unit: "s" },
+                               { k: "fall", label: "Falling (turn-off) time", min: 0, max: 1, step: 0.02, unit: "s" }];
+  }
+  function pfmt(f, k, v) { if (k === "taps" || k === "size") return String(v); if (k === "rate") return v.toFixed(1); return v.toFixed(2); }
+
+  function javaLine(f) {
+    const p = params[mode][f];
+    if (f === "ma") return `LinearFilter.movingAverage(${p.taps})`;
+    if (f === "iir") return `LinearFilter.singlePoleIIR(${pfmt(f, "tc", p.tc)}, 0.02)`;
+    if (f === "med") return `new MedianFilter(${p.size})`;
+    if (f === "slew") return `new SlewRateLimiter(${pfmt(f, "rate", p.rate)})`;
+    if (f === "deb") return `new Debouncer(${pfmt(f, "time", p.time)}, DebounceType.k${p.type})`;
+    if (f === "chain") return `new Debouncer(${pfmt(f, "rise", p.rise)}, DebounceType.kRising)\nnew Debouncer(${pfmt(f, "fall", p.fall)}, DebounceType.kFalling)`;
+  }
+
+  function buildFilterCards() {
+    const M = MODES[mode];
+    let h = "";
+    for (const f of M.filters) {
+      const F = FILTERS[f], p = params[mode][f];
+      let rows = "";
+      if (f === "deb") {
+        rows += `<div class="seg small" data-step-from="g" data-g="type:deb" role="group" aria-label="Debounce type">${["Rising", "Falling", "Both"].map((t) =>
+          `<button data-f="deb" data-type="${t}" aria-pressed="${p.type === t}">${t}</button>`).join("")}</div>`;
+      }
+      for (const d of paramDefs(f)) {
+        rows += `<div class="row" data-step-from="g" data-g="p:${f}:${d.k}"><label for="p-${f}-${d.k}"><span>${d.label}</span><span class="u"><span class="k" id="p-${f}-${d.k}-v">${pfmt(f, d.k, p[d.k])}</span> ${d.unit}${d.note ? ` <span id="p-${f}-${d.k}-n">(${d.note(p[d.k])})</span>` : ""}</span></label>
+          <input type="range" id="p-${f}-${d.k}" data-f="${f}" data-k="${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${p[d.k]}" style="grid-column:1/-1"></div>`;
+      }
+      h += `<div class="fcard${p.on ? "" : " off"}" id="card-${f}" data-step-from="g" data-g="f:${f}" style="--c: var(${F.color})">
+        <label class="check" for="on-${f}"><input type="checkbox" id="on-${f}" data-f="${f}" data-step-from="g" data-g="on:${f}" ${p.on ? "checked" : ""}><span><i class="sw"></i>${F.name}</span></label>
+        <div class="fbody">${rows}<code class="jline" id="j-${f}">${javaLine(f).replace(/\n/g, "<br>")}</code><details class="why"><summary>Why?</summary><p class="note">${F.good}</p></details></div></div>`;
+    }
+    $("filter-cards").innerHTML = h;
+    const box = $("filter-cards");
+    box.querySelectorAll('input[type="checkbox"]').forEach((cb) => cb.addEventListener("change", () => setOn(cb.dataset.f, cb.checked)));
+    box.querySelectorAll('input[type="range"]').forEach((inp) => inp.addEventListener("input", () => setParam(inp.dataset.f, inp.dataset.k, Number(inp.value), true)));
+    applyVis();
+    box.querySelectorAll("button[data-type]").forEach((b) => b.addEventListener("click", () => setParam("deb", "type", b.dataset.type)));
+  }
+
+  function setOn(f, on) {
+    params[mode][f].on = on;
+    const cb = $(`on-${f}`); if (cb) cb.checked = on;
+    $(`card-${f}`).classList.toggle("off", !on);
+    rebuild(f);
+    updateLegend(); updateCode(); updateResults(true);
+  }
+  function setParam(f, k, v, fromInput) {
+    params[mode][f][k] = v;
+    if (!fromInput) { const inp = $(`p-${f}-${k}`); if (inp) inp.value = v; }
+    const lab = $(`p-${f}-${k}-v`); if (lab) lab.textContent = pfmt(f, k, v);
+    const n = $(`p-${f}-${k}-n`); if (n) n.textContent = `(${paramDefs(f).find((d) => d.k === k).note(v)})`;
+    if (k === "type") document.querySelectorAll("button[data-type]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.type === v)));
+    $(`j-${f}`).innerHTML = javaLine(f).replace(/\n/g, "<br>");
+    rebuild(f);
+    updateCode(); updateResults(true);
+  }
+
+  // ---------- Drive row under the chart (joystick only) and the "More controls" box ----------
+  function buildDrive() {
+    let h = "";
+    if (mode === "joystick") h = `<div class="stick" data-step-from="g" data-g="drive:stick"><label for="stick">Stick</label><input type="range" id="stick" min="-1" max="1" step="0.05" value="${sim.stick}"><output id="stick-v" for="stick">0.00</output></div>
+      <div class="slams" data-step-from="g" data-g="drive:slam"><button id="slam-f">Slam forward</button><button id="slam-0" data-step-from="g" data-g="drive:stick">Center</button><button id="slam-r" data-step-from="g" data-g="drive:stick">Slam reverse</button></div>
+      <label class="check" for="spring" data-step-from="g" data-g="drive:stick"><input type="checkbox" id="spring" checked><span>Spring back to center when let go</span></label>`;
+    $("drive").innerHTML = h;
+    if (mode === "joystick") {
+      const st = $("stick");
+      st.addEventListener("input", () => { setAuto(false); setStick(Number(st.value), true); });
+      const spring = () => { if ($("spring").checked) setStick(0); };
+      st.addEventListener("pointerup", spring); st.addEventListener("pointercancel", spring);
+      $("slam-f").addEventListener("click", () => { setAuto(false); setStick(1); });
+      $("slam-0").addEventListener("click", () => { setAuto(false); setStick(0); });
+      $("slam-r").addEventListener("click", () => { setAuto(false); setStick(-1); });
+    }
+    $("auto").checked = sigs[mode].auto;
+    $("auto-label").textContent = `Auto: make a real change every ${MODES[mode].every} s`;
+    updateDriveLabel();
+    applyVis();
+  }
+  $("auto").addEventListener("change", (e) => setAuto(e.target.checked));
+  $("step").addEventListener("click", () => { setAuto(false); stepTruth(); });
+  function setAuto(on) { sigs[mode].auto = on; $("auto").checked = on; }
+  function setStick(v, fromInput) { sim.stick = v; setStickUI(v, fromInput); }
+  function setStickUI(v, fromInput) { const st = $("stick"); if (!st) return; if (!fromInput) st.value = v; $("stick-v").textContent = v.toFixed(2); }
+  function updateDriveLabel() {
+    const t = { distance: "Move the target now", current: sim.truthB ? "Spit the piece out" : "Grab a game piece", beam: "Pass a piece now", joystick: "Move the stick now" }[mode];
+    $("step").textContent = t;
+  }
+
+  // ---------- Legend, results, code ----------
+  function updateLegend() {
+    const M = MODES[mode];
+    let h = `<span><i class="sw dash" style="border-color:var(--goal)"></i>True value</span><span><i class="sw" style="border-color:var(--muted)"></i>Raw reading</span>`;
+    if (M.threshold) h += `<span><i class="sw dash" style="border-color:var(--warn)"></i>Threshold</span>`;
+    for (const f of M.filters) if (params[mode][f].on) h += `<span><i class="sw" style="border-color:var(${FILTERS[f].color})"></i>${FILTERS[f].name}</span>`;
+    if (M.analog) h += `<span><svg width="12" height="12" aria-hidden="true" style="vertical-align:middle;margin-right:6px"><circle cx="6" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>Reached 90%</span>`;
+    $("legend").innerHTML = h;
+  }
+
+  const ms = (x) => (x === null ? "–" : `${Math.round(x * 1000)} ms`);
+  let lastTable = "";
+  function updateResults(force) {
+    const M = MODES[mode], keys = laneKeys();
+    const name = (k) => (k === "raw" ? (M.threshold ? "Raw > threshold" : "Raw reading") : FILTERS[k].name + (M.threshold && FILTERS[k].kind === "analog" ? " > thr" : ""));
+    const sw = (k) => `<i class="sw" style="border-color:var(${k === "raw" ? "--muted" : FILTERS[k].color})"></i>`;
+    const wob = (s) => (s.e2 === null ? "–" : `${Math.sqrt(s.e2).toFixed(M.dp + 1)}${M.unit ? " " + M.unit : ""}`);
+    let h;
+    if (M.analog && !M.threshold) {
+      h = `<tr><th>Signal</th><th>Time to 90%</th><th>Rule of thumb</th><th>Wobble left</th></tr>`;
+      for (const k of keys) {
+        const s = sim.stats[k], ex = k === "raw" ? 0 : expected(k);
+        h += `<tr><td>${sw(k)}${name(k)}</td><td>${s.pend ? "waiting…" : ms(s.lag)}</td><td>${ex === null ? "–" : "≈ " + ms(ex)}</td><td>${wob(s)}</td></tr>`;
+      }
+    } else {
+      const cls = (v, s) => (v > 0 ? "bad" : s.real ? "ok" : "");
+      h = `<tr><th>Signal</th><th>Delay on / off</th>${M.threshold ? "<th>Wobble left</th>" : ""}<th>Pieces counted</th><th>False triggers</th><th>Missed</th></tr>`;
+      for (const k of keys) {
+        const s = sim.stats[k];
+        h += `<tr><td>${sw(k)}${name(k)}</td><td>${ms(s.delayOn)} / ${ms(s.delayOff)}</td>${M.threshold ? `<td>${k === "raw" || FILTERS[k].kind === "analog" ? wob(s) : "–"}</td>` : ""}
+          <td class="${s.counted !== s.real && s.real ? "bad" : s.real ? "ok" : ""}">${s.counted}</td><td class="${cls(s.falseT, s)}">${s.falseT}</td><td class="${cls(s.missed, s)}">${s.missed}</td></tr>`;
+      }
+    }
+    if (force || h !== lastTable) { $("results").innerHTML = h; lastTable = h; }
+  }
+
+  function updateCode() {
+    const M = MODES[mode], on = M.filters.filter((f) => params[mode][f].on);
+    const imp = new Set(), fields = [], loop = [];
+    const c = (t) => `<span class="c">${t}</span>`;
+    const thr = sigs[mode].thr;
+    const pre = { distance: "distance", current: "current", joystick: "stick" }[mode] || "beam";
+    const rawName = { distance: "raw_distance_m", current: "raw_current_a", joystick: "raw_stick", beam: "beam_blocked" }[mode];
+    for (const f of on) {
+      const p = params[mode][f];
+      if (f === "ma" || f === "iir") { imp.add("LinearFilter"); fields.push(`private final LinearFilter ${pre}_${f}_ = ${javaLine(f)};`); }
+      if (f === "med") { imp.add("MedianFilter"); fields.push(`private final MedianFilter ${pre}_median_ = ${javaLine(f)};`); }
+      if (f === "slew") { imp.add("SlewRateLimiter"); fields.push(`private final SlewRateLimiter ${pre}_slew_ = ${javaLine(f)};`); }
+      if (f === "deb") { imp.add("Debouncer"); fields.push(`private final Debouncer piece_debouncer_ =\n        new Debouncer(${pfmt(f, "time", p.time)}, DebounceType.k${p.type});`); }
+      if (f === "chain") { imp.add("Debouncer");
+        fields.push(`private final Debouncer rising_debouncer_ =\n        new Debouncer(${pfmt(f, "rise", p.rise)}, DebounceType.kRising);`);
+        fields.push(`private final Debouncer falling_debouncer_ =\n        new Debouncer(${pfmt(f, "fall", p.fall)}, DebounceType.kFalling);`); }
+      const raw = M.threshold ? `${rawName} > CURRENT_THRESHOLD_A` : rawName;
+      if (FILTERS[f].kind === "analog") {
+        const n = f === "med" ? "median" : f;
+        loop.push(`double ${pre}_${n} = ${pre}_${n === "median" ? "median" : f}_.calculate(${rawName});`);
+        if (M.threshold) loop.push(`boolean has_piece_${n} = ${pre}_${n} > CURRENT_THRESHOLD_A;`);
+      } else if (f === "deb") loop.push(`boolean has_piece = piece_debouncer_.calculate(${raw});`);
+      else loop.push(`boolean has_piece_2 =\n        rising_debouncer_.calculate(falling_debouncer_.calculate(${raw}));`);
+    }
+    if (!on.length) { $("code").innerHTML = c("// Turn on a filter to see its code."); return; }
+    let s = [...imp].map((i) => `import edu.wpi.first.math.filter.${i};`).join("\n");
+    if (imp.has("Debouncer")) s += "\nimport edu.wpi.first.math.filter.Debouncer.DebounceType;";
+    s += "\n\n" + c("// Fields: make each filter once") + "\n";
+    if (M.threshold) s += `private static final double CURRENT_THRESHOLD_A = ${thr.toFixed(1)};\n`;
+    s += fields.join("\n") + "\n\n" + c("// In periodic(): call calculate() once, every 20 ms loop") + "\n" + loop.join("\n");
+    $("code").innerHTML = s;
+  }
+
+  // ---------- Drawing ----------
+  let C = null;
+  function tokens() {
+    const cs = getComputedStyle(document.documentElement), g = (n) => cs.getPropertyValue(n).trim();
+    const col = {}; for (const f of Object.keys(FILTERS)) col[f] = g(FILTERS[f].color);
+    return { ink: g("--ink"), muted: g("--muted"), line: g("--line"), grid: g("--grid"), bg: g("--bg"), panel: g("--panel"),
+             goal: g("--goal"), warn: g("--warn"), mono: g("--f-mono"), col };
+  }
+  function fit(c, cssH) {
+    c.style.height = cssH + "px";
+    const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    const ctx = c.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, r.width, r.height);
+    return { ctx, w: r.width, h: r.height };
+  }
+  function withAlpha(hex, a) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex); if (!m) return hex;
+    const n = parseInt(m[1], 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+
+  function draw() {
+    if (!C) C = tokens();
+    const M = MODES[mode], c = $("chart"), keys = laneKeys();
+    const lanes = M.analog && !M.threshold ? [] : ["truth", ...keys];
+    const width = c.getBoundingClientRect().width || 600, narrow = width < 560;
+    const aH = M.analog ? Math.round(clamp(width * 0.4, 210, 360)) : 0;
+    const laneH = narrow ? 24 : 28, laneGap = 6, axisH = 22;
+    const lH = lanes.length ? lanes.length * (laneH + laneGap) + 8 : 0;
+    const { ctx, w } = fit(c, aH + lH + axisH);
+    const left = lanes.length ? (narrow ? 70 : 92) : (narrow ? 38 : 46), right = 10;
+    const pw = w - left - right, tNow = sim.t, t0 = tNow - WINDOW;
+    const X = (t) => left + ((t - t0) / WINDOW) * pw;
+    const S = sim.samples.filter((s) => s.t >= t0 - DT);
+    ctx.font = `11px ${C.mono}`; ctx.textBaseline = "middle";
+
+    // time grid
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+    for (let s = Math.ceil(t0); s <= tNow; s++) { const x = X(s); ctx.beginPath(); ctx.moveTo(x, 4); ctx.lineTo(x, aH + lH); ctx.stroke(); }
+
+    if (M.analog) {
+      const top = 8, bot = aH - 6, Y = (v) => bot - ((v - M.yMin) / (M.yMax - M.yMin)) * (bot - top);
+      ctx.textAlign = "right"; ctx.fillStyle = C.muted;
+      for (let v = Math.ceil(M.yMin / M.yStep) * M.yStep; v <= M.yMax + 1e-9; v += M.yStep) {
+        const y = Y(v); ctx.strokeStyle = Math.abs(v) < 1e-9 && M.yMin < 0 ? C.line : C.grid;
+        ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(w - right, y); ctx.stroke();
+        ctx.fillText(`${round(v, 2)}${M.unit && !narrow ? " " + M.unit : ""}`, left - 6, y);
+      }
+      ctx.save(); ctx.beginPath(); ctx.rect(left, top - 4, pw, bot - top + 8); ctx.clip();
+      if (M.threshold) {
+        const y = Y(sigs[mode].thr); ctx.strokeStyle = C.warn; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(w - right, y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = C.warn; ctx.textAlign = "left"; ctx.fillText(`threshold ${sigs[mode].thr.toFixed(1)} A`, left + 6, y - 9);
+      }
+      const line = (get, color, lw, dash) => {
+        ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash || []); ctx.beginPath();
+        let started = false;
+        for (const s of S) { const v = get(s); if (v === undefined) { started = false; continue; } const x = X(s.t), y = Y(v); if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y); }
+        ctx.stroke(); ctx.setLineDash([]);
+      };
+      line((s) => s.raw, withAlpha(C.muted, 0.75), 1.25);
+      line((s) => s.truth, C.goal, 2, [7, 5]);
+      for (const k of keys) if (k !== "raw") line((s) => s.a[k], C.col[k], 2.25);
+      for (const k of keys) {
+        const col = k === "raw" ? C.muted : C.col[k];
+        for (const m of sim.stats[k].marks) {
+          if (m.t < t0) continue;
+          ctx.beginPath(); ctx.arc(X(m.t), Y(m.v), 4.5, 0, Math.PI * 2); ctx.fillStyle = C.bg; ctx.fill();
+          ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    // digital lanes
+    lanes.forEach((k, i) => {
+      const top = aH + 8 + i * (laneH + laneGap), hi = top + 3, lo = top + laneH - 3;
+      const col = k === "truth" ? C.goal : k === "raw" ? C.muted : C.col[k];
+      const label = k === "truth" ? (narrow ? "True" : "True value") : k === "raw" ? (M.threshold ? (narrow ? "Raw>thr" : "Raw > thr") : "Raw") : FILTERS[k].short;
+      ctx.fillStyle = C.panel; ctx.fillRect(left, top, pw, laneH);
+      ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.strokeRect(left + 0.5, top + 0.5, pw - 1, laneH - 1);
+      ctx.fillStyle = col; ctx.textAlign = "right"; ctx.fillText(label, left - 8, top + laneH / 2);
+      const get = (s) => (k === "truth" ? s.truthB : s.d[k]);
+      ctx.fillStyle = withAlpha(col, 0.22);
+      for (let j = 0; j < S.length; j++) { if (get(S[j])) ctx.fillRect(X(S[j].t) - pw / (WINDOW / DT) / 2, hi, pw / (WINDOW / DT) + 0.6, lo - hi); }
+      ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash(k === "truth" ? [7, 5] : []); ctx.beginPath();
+      let prevY = null;
+      for (const s of S) { const v = get(s); if (v === undefined) { prevY = null; continue; } const x = X(s.t) - pw / (WINDOW / DT) / 2, y = v ? hi : lo;
+        if (prevY === null) ctx.moveTo(x, y); else { ctx.lineTo(x, prevY); ctx.lineTo(x, y); } prevY = y; }
+      if (prevY !== null) ctx.lineTo(X(tNow), prevY);
+      ctx.stroke(); ctx.setLineDash([]);
+    });
+
+    // time axis
+    ctx.fillStyle = C.muted; ctx.textAlign = "center";
+    const ay = aH + lH + axisH / 2 + 2;
+    for (let s = Math.ceil(t0); s <= tNow; s++) {
+      const ago = Math.round(tNow - s); if (ago === 0 || (narrow && ago % 2)) continue;
+      const x = X(s); if (x < left + 14 || x > w - right - 14) continue;
+      ctx.fillText(`−${ago} s`, x, ay);
+    }
+    ctx.textAlign = "right"; ctx.fillText("now", w - right, ay);
+  }
+
+  // ---------- The few big numbers under the chart ----------
+  const swatch = (k) => `<i class="sw" style="border-color:var(${k === "raw" ? "--muted" : FILTERS[k].color})"></i>`;
+  const R = {
+    lag: (k) => [`${swatch(k)}Time to 90%`, () => { const s = sim.stats[k]; return s ? (s.pend ? "waiting…" : ms(s.lag)) : "–"; }],
+    wob: (k, label) => [`${swatch(k)}${label}`, () => { const s = sim.stats[k], M = MODES[mode]; return s && s.e2 !== null ? `${Math.sqrt(s.e2).toFixed(M.dp + 1)}${M.unit ? " " + M.unit : ""}` : "–"; }],
+    cnt: (k, label, field) => [`${swatch(k)}${label}`, () => (sim.stats[k] ? String(sim.stats[k][field]) : "–")],
+    real: () => [`<i class="sw dash" style="border-color:var(--goal)"></i>Real pieces`, () => String(sim.real)],
+  };
+  function freeReadouts() {
+    const M = MODES[mode], on = M.filters.filter((f) => params[mode][f].on);
+    if (M.analog && !M.threshold) return on.length ? on.slice(0, 4).map((f) => [R.lag(f)[0].replace("Time to 90%", `${FILTERS[f].short}: time to 90%`), R.lag(f)[1]]) : [R.wob("raw", "Raw wobble")];
+    const out = [R.real(), R.cnt("raw", "Raw false triggers", "falseT")];
+    for (const f of on.slice(0, 2)) out.push([R.cnt(f, "", "falseT")[0] + `${FILTERS[f].short} false triggers`, R.cnt(f, "", "falseT")[1]]);
+    return out;
+  }
+  let lastBig = "", bigSpec = null;
+  function updateBig(force) {
+    const spec = WT.free ? freeReadouts() : STEPS[WT.i].read();
+    const labels = spec.map((r) => r[0]).join("|");
+    if (force || labels !== bigSpec) {
+      $("big").innerHTML = spec.map((r, i) => `<div><span>${r[0]}</span><b id="big-${i}">–</b></div>`).join("");
+      bigSpec = labels; lastBig = "";
+    }
+    spec.forEach((r, i) => { const v = r[1](); const el = $(`big-${i}`); if (el && el.textContent !== v) el.textContent = v; });
+  }
+
+  // ---------- Guided steps ----------
+  const WT = { i: 0, free: false, done: false };
+  try { WT.free = localStorage.getItem("filter-lab-mode") === "free"; } catch (e) {}
+  const only = (keep) => { for (const f of MODES[mode].filters) { const want = keep.includes(f); if (params[mode][f].on !== want) setOn(f, want); } };
+  const STEPS = [
+    { title: "Drag Noise up to 0.08 m",
+      text: "Grey is what the distance sensor reads every 20 ms; dashed is the true distance. The blue moving average jumps around much less.",
+      show: ["sig:noise", "f:ma"],
+      enter() { setMode("distance"); setSig("noise", 0.02); setSig("spikes", 0); setParam("ma", "taps", 5); only(["ma"]); setAuto(true); },
+      read: () => [R.wob("raw", "Raw wobble"), R.wob("ma", "Average wobble")],
+      check: () => sigs.distance.noise >= 0.075 },
+    { title: "Drag Taps up to 25",
+      text: "More taps means a smoother line, but a later one. Each circle marks where a line got 90% of the way to a new distance.",
+      show: ["sig:noise", "f:ma", "p:ma:taps"],
+      enter() { if (mode !== "distance") setMode("distance"); only(["ma"]); setAuto(true); },
+      read: () => [R.lag("ma"), R.wob("ma", "Wobble left")],
+      check: () => params.distance.ma.taps >= 20 && sim.stats.ma && sim.stats.ma.lag !== null },
+    { title: "Tick Median to turn it on",
+      text: "Now some readings are way off (spikes). The average smears each spike into a bump; the median takes the middle reading, so one bad value never wins.",
+      show: ["sig:noise", "sig:spikes", "f:ma", "p:ma:taps", "f:med", "on:med"],
+      enter() { if (mode !== "distance") setMode("distance"); setSig("spikes", 1.5); setParam("ma", "taps", 10); only(["ma"]); setAuto(true); },
+      read: () => [R.wob("ma", "Average wobble"), R.wob("med", "Median wobble")],
+      check: () => params.distance.med.on },
+    { title: "Drag Noise up to 4 A",
+      text: "This is intake motor current: above the red threshold means \"has a game piece\". Watch the raw reading flicker across the line while the IIR filter (the one MW-Lib uses) stays put.",
+      show: ["sig:noise", "f:iir"],
+      enter() { setMode("current"); setSig("noise", 1); setSig("spikes", 0.3); setSig("thr", 15); setParam("iir", "tc", 0.1); only(["iir"]); setAuto(true); resetCounts(); },
+      read: () => [R.cnt("raw", "Raw false triggers", "falseT"), R.cnt("iir", "IIR false triggers", "falseT")],
+      check: () => sigs.current.noise >= 3.5 && sim.stats.raw.falseT >= 3 },
+    { title: "Tick Debouncer to turn it on",
+      text: "A beam break chatters (bounces) for a moment every time it changes, so raw counts too many pieces. The debouncer waits until the input holds its new value for 0.1 s.",
+      show: ["sig:bounce", "f:deb", "on:deb"],
+      enter() { setMode("beam"); setSig("bounce", 0.06); setSig("glitch", 0.4); setSig("piece", 0.6); setParam("deb", "type", "Both"); setParam("deb", "time", 0.1); only([]); setAuto(true); resetCounts(); },
+      read: () => [R.real(), R.cnt("raw", "Raw counted", "counted"), R.cnt("deb", "Debouncer counted", "counted")],
+      check: () => { const s = sim.stats.deb; return params.beam.deb.on && s.real >= 2 && s.falseT === 0 && s.counted === s.real; } },
+    { title: "Pick Rising and drag Time to 0.30 s",
+      text: "Pieces now pass in 0.2 s, shorter than the debounce time, so the debouncer never says \"piece\". Debounce time must be shorter than the shortest real signal.",
+      show: ["sig:piece", "f:deb", "type:deb", "p:deb:time"],
+      enter() { if (mode !== "beam") setMode("beam"); setSig("piece", 0.2); setParam("deb", "type", "Both"); setParam("deb", "time", 0.1); only(["deb"]); setAuto(true); resetCounts(); },
+      read: () => [R.real(), R.cnt("deb", "Missed by debouncer", "missed")],
+      check: () => sim.stats.deb && sim.stats.deb.missed > 0 },
+    { title: "Press Slam forward",
+      text: "A slew rate limiter caps how fast a value can change: at 2 per second, 0 to 1 takes about 0.5 s. Our swerve drive ramps its speed the same way.",
+      show: ["f:slew", "p:slew:rate", "drive:slam"],
+      enter() { setMode("joystick"); setAuto(false); setStick(0); setParam("slew", "rate", 2); only(["slew"]); },
+      read: () => [R.lag("slew")],
+      check: () => sim.stats.slew && sim.stats.slew.lag !== null },
+  ];
+
+  function applyVis() {
+    const show = WT.free ? null : STEPS[WT.i].show;
+    document.querySelectorAll("[data-g]").forEach((el) => el.classList.toggle("not-yet", !!show && !show.includes(el.dataset.g)));
+  }
+
+  function renderGuide() {
+    const last = WT.i === STEPS.length - 1;
+    $("g-free").setAttribute("aria-pressed", String(WT.free));
+    $("g-back").hidden = $("g-next").hidden = WT.free;
+    $("g-done").hidden = WT.free || !WT.done;
+    if (WT.free) {
+      $("g-count").textContent = "Free play";
+      $("g-title").textContent = "Every signal and filter is unlocked";
+      $("g-text").textContent = "Pick a signal above the chart. Go deeper, at the bottom, has ideas to try and the robot code.";
+      $("g-free").textContent = "Back to steps";
+      $("g-free").classList.remove("primary");
+      return;
+    }
+    $("g-free").textContent = "Free play";
+    $("g-count").textContent = `Step ${WT.i + 1} of ${STEPS.length}`;
+    $("g-title").textContent = STEPS[WT.i].title;
+    $("g-text").textContent = WT.done && last ? "You've got it — try Free play." : STEPS[WT.i].text;
+    $("g-back").disabled = WT.i === 0;
+    $("g-next").hidden = last;
+    $("g-next").classList.toggle("primary", WT.done && !last);
+    $("g-free").classList.toggle("primary", WT.done && last);
+  }
+  function goStep(i) { WT.i = i; WT.done = false; STEPS[i].enter(); renderGuide(); applyVis(); updateBig(true); }
+  function setFree(on) {
+    WT.free = on;
+    try { localStorage.setItem("filter-lab-mode", on ? "free" : "guided"); } catch (e) {}
+    if (on) { renderGuide(); applyVis(); updateBig(true); } else goStep(WT.i);
+  }
+  function checkStep() {
+    if (WT.free || WT.done) return;
+    if (STEPS[WT.i].check()) { WT.done = true; renderGuide(); }
+  }
+  $("g-back").addEventListener("click", () => goStep(Math.max(0, WT.i - 1)));
+  $("g-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, WT.i + 1)));
+  $("g-free").addEventListener("click", () => setFree(!WT.free));
+
+  // ---------- Mode switching ----------
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll("button[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+    $("chart-title").textContent = MODES[m].title;
+    resetSim();
+    for (let i = 0; i < 150; i++) tick();   // start with a few seconds of history on the chart
+    buildSignalRows(); buildFilterCards(); buildDrive(); updateLegend(); updateCode(); updateResults(true); updateBig(true); draw();
+  }
+  document.querySelectorAll("button[data-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+  // ---------- Toolbar ----------
+  $("pause").addEventListener("click", () => { paused = !paused; $("pause").setAttribute("aria-pressed", String(paused)); $("pause").textContent = paused ? "Resume" : "Pause"; });
+  $("slow").addEventListener("click", () => { slow = !slow; $("slow").setAttribute("aria-pressed", String(slow)); });
+  $("reset").addEventListener("click", () => { initMode(mode); if (WT.free) setMode(mode); else goStep(WT.i); });
+  $("reset-counts").addEventListener("click", () => { resetCounts(); updateResults(true); });
+
+  // ---------- Main loop ----------
+  let last = null, acc = 0, frame = 0;
+  function loop(now) {
+    if (last === null) last = now;
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!paused) {
+      acc += dt * (slow ? 0.25 : 1);
+      let n = 0; while (acc >= DT && n < 10) { tick(); acc -= DT; n++; }
+      draw();
+      if (++frame % 6 === 0) { updateResults(); updateBig(); checkStep(); }
+    }
+    requestAnimationFrame(loop);
+  }
+
+  new MutationObserver(() => { C = tokens(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { C = tokens(); draw(); });
+  window.addEventListener("resize", draw);
+
+  if (WT.free) { setMode("distance"); renderGuide(); applyVis(); updateBig(true); } else goStep(0);
+  window.__lab = { sim, params, sigs, setMode, WT, get mode() { return mode; } };
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
