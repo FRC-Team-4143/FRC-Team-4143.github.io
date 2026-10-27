@@ -47,9 +47,10 @@ Tempus tracks your hours in the shop. There's no app to open for the everyday pa
 
 ![The shop kiosk: who's signed in for each team, the all-time and this-week leaderboards, and the Scan Badge panel](./img/tempus-kiosk.png)
 
-**Don't forget to scan out.** At 10 PM Tempus signs out anyone still signed in, but a
-forgotten session only counts a few minutes (5 by default), not the whole night, and only
-a mentor can fix it afterward.
+**Forgot to scan out?** It happens. At 3 AM Tempus signs out anyone still signed in.
+Instead of your real time, a forgotten session is credited a set session length, so you
+may get fewer hours than you actually worked. If it looks off, ask a mentor to fix the
+session. Easiest fix: scan out on your way out the door.
 
 - **`/hours`** in Slack any time for a private summary of your week and season so far:
 
@@ -83,6 +84,11 @@ so you can plan make-up time together:
 <div style={{textAlign: 'center'}}>
 <img src={SlackTempusWeekly} alt="A Slack group DM between a student, a lead mentor and Mercury: the student's weekly hours update showing they are 3.7 hours behind, and the mentor offering to plan extra build nights" width="360" />
 </div>
+
+We want everyone to have fun and enjoy their time at robotics, but there's also a goal
+and a job to get done, and your hours are meant to reflect helping with it. That's what the
+three contribution levels are for: Contributor counts 100% of your time, Present 60%, and
+Distraction 25%.
 
 If a mentor needs to correct a session (say, you were marked Contributor but were
 mostly goofing off — or the reverse), that happens on their end via `/edit`; there's

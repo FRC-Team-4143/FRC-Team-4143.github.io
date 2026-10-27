@@ -74,7 +74,9 @@ right now, hours by team, and the season leaderboard, all live:
 
 ![Tempus admin dashboard showing students currently signed in, hours-by-team tiles, and a season leaderboard](./img/tempus-admin-dashboard.png)
 
-A sign-in earns full "Contributor" hours by default. When that needs correcting —
+We want everyone to have fun and enjoy their time at robotics, but there's also a goal
+and a job to get done. A sign-in earns full "Contributor" hours (100%) by default;
+"Present" counts 60% and "Distraction" 25%. When that needs correcting —
 someone was mostly distracted, or a session needs backfilling — run **`/edit <name>`**
 in Slack. It opens a modal right there with their last five sessions and the three
 contribution levels — pick both and save:
@@ -98,10 +100,10 @@ Other commands worth having memorized:
 
 - **`/shop`** — who's currently signed in, without opening a browser.
 - **`/gtfo`** — mass-signs-out every student and mentor still signed in (end-of-night
-  cleanup). Mentor-only; students get an error if they try it. Like the 10 PM auto
-  sign-out, it treats those sessions as forgotten: each one is credited only the
-  "Session length (minutes)" set under **Admin → Settings** (5 by default), not the time
-  up to that moment. Fix any that were real work from **Admin → Sessions**.
+  cleanup). Mentor-only; students get an error if they try it. Like the 3 AM auto
+  sign-out, it treats those sessions as forgotten: each one is credited the
+  "Session length (minutes)" set under **Admin → Settings** instead of the time up to
+  that moment. Fix any that were real work from **Admin → Sessions**.
 
 `/qr` also works for you if you ever need a replacement badge yourself.
 
