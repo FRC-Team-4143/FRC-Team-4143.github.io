@@ -1,0 +1,205 @@
+---
+title: "Deep Dive: How PnP Finds the Camera"
+description: The math behind turning tag corners in a picture into the camera's position on the field, and how our SQPnP solver does it.
+sidebar_position: 5
+---
+
+# Deep Dive: How PnP Finds the Camera
+
+The [tag detector](./detector-deep-dive.mdx) gives us each tag's ID and the pixel positions of its four
+corners. The [field layout](./camera-setup.mdx#field-layout) tells us where each of those corners really is
+on the field, in meters. **PnP** (Perspective-n-Point) answers the question:
+
+> Where must the camera be, and which way must it be pointing, for those field corners to show up at
+> exactly those pixels?
+
+This page builds up the math behind that question step by step, and then explains how the method we use,
+**SQPnP**, finds the answer. It uses some algebra, trigonometry and a few matrices; if you haven't seen
+matrices yet, read them as "a compact way to write several equations at once" and you'll be fine.
+
+## The pinhole camera
+
+Every camera can be pictured as a box with a tiny hole in the front. Light from a point in the world goes
+in a straight line through the hole and lands on the sensor at the back. A real lens gathers much more light
+than a pinhole, but it sends the light to (nearly) the same place.
+
+![Side view of a pinhole camera: a ray from a tag corner passes through the pinhole and hits the sensor at height u](/img/software/vision/pnp/1-pinhole.webp)
+
+The two triangles in the drawing are **similar**: same angles, different sizes. So their sides are in
+proportion:
+
+$$
+\frac{u}{f} = \frac{X}{Z}
+\qquad\Longrightarrow\qquad
+u = f\,\frac{X}{Z}
+$$
+
+- $X$ is how far the point is to the side of the camera, and $Z$ is how far in front of it, both in meters.
+- $f$ is the **focal length**: the distance from the pinhole to the sensor, measured in pixels.
+- $u$ is where the point lands on the sensor, in pixels from the center.
+
+This one equation explains a lot. Twice as far away ($Z$ doubled) means half the size in the picture. And
+dividing by $Z$ is what makes far-away things smaller: **perspective**.
+
+The same is true vertically, and pixel numbers start in the top left corner of the picture, not the middle,
+so we add the position of the picture's center $(c_x, c_y)$:
+
+$$
+u = f_x \frac{X}{Z} + c_x
+\qquad
+v = f_y \frac{Y}{Z} + c_y
+$$
+
+The four numbers $f_x, f_y, c_x, c_y$ are the camera's **intrinsics**: they describe the camera itself, not
+where it is. They are what [calibration](./camera-setup.mdx#calibration) measures, along with five more
+numbers that describe how the lens bends straight lines (**distortion**). Written as a matrix, the
+intrinsics are:
+
+$$
+K = \begin{bmatrix} f_x & 0 & c_x \\ 0 & f_y & c_y \\ 0 & 0 & 1 \end{bmatrix}
+$$
+
+## Where the camera is: R and t
+
+The equations above need the point's position **relative to the camera** ($X, Y, Z$ measured from the
+camera, with $Z$ straight out of the lens). But the field layout gives each corner's position **on the
+field**. To go from one to the other, we need the camera's pose:
+
+- a **rotation** $R$: which way the camera is pointing. It is a 3 × 3 matrix; multiplying a point by it turns
+  the point around the origin.
+- a **translation** $t$: where the camera is. It is a list of 3 numbers in meters.
+
+A corner at field position $P$ is at $R\,P + t$ as seen from the camera. Putting it all together, the pixel
+where a field point appears is:
+
+$$
+\begin{bmatrix} u \\ v \\ 1 \end{bmatrix}
+\sim
+K \,\big( R\,P + t \big)
+$$
+
+The $\sim$ means "equal after dividing by the last entry", which is the divide-by-$Z$ from the pinhole.
+
+**PnP runs this backwards.** We know $K$ (from calibration), we know the field positions $P_i$ of the
+corners (from the field layout), and we measured their pixels $(u_i, v_i)$ (from the detector). We want $R$
+and $t$. That is 6 unknown numbers: 3 for where the camera is, 3 for which way it's pointing.
+
+Each corner gives 2 equations (one for $u$, one for $v$), so 3 corners would be just enough in theory, and
+one tag has 4. With several tags, we have many more equations than unknowns.
+
+## Reprojection error: what "best" means
+
+Real measurements are never perfect. The detector's corners are off by a fraction of a pixel, the tags might
+be a few millimeters from where the field drawing says, and the calibration isn't perfect either. So no
+single pose makes every corner land *exactly* on its pixel. Instead we look for the pose that is **closest**.
+
+Pick any guess for $R$ and $t$, and use the camera equation to work out where each corner *should* appear.
+The distance between where it should appear and where the detector actually found it is that corner's
+**reprojection error**:
+
+![The corners the detector found (black) and where a wrong guess for the camera pose says they should be (red). The arrows are the reprojection errors.](/img/software/vision/pnp/2-reprojection.webp)
+
+PnP finds the pose that makes the total of the squared errors as small as possible:
+
+$$
+E(R, t) = \sum_{i=1}^{n} \big\| \, (u_i, v_i) - \text{project}(R\,P_i + t) \, \big\|^2
+$$
+
+This is the same idea as a line of best fit (least squares), but instead of choosing a slope and an
+intercept, we're choosing a camera position and direction.
+
+## Why this is hard
+
+For a line of best fit, the error is a simple bowl-shaped function of the slope and intercept, so there is
+one lowest point and a formula that finds it. PnP is harder for two reasons:
+
+1. **The divide-by-$Z$** makes the error a curved, lumpy function of the pose. It can have several valleys,
+   and a solver that just walks downhill from a starting guess can get stuck in the wrong one.
+2. **Not every 3 × 3 matrix is a rotation.** A rotation has to keep lengths and angles the same, which means
+   its three columns must each have length 1 and be at right angles to each other ($R^\mathsf{T} R = I$), and
+   it can't mirror the world ($\det R = +1$). The solver has to search only among real rotations.
+
+Older methods either solve with only a few points, or start from a rough guess and improve it step by step
+and hope they end up in the right valley. Our detector uses **SQPnP**
+([Terzakis and Lourakis, 2020](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123460460.pdf)),
+which is designed to find the best answer every time.
+
+## How SQPnP works
+
+SQPnP stands for **Sequential Quadratic Programming PnP**. Here are its ideas, in order.
+
+**1. Measure the error in 3D instead.** Every pixel the detector found defines a **line of sight**: the
+straight line from the camera through that pixel, out into the world. If the pose were perfect, each corner
+would sit exactly on its line of sight. Instead of pixels, SQPnP measures error in 3D: roughly, how far each corner
+(moved by the guessed $R$ and $t$) is from its line of sight. This 3D distance behaves much like the pixel error, but without the
+divide-by-$Z$, so the math stays simpler.
+
+**2. Get rid of $t$.** For any given rotation, the best translation can be worked out directly with a
+formula (it's a linear least-squares problem, like a line of best fit). Substituting that formula back in
+leaves an error that depends on the rotation alone.
+
+**3. The error is now a simple quadratic.** Write the 9 numbers of $R$ as one list $r$. The error becomes
+
+$$
+E(r) = r^\mathsf{T}\, \Omega\, r
+$$
+
+where $\Omega$ is a 9 × 9 matrix built once from the corners and pixels. A quadratic like this is the
+higher-dimensional version of a parabola $y = a x^2$: very easy to minimize on its own. The catch is that
+$r$ must still be a real rotation (from "why this is hard" above).
+
+**4. Search carefully among rotations.** "Minimize a quadratic, subject to some equations that must stay
+true" is a classic problem called **quadratic programming**. SQPnP solves it with **sequential quadratic
+programming**: from a starting rotation, it takes a step that lowers the error while bending as little as
+possible away from the set of rotations, then snaps back onto a true rotation, and repeats. It usually
+settles in a handful of steps.
+
+**5. Start in several places.** To avoid getting stuck in the wrong valley, SQPnP runs that search from
+several starting rotations, built from the eigenvectors of $\Omega$ (the directions in which the error grows
+the slowest). The authors proved that
+with these starting points, one of the searches always ends at the true lowest point. SQPnP keeps the
+best answer it finds.
+
+The result is the camera's rotation $R$ and translation $t$.
+
+## From the camera's pose to the robot's pose
+
+PnP answers "where is the field, seen from the camera". We want the opposite, "where is the camera on the
+field", so the detector inverts the transform: the camera's position on the field is $-R^\mathsf{T} t$, and
+its rotation is $R^\mathsf{T}$.
+
+Then the [proxy client](./pipeline.mdx#4-sending-it-to-the-roborio) moves that pose from the camera to the
+center of the robot, using where the camera is mounted (the
+[camera pose](./camera-setup.mdx#camera-pose) in its pipeline), and sends the robot's x and y (meters) and
+heading (radians) to the roboRIO.
+
+## Why we use many tags at once
+
+Our detector puts the corners of **every tag the camera sees** into one PnP solve. Here's why. These are 500
+simulated pictures of the same scene, solved with SQPnP, with each detected corner off by about half a pixel
+(a realistic amount):
+
+![With one tag, the camera position estimates spread over more than a meter. With four tags, they are all within about a centimeter.](/img/software/vision/pnp/3-one-vs-many.webp)
+
+With **one tag** about 3.5 m away, the left/right estimate spreads over more than a meter and the heading
+by about 0.17 rad (about 10°). With **four tags**, the spread drops to under a centimeter and about
+0.002 rad.
+
+The reason is that a single tag is small and flat. From far away, a tag turned slightly to the left looks
+almost exactly like one turned slightly to the right; the difference is less than a pixel. Half a pixel of
+noise is enough to flip the answer, and since the camera's position is worked out from the tag's angle, a
+small angle error 3.5 m away becomes a big position error. This is called the **pose ambiguity** problem.
+Corners from several tags, spread across the picture and at different distances, pin the pose down from
+many directions at once, and the ambiguity disappears.
+
+That's why, on the robot, a solution from several tags deserves more trust than one from a single tag (see
+[Using Vision in Robot Code](./robot-code.mdx#standard-deviations-how-much-to-trust-the-camera)).
+
+## Learn more
+
+- [An Efficient and Globally Optimal Solution to the Perspective-n-Point Problem (SQPnP)](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123460460.pdf),
+  G. Terzakis and M. Lourakis, ECCV 2020. The paper behind our solver.
+- [OpenCV's `solvePnP` documentation](https://docs.opencv.org/4.x/d5/d1f/calib3d_solvePnP.html), with
+  diagrams of the camera model and all the other PnP methods.
+- In Aquila Vision, the solve is `AprilDetect::getTagTransform` in
+  `perception/apriltag_detector/detector_lib/src/april_detector.cpp`.
