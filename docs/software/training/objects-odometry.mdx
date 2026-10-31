@@ -46,6 +46,13 @@ The exercises below are the **Objects and Odometry** lesson in [Scriptum](https:
 - Use a [DifferentialDrivePoseEstimator](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/estimator/DifferentialDrivePoseEstimator.html) object
     - Update it every loop and log the estimated pose
     - Use the x value from the estimated pose to drive 3 meters in autonomous
+### The NavX IMU
+- The NavX is an IMU (Inertial Measurement Unit): a gyroscope, an accelerometer and a magnetometer on one board
+    - It reports yaw (turning left and right, our heading), pitch (nose up or down) and roll (tipping side to side)
+- Using it on a real robot
+    - Keep the robot still while it boots: the NavX calibrates at power-on
+    - Mount it flat and solid, near the middle of the robot
+    - The NavX's own getYaw() counts clockwise; use getRotation2d(), which counts counterclockwise like WPILib
 ### Simulation
 - Drive the robot in simulation and watch the pose on the AdvantageScope 2D field
 - Compare your estimated pose with the simulator's true pose
