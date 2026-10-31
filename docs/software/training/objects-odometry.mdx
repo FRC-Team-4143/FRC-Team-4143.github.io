@@ -8,7 +8,7 @@ sidebar_position: 5
 import {LabLink} from '@site/src/components/LabLink';
 
 # Objects and Odometry
-In this module we will cover the basics of Object Oriented Programming: classes, objects and `static` methods. We will then use WPILib classes for controlling a differential drive robot, including kinematics and a pose estimator that tracks where the robot is. Finally, we will compare that estimate with the simulator's true position.
+In this module we will cover the basics of Object Oriented Programming: classes, objects and `static` methods. We will then use WPILib classes for controlling a differential drive robot, including kinematics, a NavX gyro for the heading, and a pose estimator that tracks where the robot is. Finally, we will compare that estimate with the simulator's true position.
 
 :::tip Try it in the Pose Estimator Lab
 Watch wheel odometry drift as you drive, and see how vision corrects it. <LabLink slug="pose-estimator-lab" />
@@ -37,9 +37,12 @@ The exercises below are the **Objects and Odometry** lesson in [Scriptum](https:
 - Use a [DifferentialDriveKinematics](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/DifferentialDriveKinematics.html) object in the drive mechanism
     - Write a getChassisSpeeds method
     - Use it to get the [ChassisSpeeds](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/kinematics/ChassisSpeeds.html) of the robot and compare it with your hand-written speeds
-- Write a getYaw method that works out the robot's heading from how far each side has driven
+- Write a getWheelYaw method that works out the robot's heading from how far each side has driven
     - The heading in radians is (right meters - left meters) / track width (0.61 m)
     - Return it as a [Rotation2d](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/geometry/Rotation2d.html)
+- Write a getYaw method that reads the heading from the robot's [NavX](https://pdocs.kauailabs.com/navx-mxp/) gyro
+    - The NavX is plugged into the roboRIO's top (MXP) port, and the drive mechanism already reads it into `inputs_.gyroYawRad`
+    - If the gyro is connected, return its heading as a Rotation2d; if not, fall back to `backupYaw()`, which carries on from the gyro's last heading using the wheels
 - Use a [DifferentialDrivePoseEstimator](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/estimator/DifferentialDrivePoseEstimator.html) object
     - Update it every loop and log the estimated pose
     - Use the x value from the estimated pose to drive 3 meters in autonomous
@@ -47,6 +50,8 @@ The exercises below are the **Objects and Odometry** lesson in [Scriptum](https:
 - Drive the robot in simulation and watch the pose on the AdvantageScope 2D field
 - Compare your estimated pose with the simulator's true pose
     - Why do they drift apart? What would a real robot add to fix it?
+- Graph Drive/GyroYawRad and Drive/WheelYawRad together and drive in circles
+    - Which one wanders off, and why does getYaw use the other?
 - Optional: try WPILib's [DifferentialDrive](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/wpilibj/drive/DifferentialDrive.html) `arcadeDriveIK` method and compare it with your own arcade math
 
 ---
