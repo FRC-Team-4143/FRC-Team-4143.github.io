@@ -27,7 +27,7 @@ The exercises below are the **Control Theory** lesson in [Scriptum](https://scri
     - Full power when too slow, no power when fast enough
 - Write a Feed Forward controller for the flywheel
     - Work out the power from the target speed and `kV`, with no measuring: `volts = FLYWHEEL_KV * SHOOT_VELOCITY`
-    - `kV` is in volts per rad/s: 12 V / 628 rad/s (a Kraken's free speed) is about 0.0191
+    - `kV` is in volts per rad/s: 12 V / 642 rad/s (the training robot's flywheel top speed: a Falcon 500's 668 rad/s free speed through the 1.04:1 reduction) is about 0.0187
     - Find a good `kV` by experiment
 - Use PID (feed forward plus feedback) to hold the speed
     - Tune `kP` and compare how each style recovers from a simulated ball launch
@@ -36,7 +36,7 @@ The exercises below are the **Control Theory** lesson in [Scriptum](https://scri
     - Make sure your system measurements like MOI and radius are close to the real robot
         - Wheel Radius: 0.0762 m
         - Wheel Mass: 2.3 kg
-    - Spin up in under about 1.5 seconds without overshooting the target
+    - Spin up in under about 2 seconds without overshooting the target
     - Once you have tuned in simulation try final values on the robot
 ### WPILib exercises
 - [Elevator Tuning Exercise](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/introduction/tuning-elevator.html)
