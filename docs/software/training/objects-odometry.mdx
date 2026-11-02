@@ -52,7 +52,7 @@ The exercises below are the **Objects and Odometry** lesson in [Scriptum](https:
 - Using it on a real robot
     - Keep the robot still while it boots: the NavX calibrates at power-on
     - Mount it flat and solid, near the middle of the robot
-    - The NavX's own getYaw() counts clockwise; use getRotation2d(), which counts counterclockwise like WPILib
+    - The NavX's getYaw() wraps at -180 to 180 degrees but counts clockwise; flip it with a minus sign so counterclockwise is positive, like WPILib
 ### Simulation
 - Drive the robot in simulation and watch the pose on the AdvantageScope 2D field
 - Compare your estimated pose with the simulator's true pose
