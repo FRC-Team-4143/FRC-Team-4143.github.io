@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><!-- the site defaults to dark -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Object Detection Lab</title>
+<link rel="stylesheet" href="lab-base.css">
+<script src="lab-theme.js"></script>
+<style>
+.views { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 1250px) { .views { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.view { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.view canvas { width: 100%; aspect-ratio: 16 / 9; border-radius: var(--radius); background: #000; }
+.view .cap { font-size: 12px; color: var(--muted); }
+.big { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px 16px; padding-top: 4px; border-top: 1px solid var(--grid); }
+.big b { font-size: 24px; line-height: 1.2; }
+.big b.bad { color: var(--warn); }
+.big b.ok { color: var(--volt); }
+.rows { display: grid; gap: 12px; }
+.group { display: grid; gap: 10px; }
+.group + .group { padding-top: 10px; border-top: 1px solid var(--grid); }
+.seg.wrap-seg { flex-wrap: wrap; }
+.seg button { padding-inline: 11px; }
+/* One track, two dots: two range inputs stacked on the hue bar. Only their thumbs take clicks. Inset the bar by half a thumb so hues line up under the dots. */
+.hue-range { position: relative; height: 26px; }
+.hue-range input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.hue-range input:focus-visible { outline: none; }
+.hue-range input::-webkit-slider-runnable-track { background: none; }
+.hue-range input::-moz-range-track { background: none; }
+.hue-range input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #1c1e21; box-shadow: 0 0 0 1px rgba(255, 255, 255, .55); cursor: grab; }
+.hue-range input::-moz-range-thumb { pointer-events: auto; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid #1c1e21; box-shadow: 0 0 0 1px rgba(255, 255, 255, .55); cursor: grab; }
+.hue-range input:active::-webkit-slider-thumb { cursor: grabbing; }
+.hue-range input:active::-moz-range-thumb { cursor: grabbing; }
+.hue-range input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hue-range input:focus-visible::-moz-range-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
+.huebar { position: absolute; left: 9px; right: 9px; top: 7px; height: 12px; border-radius: 3px; background: linear-gradient(to right, hsl(0 100% 50%), hsl(60 100% 50%), hsl(120 100% 50%), hsl(180 100% 50%), hsl(240 100% 50%), hsl(300 100% 50%), hsl(360 100% 50%)); overflow: hidden; }
+.huebar i { position: absolute; top: 0; bottom: 0; background: rgba(0, 0, 0, .78); }
+.matchbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13px; max-height: 9.5em; overflow-y: auto; }
+.log li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 4px; }
+.log time { font-family: var(--f-mono); color: var(--muted); }
+.log .bad { color: var(--warn); }
+.log .ok { color: var(--volt); }
+.log .warn { color: var(--goal); }
+pre.code { margin: 0 0 8px; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; overflow-x: auto; white-space: pre; }
+pre.code .c { color: var(--muted); }
+.deeper ul, .deeper ol { margin: 0 0 8px; padding-left: 22px; display: grid; gap: 6px; }
+.deeper p { margin: 0 0 8px; }
+.deeper code { font-size: 13px; }
+.guide .done-mark[hidden] { display: none; }
+.guide .guide-count { display: flex; gap: 10px; align-items: baseline; }
+@media (min-width: 1000px) { .app > .main { grid-column: 2; grid-row: 1; } .app > .side { grid-column: 1; grid-row: 1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Software · Vision</p>
+      <h1>Object Detection Lab</h1>
+      <p class="lede short">Tune what the robot's camera thinks is a game piece, then watch it play 15 seconds of auto on what you tuned.</p>
+    </div>
+    <div class="toolbar">
+      <button id="reset">Reset</button>
+    </div>
+  </header>
+
+  <div class="app">
+    <main class="main">
+      <section class="guide" id="guide" aria-live="polite">
+        <span class="guide-count"><span id="g-count">Step 1 of 9</span><span class="done-mark" id="g-done" hidden>✓ Done</span></span>
+        <h2 id="g-title"></h2>
+        <p id="g-text"></p>
+        <div class="guide-nav">
+          <button id="g-back">Back</button>
+          <button id="g-next">Next</button>
+          <button id="g-free" aria-pressed="false">Free play</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="views">
+          <div class="view">
+            <canvas id="cam" role="img" aria-label="The robot's camera view with a box drawn around each detection"></canvas>
+            <span class="cap" id="cam-cap">What the camera sees</span>
+          </div>
+          <div class="view">
+            <canvas id="second" role="img" aria-label="Second view: the color mask, or a top-down map of the field"></canvas>
+            <span class="cap" id="second-cap"></span>
+          </div>
+        </div>
+        <div class="matchbar" data-step-from="g" data-g="start">
+          <button class="primary" id="start">Start 15 s round</button>
+          <span class="note" id="match-note"></span>
+        </div>
+        <div class="readout big" id="big" aria-live="off"></div>
+        <ul class="log" id="log" data-step-from="g" data-g="start" aria-label="What happened this round"></ul>
+      </section>
+    </main>
+
+    <aside class="side" aria-label="Detector controls">
+      <div class="panel">
+        <h2>Controls</h2>
+
+        <div class="group" data-step-from="g" data-g="scene">
+          <span class="label">Where</span>
+          <div class="seg" role="group" aria-label="Where the robot is">
+            <button data-scene="bench" aria-pressed="true">Workbench</button>
+            <button data-scene="match" aria-pressed="false">Match</button>
+          </div>
+        </div>
+
+        <div class="group" data-step-from="g" data-g="det">
+          <span class="label">Detector</span>
+          <div class="seg" role="group" aria-label="Which detector runs">
+            <button data-det="color" aria-pressed="true">Color</button>
+            <button data-det="yolo" aria-pressed="false">YOLO</button>
+          </div>
+        </div>
+
+        <div class="group" data-step-from="g" data-g="world">
+          <span class="label">Lights</span>
+          <div class="seg" role="group" aria-label="Lighting">
+            <button data-light="shop" aria-pressed="true">Shop</button>
+            <button data-light="arena" aria-pressed="false">Arena</button>
+            <button data-light="dim" aria-pressed="false">Dim gym</button>
+          </div>
+        </div>
+
+        <label class="check" for="fan" data-step-from="g" data-g="fan"><input type="checkbox" id="fan"><span>Fans in orange shirts behind the field</span></label>
+
+        <div class="group" data-step-from="g" data-g="colorctl" id="color-ctl">
+          <span class="label">Color filter (OpenCV units)</span>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span>Hue range</span><span class="k" id="hue-v"></span></div>
+          <div class="hue-range">
+            <div class="huebar" id="huebar" aria-hidden="true"><i id="hb-a"></i><i id="hb-b"></i></div>
+            <input type="range" id="hueLo" min="0" max="179" step="1" aria-label="Hue range start">
+            <input type="range" id="hueHi" min="0" max="179" step="1" aria-label="Hue range end">
+          </div>
+          <details class="more">
+            <summary>More controls</summary>
+            <div class="row"><label for="satMin"><span>Minimum saturation</span><span class="k" id="satMin-v"></span></label><input type="range" id="satMin" min="0" max="255" step="1" style="grid-column:1/-1"></div>
+            <div class="row"><label for="valMin"><span>Minimum brightness</span><span class="k" id="valMin-v"></span></label><input type="range" id="valMin" min="0" max="255" step="1" style="grid-column:1/-1"></div>
+            <div class="row"><label for="minArea"><span>Smallest blob</span><span class="u"><span class="k" id="minArea-v"></span> px</span></label><input type="range" id="minArea" min="1" max="300" step="1" style="grid-column:1/-1"></div>
+            <label class="check" for="round"><input type="checkbox" id="round"><span>Blob must be round</span></label>
+          </details>
+        </div>
+
+        <div class="group" data-step-from="g" data-g="confctl" id="conf-ctl">
+          <span class="label">YOLO output</span>
+          <div class="row"><label for="conf"><span>Confidence threshold</span><span class="k" id="conf-v"></span></label><input type="range" id="conf" min="0.01" max="0.95" step="0.01" style="grid-column:1/-1"></div>
+          <label class="check" for="nms" data-step-from="g" data-g="nms"><input type="checkbox" id="nms"><span>NMS: merge boxes on the same object</span></label>
+          <div class="row" data-step-from="g" data-g="nmsiou"><label for="iou"><span>NMS overlap limit (IoU)</span><span class="k" id="iou-v"></span></label><input type="range" id="iou" min="0.05" max="0.95" step="0.01" style="grid-column:1/-1"></div>
+          <div data-step-from="g" data-g="model" class="group">
+            <span class="label">Model size</span>
+            <div class="seg" role="group" aria-label="Model size">
+              <button data-model="nano" aria-pressed="false">Nano</button>
+              <button data-model="small" aria-pressed="false">Small</button>
+              <button data-model="medium" aria-pressed="true">Medium</button>
+              <button data-model="large" aria-pressed="false">Large</button>
+            </div>
+          </div>
+          <label class="check" for="grid" data-step-from="g" data-g="grid"><input type="checkbox" id="grid"><span>Show the YOLO grid</span></label>
+        </div>
+
+        <label class="check" for="truth" data-step-from="g" data-g="truth"><input type="checkbox" id="truth" checked><span>Color boxes by right and wrong (the real robot can't)</span></label>
+      </div>
+    </aside>
+  </div>
+
+  <section class="deeper" aria-label="Go deeper">
+    <h2>Go deeper</h2>
+    <details>
+      <summary>What is real here and what is pretend</summary>
+      <ul>
+        <li><b>The color detector is real.</b> It runs on the actual pixels of the camera image every frame: HSV threshold, connected blobs, size filter. The lighting really changes those pixels. If it breaks, it broke for the same reason it would on a robot.</li>
+        <li><b>The YOLO detector is a stand-in.</b> No neural network runs here. It uses the positions of the objects to write out the kind of boxes and confidences a real model gives: closer objects score higher, hidden objects score lower, look-alikes score some, and one object gets several boxes.</li>
+        <li><b>NMS and the scoring are real.</b> NMS, IoU, precision and recall are the actual algorithms, run on those boxes.</li>
+        <li><b>The model sizes are illustrative.</b> Their frame rates and scores are made up to show the trade-off. Measure your own model on the Jetson before believing any number.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>In real code</summary>
+      <p>The color filter you have tuned, in Python with OpenCV:</p>
+      <pre class="code" id="code-color" tabindex="0" aria-label="Python code for the color filter"></pre>
+      <p>The YOLO settings you have tuned, with Ultralytics. <code>predict()</code> does the confidence filter and NMS for you:</p>
+      <pre class="code" id="code-yolo" tabindex="0" aria-label="Python code for the YOLO settings"></pre>
+      <p>Read more on the <a href="/docs/software/vision/obj_det" target="_top">Object Detection</a> page.</p>
+    </details>
+    <details>
+      <summary>How a box becomes a place on the field</summary>
+      <p>This lab's robot uses the bottom edge of a box, which is where the object touches the floor. Knowing the camera's height and lens, it turns that pixel into a distance and a direction. Our Jetson sends the angles to the center of the box instead; the Object Detection page shows how. That is why the fan's shirt sends the robot somewhere silly: its box isn't on the floor at all, so the distance is a guess.</p>
+      <p>Within about a meter of the camera, the floor is out of frame, so the robot has to keep driving to the last place it saw the ball.</p>
+      <p>This robot uses each detection as if it just happened. Real code should look up where the robot was when the picture was taken, or latency turns into steering error. Run a round on Large and watch how far the boxes trail behind when the robot turns.</p>
+    </details>
+    <details>
+      <summary>Precision and recall</summary>
+      <ul>
+        <li><b>Precision</b>: of all the boxes the detector drew, how many were really balls? Low precision means the robot chases cones.</li>
+        <li><b>Recall</b>: of all the balls in view, how many got a box? Low recall means the robot drives past game pieces.</li>
+        <li>A box counts as correct when its IoU (overlap divided by combined area) with the real ball is at least 0.25.</li>
+        <li>Raising confidence trades recall for precision. A better model is one that gives you more of both at once.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Things to try in free play</summary>
+      <ol>
+        <li><b>One range for every light.</b> Try to find a single hue range that finds all the balls under Shop, Arena and Dim gym, with nothing else boxed.</li>
+        <li><b>Shape helps color.</b> Under More controls, tick Blob must be round. Do the fans go away? What does it do to a ball half hidden behind something?</li>
+        <li><b>Color vs. YOLO.</b> Run a Match with each detector, under each light.</li>
+        <li><b>Too cautious.</b> Run a round with confidence at 0.90. The robot makes no mistakes. How many balls does it get?</li>
+        <li><b>NMS too loose.</b> Drag the overlap limit up to 0.95 with NMS on. One ball gets several boxes again.</li>
+      </ol>
+    </details>
+  </section>
+  <footer class="foot">MARS/WARS · FRC Team 4143</footer>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+  const hash = (a, b) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
+  const wrapPi = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+
+  // ---------- Camera ----------
+  const W = 480, H = 270, FOV = 70 * Math.PI / 180, F = (W / 2) / Math.tan(FOV / 2), HOR = H * 0.30, CAMH = 0.55, CAM_FWD = 0.4;
+  const FIELD = { w: 8, h: 5 }, HALF = 0.45;
+  const scene = document.createElement("canvas"); scene.width = W; scene.height = H;
+  const sx = scene.getContext("2d", { willReadFrequently: true });
+  const shown = document.createElement("canvas"); shown.width = W; shown.height = H;
+  const maskC = document.createElement("canvas"); maskC.width = W; maskC.height = H;
+  const mx = maskC.getContext("2d");
+  const maskImg = mx.createImageData(W, H);
+  let frame = sx.createImageData(W, H);
+
+  const LIGHTS = {
+    shop:  { gain: [1, 1, 1],          label: "Shop" },
+    arena: { gain: [0.72, 1, 1.3],     label: "Arena" },
+    dim:   { gain: [0.62, 0.42, 0.22], label: "Dim gym" },
+  };
+  // Frame rates and scores are illustrative, see Go deeper.
+  const MODELS = {
+    nano:   { label: "Nano",   fps: 60, q: 0 },
+    small:  { label: "Small",  fps: 40, q: 0.3 },
+    medium: { label: "Medium", fps: 20, q: 0.6 },
+    large:  { label: "Large",  fps: 7,  q: 1 },
+  };
+
+  // ---------- Settings ----------
+  const DEF = { det: "color", light: "shop", fan: false, hueLo: 0, hueHi: 179, satMin: 110, valMin: 60, minArea: 12, round: false,
+                conf: 0.25, nms: true, iou: 0.45, model: "medium", grid: false, truth: true };
+  const P = { ...DEF };
+
+  // ---------- The world ----------
+  const BENCH = {
+    robot: { x: 0.8, y: 2.5, th: 0 },
+    balls: [[2.5, 2.05], [3.5, 3.05], [5.05, 2.2]],
+    cones: [[3.15, 1.55], [4.6, 3.1]],
+    foe: { x: 5.0, y: 0.95, yaw: 0.5, vy: 0 },
+    fans: [[8.6, 3.0]],
+  };
+  const MATCH = {
+    robot: { x: 0.8, y: 2.5, th: 0 },
+    balls: [[3.0, 1.3], [3.3, 3.6], [4.6, 2.4], [5.5, 0.9], [6.4, 3.8], [7.1, 1.8], [2.0, 4.2], [1.7, 0.8]],
+    cones: [[2.4, 2.6], [4.4, 1.2], [5.7, 2.6], [4.9, 4.2]],
+    foe: { x: 5.3, y: 2.6, yaw: 1.2, vy: 0.7 },
+    fans: [[3.2, 5.6], [6.3, 5.6], [8.6, 2.2], [4.8, -0.6]],
+    roll: { i: 2, vx: 0, vy: 0.5 },
+  };
+  let world = null;
+  function makeWorld(def) {
+    const objs = [];
+    def.balls.forEach((b, i) => objs.push({ id: "b" + i, type: "ball", x: b[0], y: b[1], vx: 0, vy: 0 }));
+    def.cones.forEach((c, i) => objs.push({ id: "c" + i, type: "cone", x: c[0], y: c[1] }));
+    def.fans.forEach((f, i) => objs.push({ id: "f" + i, type: "fan", x: f[0], y: f[1] }));
+    objs.push({ id: "r", type: "foe", x: def.foe.x, y: def.foe.y, yaw: def.foe.yaw, vy: def.foe.vy });
+    if (def.roll) { objs[def.roll.i].vx = def.roll.vx; objs[def.roll.i].vy = def.roll.vy; }
+    return { robot: { ...def.robot }, objs };
+  }
+  const active = (o) => !o.gone && (o.type !== "fan" || P.fan);
+
+  const S = { sceneName: "bench", t: 0, nextDet: 0, queue: [], dets: [], maskPct: 0, blobs: 0, above: 0, kept: 0, E: { tp: 0, fp: 0, fn: 0, n: 0 }, okHold: 0 };
+  const match = { running: false, finished: false, tLeft: 15, pieces: 0, mistakes: 0, misses: 0, wasted: 0, tp: 0, fp: 0, fn: 0, log: [], target: null, lastSeen: -9, stall: 0, ignore: {}, wallT: 0, flash: null, best: null, lastModel: null };
+
+  // ---------- Camera geometry ----------
+  const cam = { x: 0, y: 0, c: 1, s: 0 };
+  function setCam() { const r = world.robot; cam.c = Math.cos(r.th); cam.s = Math.sin(r.th); cam.x = r.x + CAM_FWD * cam.c; cam.y = r.y + CAM_FWD * cam.s; }
+  const toCam = (x, y) => { const dx = x - cam.x, dy = y - cam.y; return [dx * cam.c + dy * cam.s, -dx * cam.s + dy * cam.c]; };
+  const proj = (d, l, z) => [W / 2 - F * l / d, HOR + F * (CAMH - z) / d];
+
+  function poly(pts, fill, ctx = sx) {
+    const near = 0.15;
+    const q = pts.map((p) => { const [d, l] = toCam(p[0], p[1]); return [d, l, p[2]]; });
+    const out = [];
+    for (let i = 0; i < q.length; i++) {
+      const a = q[i], b = q[(i + 1) % q.length];
+      if (a[0] >= near) out.push(a);
+      if ((a[0] >= near) !== (b[0] >= near)) { const t = (near - a[0]) / (b[0] - a[0]); out.push([near, a[1] + t * (b[1] - a[1]), a[2] + t * (b[2] - a[2])]); }
+    }
+    if (out.length < 3) return;
+    ctx.fillStyle = fill; ctx.beginPath();
+    out.forEach((p, i) => { const [u, v] = proj(p[0], p[1], p[2]); if (i) ctx.lineTo(u, v); else ctx.moveTo(u, v); });
+    ctx.closePath(); ctx.fill();
+  }
+  function orientedCorners(o, hw, hl) {
+    const c = Math.cos(o.yaw), s = Math.sin(o.yaw);
+    return [[hl, hw], [hl, -hw], [-hl, -hw], [-hl, hw]].map(([a, b]) => [o.x + a * c - b * s, o.y + a * s + b * c]);
+  }
+  function box3(o, hw, hl, z0, z1, side, top) {
+    const cs = orientedCorners(o, hw, hl);
+    const faces = cs.map((a, i) => { const b = cs[(i + 1) % 4]; return { a, b, d: toCam((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)[0] }; }).sort((p, q) => q.d - p.d);
+    for (const f of faces) poly([[f.a[0], f.a[1], z0], [f.b[0], f.b[1], z0], [f.b[0], f.b[1], z1], [f.a[0], f.a[1], z1]], side);
+    if (top) poly(cs.map((c) => [c[0], c[1], z1]), top);
+  }
+
+  // Tight box in image pixels (not clipped to the image), or null when behind the camera.
+  const BALL_R = 0.09, CONE_H = 0.46, CONE_W = 0.13, FAN_Z0 = 1.0, FAN_Z1 = 1.55, FAN_W = 0.25;
+  function boxOf(o) {
+    if (o.type === "foe") {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, n = 0;
+      for (const c of orientedCorners(o, HALF, HALF)) {
+        const [d, l] = toCam(c[0], c[1]); if (d < 0.25) continue; n++;
+        const [u, v0] = proj(d, l, 0.04), [, v1] = proj(d, l, 0.2);
+        x0 = Math.min(x0, u); x1 = Math.max(x1, u); y0 = Math.min(y0, v1); y1 = Math.max(y1, v0);
+      }
+      return n >= 2 ? [x0, y0, x1, y1] : null;
+    }
+    const [d, l] = toCam(o.x, o.y); if (d < 0.25) return null;
+    if (o.type === "ball") { const [u, v] = proj(d, l, BALL_R), r = F * BALL_R / d; return [u - r, v - r, u + r, v + r]; }
+    if (o.type === "cone") { const [u, v0] = proj(d, l, 0), [, v1] = proj(d, l, CONE_H), r = F * CONE_W / d; return [u - r, v1, u + r, v0]; }
+    const [u, v0] = proj(d, l, FAN_Z0), [, v1] = proj(d, l, FAN_Z1), r = F * FAN_W / d; return [u - r, v1, u + r, v0];
+  }
+  const area = (b) => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]);
+  const inter = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+  const iou = (a, b) => { const i = inter(a, b); return i / Math.max(1e-6, area(a) + area(b) - i); };
+  const clipBox = (b) => [clamp(b[0], 0, W), clamp(b[1], 0, H), clamp(b[2], 0, W), clamp(b[3], 0, H)];
+
+  // Everything in view: clipped box, distance, how much of it shows.
+  function visibleObjects() {
+    setCam();
+    const list = [];
+    for (const o of world.objs) {
+      if (!active(o)) continue;
+      const raw = boxOf(o); if (!raw) continue;
+      const box = clipBox(raw); const a = area(raw); if (a < 1 || area(box) / a < 0.3) continue;
+      const [d] = toCam(o.x, o.y);
+      list.push({ o, raw, box, d, vis: area(box) / a });
+    }
+    for (const it of list) for (const q of world.objs) {
+      if (!active(q) || q === it.o || (q.type !== "foe" && q.type !== "cone")) continue;
+      const [dq] = toCam(q.x, q.y); if (dq >= it.d || dq < 0.25) continue;
+      let qb = boxOf(q); if (!qb) continue;
+      if (q.type === "foe") { const [, ly] = toCam(q.x, q.y); const [, v1] = proj(dq, ly, 0.95); qb = [qb[0], v1, qb[2], qb[3]]; }
+      it.vis -= inter(it.raw, qb) / Math.max(1, area(it.raw)) * (q.type === "cone" ? 0.7 : 1);
+    }
+    return list.filter((v) => v.vis > 0.2);
+  }
+
+  // ---------- Painting the camera image ----------
+  const FLOOR = "hsl(212 9% 36%)", OUTER = "hsl(215 12% 18%)";
+  function paintBall(o) {
+    const [d, l] = toCam(o.x, o.y); if (d < 0.2) return;
+    const [u, v] = proj(d, l, BALL_R), r = F * BALL_R / d, [, vg] = proj(d, l, 0);
+    sx.fillStyle = "rgba(0,0,0,.35)"; sx.beginPath(); sx.ellipse(u, vg, r * 1.05, r * 0.32, 0, 0, 7); sx.fill();
+    const g = sx.createRadialGradient(u - r * 0.35, v - r * 0.4, r * 0.1, u, v, r);
+    g.addColorStop(0, "hsl(29 100% 62%)"); g.addColorStop(0.65, "hsl(29 96% 50%)"); g.addColorStop(1, "hsl(29 92% 34%)");
+    sx.fillStyle = g; sx.beginPath(); sx.arc(u, v, r, 0, 7); sx.fill();
+  }
+  function paintCone(o) {
+    const [d, l] = toCam(o.x, o.y); if (d < 0.2) return;
+    const [u, v0] = proj(d, l, 0), [, v1] = proj(d, l, CONE_H), r = F * CONE_W / d;
+    sx.fillStyle = "hsl(0 0% 12%)"; sx.fillRect(u - r * 1.25, v0 - r * 0.22, r * 2.5, r * 0.3);
+    sx.fillStyle = "hsl(17 96% 50%)"; sx.beginPath(); sx.moveTo(u - r, v0 - r * 0.1); sx.lineTo(u - r * 0.14, v1); sx.lineTo(u + r * 0.14, v1); sx.lineTo(u + r, v0 - r * 0.1); sx.closePath(); sx.fill();
+    const a = v1 + (v0 - v1) * 0.42, b = v1 + (v0 - v1) * 0.6, w = (t) => r * (0.14 + 0.86 * (t - v1) / (v0 - v1));
+    sx.fillStyle = "hsl(0 0% 92%)"; sx.beginPath(); sx.moveTo(u - w(a), a); sx.lineTo(u + w(a), a); sx.lineTo(u + w(b), b); sx.lineTo(u - w(b), b); sx.closePath(); sx.fill();
+  }
+  function paintFoe(o) {
+    box3(o, HALF, HALF, 0.04, 0.2, "hsl(6 88% 42%)", "hsl(6 80% 34%)");
+    box3(o, HALF - 0.06, HALF - 0.06, 0.2, 0.42, "hsl(220 8% 24%)", "hsl(220 8% 32%)");
+    const up = { x: o.x, y: o.y, yaw: o.yaw }; box3(up, 0.17, 0.2, 0.42, 0.95, "hsl(215 10% 42%)", "hsl(215 10% 52%)");
+  }
+  function paintFan(o) {
+    const [d, l] = toCam(o.x, o.y); if (d < 0.4) return;
+    const [u, v] = proj(d, l, FAN_Z0), [, vt] = proj(d, l, FAN_Z1), [, vg] = proj(d, l, 0.35), [, vh] = proj(d, l, 1.72), s = F / d;
+    sx.fillStyle = "hsl(222 24% 20%)"; sx.fillRect(u - s * 0.2, v, s * 0.16, vg - v); sx.fillRect(u + s * 0.04, v, s * 0.16, vg - v);
+    sx.fillStyle = "hsl(29 96% 50%)"; sx.fillRect(u - s * FAN_W, vt, s * FAN_W * 2, v - vt);
+    sx.fillStyle = "hsl(28 40% 62%)"; sx.beginPath(); sx.arc(u, vh, s * 0.1, 0, 7); sx.fill();
+  }
+  function paintScene() {
+    setCam();
+    const g = sx.createLinearGradient(0, 0, 0, HOR); g.addColorStop(0, "hsl(216 16% 12%)"); g.addColorStop(1, "hsl(216 12% 24%)");
+    sx.fillStyle = g; sx.fillRect(0, 0, W, H);
+    // the arena around the field
+    const OX0 = -5, OX1 = 13, OY0 = -5, OY1 = 10;
+    const wall = (a, b, c, z0, z1) => poly([[a[0], a[1], z0], [b[0], b[1], z0], [b[0], b[1], z1], [a[0], a[1], z1]], c);
+    const corners = [[OX0, OY0], [OX1, OY0], [OX1, OY1], [OX0, OY1]];
+    corners.forEach((a, i) => { const b = corners[(i + 1) % 4]; wall(a, b, i % 2 ? "hsl(216 14% 22%)" : "hsl(216 14% 26%)", 0, 7); });
+    for (let i = 0; i < 6; i++) {
+      const t = (i + 0.3) / 6, c = i % 2 ? "hsl(204 40% 34%)" : "hsl(150 18% 38%)";
+      wall([OX1, OY0 + (OY1 - OY0) * t], [OX1, OY0 + (OY1 - OY0) * (t + 0.08)], c, 2, 3.4);
+      wall([OX0, OY0 + (OY1 - OY0) * t], [OX0, OY0 + (OY1 - OY0) * (t + 0.08)], c, 2, 3.4);
+      wall([OX0 + (OX1 - OX0) * t, OY1], [OX0 + (OX1 - OX0) * (t + 0.08), OY1], c, 2, 3.4);
+      wall([OX0 + (OX1 - OX0) * t, OY0], [OX0 + (OX1 - OX0) * (t + 0.08), OY0], c, 2, 3.4);
+    }
+    poly([[OX0, OY0, 0], [OX1, OY0, 0], [OX1, OY1, 0], [OX0, OY1, 0]], OUTER);
+    poly([[0, 0, 0], [FIELD.w, 0, 0], [FIELD.w, FIELD.h, 0], [0, FIELD.h, 0]], FLOOR);
+    const tape = (x, c) => poly([[x - 0.03, 0, 0.001], [x + 0.03, 0, 0.001], [x + 0.03, FIELD.h, 0.001], [x - 0.03, FIELD.h, 0.001]], c);
+    tape(2, "hsl(215 80% 52%)"); tape(4, "hsl(0 0% 88%)"); tape(6, "hsl(350 70% 48%)");
+    // fans stand outside the field, so they are always behind the wall
+    const dist = (o) => toCam(o.x, o.y)[0];
+    world.objs.filter((o) => active(o) && o.type === "fan").sort((a, b) => dist(b) - dist(a)).forEach(paintFan);
+    // field wall: clear panels on posts
+    const fc = [[0, 0], [FIELD.w, 0], [FIELD.w, FIELD.h], [0, FIELD.h]];
+    fc.forEach((a, i) => {
+      const b = fc[(i + 1) % 4];
+      wall(a, b, "rgba(200,225,240,.13)", 0.02, 0.5);
+      wall(a, b, "hsl(215 8% 62%)", 0.5, 0.56);
+      wall(a, b, "hsl(215 8% 25%)", 0, 0.05);
+      const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 2);
+      for (let k = 0; k <= n; k++) { const x = a[0] + (b[0] - a[0]) * k / n, y = a[1] + (b[1] - a[1]) * k / n; const dx = (b[1] - a[1]) ? 0.03 : 0, dy = (b[0] - a[0]) ? 0.03 : 0; poly([[x - dy, y - dx, 0], [x + dy, y + dx, 0], [x + dy, y + dx, 0.56], [x - dy, y - dx, 0.56]], "hsl(215 8% 45%)"); }
+    });
+    world.objs.filter((o) => active(o) && o.type !== "fan").sort((a, b) => dist(b) - dist(a)).forEach((o) => {
+      if (o.type === "ball") paintBall(o); else if (o.type === "cone") paintCone(o); else if (dist(o) > 0.3) paintFoe(o);
+    });
+  }
+  // Lighting and sensor noise change the real pixels, which is what the color filter reads.
+  const noise = new Int8Array(4096); for (let i = 0; i < noise.length; i++) noise[i] = Math.round((Math.random() - 0.5) * 14);
+  let noiseAt = 0;
+  function renderFrame() {
+    paintScene();
+    frame = sx.getImageData(0, 0, W, H);
+    const d = frame.data, g = LIGHTS[P.light].gain;
+    noiseAt = (noiseAt + 977) % 4096;
+    for (let i = 0, n = noiseAt; i < d.length; i += 4, n = (n + 3) & 4095) {
+      const e = noise[n];
+      const r = d[i] * g[0] + e, gg = d[i + 1] * g[1] + e, b = d[i + 2] * g[2] + e;
+      d[i] = r < 0 ? 0 : r > 255 ? 255 : r; d[i + 1] = gg < 0 ? 0 : gg > 255 ? 255 : gg; d[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+    }
+    shown.getContext("2d").putImageData(frame, 0, 0);
+  }
+
+  // ---------- The real color detector ----------
+  const label = new Int32Array(W * H), stack = new Int32Array(W * H);
+  const pass = new Uint8Array(W * H);
+  function colorDetect() {
+    const d = frame.data, lo = P.hueLo, hi = P.hueHi, m = maskImg.data;
+    let count = 0;
+    for (let p = 0, i = 0; p < W * H; p++, i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const v = r > g ? (r > b ? r : b) : (g > b ? g : b), mn = r < g ? (r < b ? r : b) : (g < b ? g : b), c = v - mn;
+      let on = 0;
+      if (v >= P.valMin && c > 0 && (255 * c / v) >= P.satMin) {
+        let h = v === r ? (g - b) / c : v === g ? 2 + (b - r) / c : 4 + (r - g) / c;
+        h = (h * 30 + 180) % 180;                     // OpenCV hue runs 0 to 179
+        on = h >= lo && h <= hi ? 1 : 0;
+      }
+      pass[p] = on; count += on;
+      const out = on ? 255 : 0; m[i] = out; m[i + 1] = out; m[i + 2] = out; m[i + 3] = 255;
+    }
+    mx.putImageData(maskImg, 0, 0);
+    S.maskPct = 100 * count / (W * H);
+    label.fill(0);
+    const out = []; let blobs = 0;
+    for (let s = 0; s < W * H; s++) {
+      if (!pass[s] || label[s]) continue;
+      let top = 0, x0 = W, y0 = H, x1 = 0, y1 = 0, a = 0; stack[top++] = s; label[s] = 1;
+      while (top) {
+        const p = stack[--top], x = p % W, y = (p / W) | 0; a++;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        if (x > 0 && pass[p - 1] && !label[p - 1]) { label[p - 1] = 1; stack[top++] = p - 1; }
+        if (x < W - 1 && pass[p + 1] && !label[p + 1]) { label[p + 1] = 1; stack[top++] = p + 1; }
+        if (y > 0 && pass[p - W] && !label[p - W]) { label[p - W] = 1; stack[top++] = p - W; }
+        if (y < H - 1 && pass[p + W] && !label[p + W]) { label[p + W] = 1; stack[top++] = p + W; }
+      }
+      if (a < P.minArea) continue;
+      blobs++;
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+      if (P.round) { const fill = a / (bw * bh), asp = Math.max(bw, bh) / Math.min(bw, bh); if (asp > 1.35 || fill > 0.93 || fill < 0.55) continue; }
+      out.push({ box: [x0, y0, x1 + 1, y1 + 1], score: Math.min(1, a / 700), a });
+    }
+    S.blobs = blobs;
+    return out;
+  }
+
+  // ---------- The stand-in YOLO: writes out the boxes a real model would (see Go deeper) ----------
+  const LIKE = { cone: 0.36, fan: 0.32, foe: 0.22 };
+  function yoloRaw(vis, t) {
+    const q = MODELS[P.model].q, light = P.light === "dim" ? 0.88 : 1, out = [];
+    for (const v of vis) {
+      const o = v.o, bh = v.raw[3] - v.raw[1];
+      let c;
+      if (o.type === "ball") {
+        const s = clamp((bh - 8) / 52, 0, 1);
+        c = (0.45 + 0.5 * Math.sqrt(s)) * (0.72 + 0.28 * q) * light * (0.5 + 0.5 * clamp(v.vis, 0, 1));
+      } else c = LIKE[o.type] * (1.25 - 0.55 * q);
+      const seed = o.id.charCodeAt(0) * 7 + Number(o.id.slice(1) || 3);
+      c = clamp(c + 0.018 * Math.sin(t * 2.3 + seed) + 0.012 * Math.sin(t * 5.1 + seed * 2), 0.01, 0.99);
+      out.push({ box: v.box, score: c, conf: c, src: o.id, main: true });
+      const w = v.box[2] - v.box[0], h = v.box[3] - v.box[1], dups = o.type === "ball" ? 5 : 3;
+      for (let i = 0; i < dups; i++) {
+        const j = (a) => hash(seed + i * 3.1, a) - 0.5;
+        const ox = j(1) * 0.26 * w, oy = j(2) * 0.26 * h, sc = 1 + j(3) * 0.24;
+        const cx = (v.box[0] + v.box[2]) / 2 + ox, cy = (v.box[1] + v.box[3]) / 2 + oy, hw = w / 2 * sc, hh = h / 2 * sc;
+        const dc = c * (0.35 + 0.5 * hash(seed + i, 4));
+        out.push({ box: clipBox([cx - hw, cy - hh, cx + hw, cy + hh]), score: dc, conf: dc, src: o.id });
+      }
+    }
+    // low-confidence junk scattered around the image, a little different every moment
+    const bucket = Math.floor(t / 0.7);
+    for (let i = 0; i < 14; i++) {
+      const u = hash(bucket + 1, i * 2.1) * W, v = HOR + hash(bucket + 2, i * 3.3) * (H - HOR), s = 8 + hash(bucket + 3, i) * 34;
+      const c = 0.02 + 0.13 * hash(bucket + 4, i);
+      out.push({ box: clipBox([u - s, v - s * 0.7, u + s, v + s * 0.7]), score: c, conf: c, src: null });
+    }
+    return out;
+  }
+  function nms(list, limit) {
+    const sorted = [...list].sort((a, b) => b.score - a.score), keep = [];
+    for (const d of sorted) if (!keep.some((k) => iou(k.box, d.box) > limit)) keep.push(d);
+    return keep;
+  }
+
+  // ---------- Scoring one camera frame ----------
+  function grade(dets, vis) {
+    const balls = vis.filter((v) => v.o.type === "ball");
+    const counted = balls.filter((v) => v.d <= 5.5 && v.vis > 0.45 && v.raw[3] < H);
+    const used = new Set(); let tp = 0, fp = 0;
+    for (const d of dets) {
+      let best = null, bi = 0.25;
+      for (const b of balls) { if (used.has(b.o.id)) continue; const v = iou(d.box, b.box); if (v > bi) { bi = v; best = b; } }
+      if (best) { used.add(best.o.id); d.kind = "tp"; d.src = best.o.id; if (counted.includes(best)) tp++; }
+      else {
+        // a second box on a ball already found is a duplicate: wrong, but it isn't a different object
+        const hit = vis.filter((v) => inter(d.box, v.box) / Math.max(1, area(d.box)) > 0.25).sort((a, b) => a.d - b.d)[0];
+        d.kind = "fp"; if (hit && d.src === undefined) d.src = hit.o.id; if (hit && !d.src) d.src = hit.o.id;
+        d.what = hit ? hit.o.type : null; fp++;
+      }
+    }
+    return { tp, fp, fn: counted.filter((b) => !used.has(b.o.id)).length, n: counted.length, missed: counted.filter((b) => !used.has(b.o.id)).map((b) => b.box) };
+  }
+
+  // ---------- One detector frame: capture now, deliver after the latency ----------
+  function capture() {
+    const vis = visibleObjects();
+    let dets, above = 0;
+    if (P.det === "color") dets = colorDetect();
+    else {
+      const raw = yoloRaw(vis, S.t).filter((d) => d.conf >= P.conf);
+      above = raw.length;
+      dets = P.nms ? nms(raw, P.iou) : raw;
+    }
+    const E = grade(dets, vis);
+    if (match.running) { match.tp += E.tp; match.fp += E.fp; match.fn += E.fn; }
+    return { dets, E, above, kept: dets.length, t: S.t };
+  }
+  function frameTime() { return P.det === "color" ? 1 / 30 : 1 / MODELS[P.model].fps; }
+  function latency() { return frameTime() + 0.02; }
+
+  // ---------- The robot's brain ----------
+  function logEvent(kind, text) {
+    const at = (15 - match.tLeft).toFixed(1);
+    match.log.unshift({ at, kind, text });
+    match.flash = { kind, text, until: S.t + 1.4 };
+    renderLog();
+  }
+  const MIST = {
+    cone: "Stopped at a cone. It looked like a ball",
+    fan: "Chased a fan's orange shirt",
+    foe: "Chased the other robot's bumper",
+    ball: "Got there late: the ball wasn't where the box said",
+  };
+  function mistake(src, what) {
+    match.mistakes++;
+    logEvent("bad", what || "Drove to empty carpet: a ghost detection");
+    if (src) match.ignore[src] = S.t + 6;
+    match.target = null; match.stall = 1.0; match.wasted += 1.0;
+  }
+  function lateArrival() { match.misses++; match.wasted += 0.5; match.stall = 0.5; match.target = null; logEvent("warn", MIST.ball); }
+  function typeOf(id) { const o = world.objs.find((x) => x.id === id); return o ? o.type : null; }
+  function think(arrived) {
+    const r = world.robot;
+    const c = Math.cos(r.th), s = Math.sin(r.th), cx = r.x + CAM_FWD * c, cy = r.y + CAM_FWD * s;
+    let best = null, bestScore = -1;
+    for (const d of arrived.dets) {
+      if (d.src && match.ignore[d.src] > S.t) continue;
+      if (d.box[3] >= H - 1) continue;                  // the floor point is out of frame
+      // bottom-center of the box to a point on the floor. Naive on purpose: uses the robot's pose now, not when the picture was taken.
+      const u = (d.box[0] + d.box[2]) / 2, vb = d.box[3];
+      const dist = vb > HOR + 3 ? Math.min(7, F * CAMH / (vb - HOR)) : 4.5;
+      const lat = (W / 2 - u) * dist / F;
+      const pt = { x: cx + dist * c - lat * s, y: cy + dist * s + lat * c };
+      // go for the closest box: the lower in the image, the closer it is
+      let sc = vb / H;
+      if (match.target && Math.hypot(pt.x - match.target.x, pt.y - match.target.y) < 0.7) sc += 0.2;
+      if (sc > bestScore) { bestScore = sc; best = { ...pt, src: d.src }; }
+    }
+    if (best) { match.target = best; match.lastSeen = S.t; }
+  }
+  function drive(dt) {
+    const r = world.robot;
+    const objs = world.objs;
+    // the other robot
+    const foe = objs.find((o) => o.type === "foe");
+    // pick up any ball in the intake
+    for (const o of objs) {
+      if (o.type !== "ball" || o.gone) continue;
+      const dx = o.x - r.x, dy = o.y - r.y;
+      if (Math.hypot(dx, dy) < 0.52 && Math.abs(wrapPi(Math.atan2(dy, dx) - r.th)) < 1.1) {
+        o.gone = true; match.pieces++; logEvent("ok", `Picked up ball ${match.pieces}`);
+        if (match.target && Math.hypot(match.target.x - o.x, match.target.y - o.y) < 0.9) match.target = null;
+      }
+    }
+    if (match.stall > 0) { match.stall -= dt; return; }
+    if (Math.hypot(foe.x - r.x, foe.y - r.y) < 0.98) {
+      const a = Math.atan2(r.y - foe.y, r.x - foe.x);
+      r.x = clamp(r.x + Math.cos(a) * 0.12, HALF, FIELD.w - HALF); r.y = clamp(r.y + Math.sin(a) * 0.12, HALF, FIELD.h - HALF);
+      // only a foul when the robot was chasing that bumper; otherwise it's just traffic
+      if (match.target && match.target.src === foe.id) {
+        match.mistakes++; logEvent("bad", "Foul! Rammed the other robot chasing its bumper");
+        match.ignore[foe.id] = S.t + 6; match.target = null; match.stall = 1.0; match.wasted += 1.0;
+        return;
+      }
+    }
+    const VMAX = 2.3, WMAX = 5;
+    const T = match.target;
+    if (T && S.t - match.lastSeen > 1.3) match.target = null;
+    if (!match.target) { r.th = wrapPi(r.th + 2.4 * dt); return; }
+    const dx = T.x - r.x, dy = T.y - r.y, dist = Math.hypot(dx, dy), err = wrapPi(Math.atan2(dy, dx) - r.th);
+    if (dist < 0.32) {
+      const t = typeOf(T.src);
+      if (t === "ball") lateArrival();
+      else if (t) mistake(T.src, MIST[t]);
+      else mistake(null, null);
+      return;
+    }
+    r.th = wrapPi(r.th + clamp(err * 7, -WMAX, WMAX) * dt);
+    const v = Math.abs(err) < 1.1 ? VMAX * Math.cos(err) ** 2 : 0;
+    const nx = r.x + Math.cos(r.th) * v * dt, ny = r.y + Math.sin(r.th) * v * dt;
+    r.x = clamp(nx, HALF, FIELD.w - HALF); r.y = clamp(ny, HALF, FIELD.h - HALF);
+    if ((r.x !== nx || r.y !== ny) && (T.x < HALF || T.x > FIELD.w - HALF || T.y < HALF || T.y > FIELD.h - HALF || dist < 1)) {
+      match.wallT += dt;
+      if (match.wallT > 0.3) { match.wallT = 0; const ty = typeOf(T.src); if (ty === "ball") lateArrival(); else mistake(T.src, ty ? MIST[ty] : "Drove into the wall chasing a ghost detection"); }
+    } else match.wallT = 0;
+  }
+  function moveWorld(dt) {
+    for (const o of world.objs) {
+      if (o.gone) continue;
+      if (o.type === "ball" && (o.vx || o.vy)) {
+        o.x += o.vx * dt; o.y += o.vy * dt;
+        if (o.y < 0.3 || o.y > FIELD.h - 0.3) o.vy = -o.vy;
+        if (o.x < 0.3 || o.x > FIELD.w - 0.3) o.vx = -o.vx;
+      }
+      if (o.type === "foe" && o.vy) {
+        o.y += o.vy * dt;
+        if (o.y < 1.2 || o.y > 3.9) o.vy = -o.vy;
+      }
+    }
+  }
+
+  function finishRound() {
+    match.running = false; match.finished = true; match.lastModel = P.det === "color" ? "color" : P.model;
+    const clean = match.mistakes === 0;
+    logEvent(clean ? "ok" : match.mistakes ? "bad" : "ok", `Round over: ${match.pieces} ball${match.pieces === 1 ? "" : "s"}, ${match.mistakes} mistake${match.mistakes === 1 ? "" : "s"}`);
+    match.flash = null;
+    $("start").textContent = "Run it again";
+    updateNote();
+  }
+
+  // ---------- Fixed-step simulation ----------
+  const DT = 1 / 60;
+  function tick() {
+    S.t += DT;
+    moveWorld(DT);
+    if (S.t >= S.nextDet) {
+      S.nextDet = S.t + frameTime() - 1e-6;
+      if (P.det === "color") renderFrame();
+      const res = capture(); res.arrive = S.t + latency();
+      S.queue.push(res);
+    }
+    while (S.queue.length && S.queue[0].arrive <= S.t) {
+      const res = S.queue.shift();
+      S.dets = res.dets; S.E = res.E; S.above = res.above; S.kept = res.kept;
+      if (match.running) think(res);
+    }
+    if (match.running) {
+      match.tLeft -= DT;
+      drive(DT);
+      if (match.tLeft <= 0 || match.pieces === 8) finishRound();
+    }
+  }
+
+  // ---------- Scene control ----------
+  function resetSceneState() {
+    S.queue = []; S.dets = []; S.nextDet = S.t; S.okHold = 0;
+    match.running = false; match.tLeft = 15; match.pieces = 0; match.mistakes = 0; match.misses = 0; match.wasted = 0; match.tp = 0; match.fp = 0; match.fn = 0;
+    match.log = []; match.target = null; match.lastSeen = -9; match.stall = 0; match.ignore = {}; match.wallT = 0; match.flash = null;
+    renderLog();
+  }
+  function setScene(name) {
+    S.sceneName = name;
+    world = makeWorld(name === "match" ? MATCH : BENCH);
+    match.finished = false;
+    resetSceneState();
+    $("start").textContent = "Start 15 s round";
+    syncUI(); updateNote();
+  }
+  function startRound() {
+    if (S.sceneName !== "match") S.sceneName = "match";
+    world = makeWorld(MATCH);
+    resetSceneState(); match.finished = false; match.running = true;
+    $("start").textContent = "Restart round";
+    syncUI(); updateNote();
+  }
+  function updateNote() {
+    const n = $("match-note");
+    if (match.running) n.textContent = "The robot is on its own now. Sliders still work.";
+    else if (match.finished) n.textContent = "Change something and run it again.";
+    else n.textContent = "Same field every round: 8 balls, 4 cones, and one robot playing defense.";
+  }
+
+  // ---------- Drawing ----------
+  let C = null;
+  function tokens() {
+    const cs = getComputedStyle(document.documentElement), g = (n) => cs.getPropertyValue(n).trim();
+    return { ink: g("--ink"), muted: g("--muted"), line: g("--line"), grid: g("--grid"), bg: g("--bg"), panel: g("--panel"), warn: g("--warn"), volt: g("--volt"), goal: g("--goal"), actual: g("--actual"), red: g("--red-alliance"), mono: g("--f-mono") };
+  }
+  function fit(c) {
+    const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    const ctx = c.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w: r.width, h: r.height };
+  }
+  const GOOD = "#3ecf6e", BAD = "#ff4d52", MISS = "#fbbf24", NEUTRAL = "#ffe14d";
+  const WHAT = { cone: "cone", fan: "fan", foe: "bumper" };
+  function boxLabel(d) {
+    const name = d.kind === "tp" ? "ball" : P.truth ? (WHAT[d.what] || "nothing") : "ball";
+    return d.conf !== undefined ? `${name} ${d.conf.toFixed(2)}` : `${name} ${d.a} px`;
+  }
+  function drawCam() {
+    const { ctx, w, h } = fit($("cam")), k = w / W;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(shown, 0, 0, w, h);
+    if (P.det === "yolo" && P.grid) {
+      const nx = 20, ny = 11;
+      ctx.strokeStyle = "rgba(255,255,255,.17)"; ctx.lineWidth = 1; ctx.beginPath();
+      for (let i = 1; i < nx; i++) { const x = i * w / nx; ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+      for (let i = 1; i < ny; i++) { const y = i * h / ny; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,225,77,.15)";
+      for (const d of S.dets) {
+        const cx = (d.box[0] + d.box[2]) / 2 / W, cy = (d.box[1] + d.box[3]) / 2 / H;
+        ctx.fillRect(Math.floor(cx * nx) * w / nx, Math.floor(cy * ny) * h / ny, w / nx, h / ny);
+      }
+    }
+    ctx.font = `600 ${Math.max(10, Math.round(k * 7.5))}px ${C.mono}`; ctx.textBaseline = "bottom"; ctx.textAlign = "left";
+    const many = S.dets.length > 14;
+    for (const d of [...S.dets].sort((a, b) => a.score - b.score)) {
+      const col = P.truth ? (d.kind === "tp" ? GOOD : BAD) : NEUTRAL;
+      const x = d.box[0] * k, y = d.box[1] * k, bw = (d.box[2] - d.box[0]) * k, bh = (d.box[3] - d.box[1]) * k;
+      ctx.globalAlpha = d.conf !== undefined ? clamp(0.35 + d.conf * 1.1, 0.35, 1) : 1;
+      ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(x, y, bw, bh);
+      ctx.globalAlpha = 1;
+      if (!many || d.score > 0.5) {
+        const t = boxLabel(d), tw = ctx.measureText(t).width + 6, th = parseInt(ctx.font.match(/(\d+)px/)[1], 10) + 3;
+        const ly = y - th < 0 ? y + bh + th : y;
+        ctx.fillStyle = col; ctx.fillRect(x - 1, ly - th, tw, th);
+        ctx.fillStyle = "#101214"; ctx.fillText(t, x + 2, ly - 1);
+      }
+    }
+    if (P.truth && S.E.missed) {
+      ctx.setLineDash([5, 4]); ctx.strokeStyle = MISS; ctx.lineWidth = 2;
+      for (const b of S.E.missed) ctx.strokeRect(b[0] * k, b[1] * k, (b[2] - b[0]) * k, (b[3] - b[1]) * k);
+      ctx.setLineDash([]);
+    }
+    if (match.flash && match.flash.until > S.t) {
+      const f = match.flash, size = Math.max(13, Math.round(k * 9));
+      ctx.font = `700 ${size}px ${C.mono}`;
+      const tw = Math.min(w - 16, ctx.measureText(f.text).width + 16);
+      ctx.fillStyle = "rgba(10,12,14,.82)"; ctx.fillRect((w - tw) / 2, h - size - 18, tw, size + 10);
+      ctx.fillStyle = f.kind === "ok" ? GOOD : f.kind === "warn" ? MISS : BAD; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(f.text, w / 2, h - size / 2 - 13, w - 24);
+    }
+    if (match.running || match.finished) {
+      const size = Math.max(13, Math.round(k * 10));
+      ctx.font = `700 ${size}px ${C.mono}`; ctx.textAlign = "right"; ctx.textBaseline = "top";
+      const t = `${Math.ceil(Math.max(0, match.tLeft))} s · ${match.pieces} balls`;
+      const tw = ctx.measureText(t).width + 12;
+      ctx.fillStyle = "rgba(10,12,14,.72)"; ctx.fillRect(w - tw - 6, 6, tw, size + 8);
+      ctx.fillStyle = "#fff"; ctx.fillText(t, w - 12, 10);
+    }
+  }
+  function drawMask() {
+    const { ctx, w, h } = fit($("second")), k = w / W;
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(maskC, 0, 0, w, h);
+    ctx.lineWidth = 2;
+    for (const d of S.dets) { ctx.strokeStyle = P.truth ? (d.kind === "tp" ? GOOD : BAD) : NEUTRAL; ctx.strokeRect(d.box[0] * k, d.box[1] * k, (d.box[2] - d.box[0]) * k, (d.box[3] - d.box[1]) * k); }
+  }
+  function drawMap() {
+    const { ctx, w, h } = fit($("second"));
+    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, w, h);
+    const m = 26, s = Math.min((w - m * 2) / FIELD.w, (h - m * 2) / FIELD.h), ox = (w - s * FIELD.w) / 2, oy = (h - s * FIELD.h) / 2;
+    const X = (x) => ox + x * s, Y = (y) => oy + (FIELD.h - y) * s;
+    ctx.fillStyle = C.panel; ctx.fillRect(X(0), Y(FIELD.h), s * FIELD.w, s * FIELD.h);
+    ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.strokeRect(X(0), Y(FIELD.h), s * FIELD.w, s * FIELD.h);
+    ctx.lineWidth = 1;
+    [[2, "#3578e5"], [4, C.muted], [6, "#d4282e"]].forEach(([x, c]) => { ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(X(x), Y(0)); ctx.lineTo(X(x), Y(FIELD.h)); ctx.stroke(); });
+    const r = world.robot;
+    setCam();
+    // field of view
+    ctx.fillStyle = "rgba(255,225,77,.12)"; ctx.beginPath(); ctx.moveTo(X(cam.x), Y(cam.y));
+    for (let i = 0; i <= 12; i++) { const a = r.th - FOV / 2 + FOV * i / 12; ctx.lineTo(X(cam.x + 6 * Math.cos(a)), Y(cam.y + 6 * Math.sin(a))); }
+    ctx.closePath(); ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+    ctx.beginPath(); ctx.moveTo(X(cam.x), Y(cam.y));
+    for (let i = 0; i <= 12; i++) { const a = r.th - FOV / 2 + FOV * i / 12; ctx.lineTo(X(cam.x + 6 * Math.cos(a)), Y(cam.y + 6 * Math.sin(a))); }
+    ctx.closePath(); ctx.fill(); ctx.restore();
+    for (const o of world.objs) {
+      if (!active(o)) continue;
+      if (o.type === "ball") { ctx.fillStyle = "#f28a18"; ctx.beginPath(); ctx.arc(X(o.x), Y(o.y), Math.max(5, s * 0.12), 0, 7); ctx.fill(); }
+      else if (o.type === "cone") { const q = Math.max(6, s * 0.14); ctx.fillStyle = "#e0571a"; ctx.beginPath(); ctx.moveTo(X(o.x), Y(o.y) - q); ctx.lineTo(X(o.x) + q * 0.8, Y(o.y) + q * 0.7); ctx.lineTo(X(o.x) - q * 0.8, Y(o.y) + q * 0.7); ctx.closePath(); ctx.fill(); }
+      else if (o.type === "fan") { const fx = clamp(X(o.x), 8, w - 8), fy = clamp(Y(o.y), 8, h - 8); ctx.fillStyle = "#f28a18"; ctx.fillRect(fx - 5, fy - 2, 10, 9); ctx.fillStyle = C.muted; ctx.beginPath(); ctx.arc(fx, fy - 6, 4, 0, 7); ctx.fill(); }
+      else {
+        const cs = orientedCorners(o, HALF, HALF);
+        ctx.fillStyle = "#d4282e"; ctx.beginPath(); cs.forEach((c, i) => { if (i) ctx.lineTo(X(c[0]), Y(c[1])); else ctx.moveTo(X(c[0]), Y(c[1])); }); ctx.closePath(); ctx.fill();
+      }
+    }
+    if (match.target) {
+      const T = match.target;
+      ctx.strokeStyle = NEUTRAL; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(X(r.x), Y(r.y)); ctx.lineTo(X(T.x), Y(T.y)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(X(T.x) - 6, Y(T.y) - 6); ctx.lineTo(X(T.x) + 6, Y(T.y) + 6); ctx.moveTo(X(T.x) + 6, Y(T.y) - 6); ctx.lineTo(X(T.x) - 6, Y(T.y) + 6); ctx.stroke();
+    }
+    const us = orientedCorners({ x: r.x, y: r.y, yaw: r.th }, HALF, HALF);
+    ctx.fillStyle = "#2563c9"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.beginPath(); us.forEach((c, i) => { if (i) ctx.lineTo(X(c[0]), Y(c[1])); else ctx.moveTo(X(c[0]), Y(c[1])); }); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X(r.x), Y(r.y)); ctx.lineTo(X(r.x + 0.45 * Math.cos(r.th)), Y(r.y + 0.45 * Math.sin(r.th))); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke();
+  }
+  function draw() {
+    if (!C) C = tokens();
+    drawCam();
+    if (P.det === "color") drawMask(); else drawMap();
+  }
+
+  // ---------- Readouts ----------
+  const fmtPct = (a, b) => (a + b === 0 ? "–" : `${Math.round(100 * a / (a + b))}%`);
+  function bigSpec() {
+    const E = S.E;
+    const found = ["Balls found", `${E.tp} of ${E.n}`, E.n && E.tp === E.n ? "ok" : E.tp < E.n ? "bad" : ""];
+    const wrong = ["Wrong boxes", String(E.fp), E.fp ? "bad" : "ok"];
+    if (S.sceneName === "match") {
+      return [["Balls collected", `${match.pieces} of 8`, ""], ["Mistakes", String(match.mistakes), match.mistakes ? "bad" : "ok"], ["Time wasted", `${match.wasted.toFixed(1)} s`, ""],
+              ["Precision", fmtPct(match.tp, match.fp), ""], ["Recall", fmtPct(match.tp, match.fn), ""],
+              ["Detector", P.det === "color" ? "30 FPS" : `${MODELS[P.model].fps} FPS`, ""]];
+    }
+    if (P.det === "color") return [found, wrong, ["Pixels matched", `${S.maskPct.toFixed(1)}%`, ""], ["Blobs", String(S.blobs), ""]];
+    return [found, wrong, ["Above confidence", String(S.above), ""], ["After NMS", P.nms ? String(S.kept) : "off", ""]];
+  }
+  let bigKey = "";
+  function updateBig() {
+    const spec = bigSpec(), key = spec.map((r) => r[0]).join("|");
+    if (key !== bigKey) { $("big").innerHTML = spec.map((r, i) => `<div><span>${r[0]}</span><b id="big-${i}">–</b></div>`).join(""); bigKey = key; }
+    spec.forEach((r, i) => { const el = $(`big-${i}`); if (el.textContent !== r[1]) el.textContent = r[1]; el.className = r[2] || ""; });
+  }
+  function renderLog() {
+    $("log").innerHTML = match.log.map((e) => `<li class="${e.kind}"><time>${e.at}s</time><span>${e.text}</span></li>`).join("");
+  }
+
+  // ---------- Controls ----------
+  const SL = ["satMin", "valMin", "minArea", "conf", "iou"];
+  function syncUI() {
+    for (const k of SL) { const fixed = k === "conf" || k === "iou"; $(k).value = P[k]; $(`${k}-v`).textContent = fixed ? P[k].toFixed(2) : String(P[k]); }
+    $("hueLo").value = P.hueLo; $("hueHi").value = P.hueHi; $("hue-v").textContent = `${P.hueLo} to ${P.hueHi}`;
+    $("fan").checked = P.fan; $("round").checked = P.round; $("nms").checked = P.nms; $("grid").checked = P.grid; $("truth").checked = P.truth;
+    document.querySelectorAll("[data-scene]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.scene === S.sceneName)));
+    document.querySelectorAll("[data-det]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.det === P.det)));
+    document.querySelectorAll("[data-light]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.light === P.light)));
+    document.querySelectorAll("[data-model]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.model === P.model)));
+    $("color-ctl").hidden = P.det !== "color"; $("conf-ctl").hidden = P.det !== "yolo";
+    $("hb-a").style.cssText = `left:0;width:${P.hueLo / 179 * 100}%`;
+    $("hb-b").style.cssText = `left:${P.hueHi / 179 * 100}%;right:0`;
+    $("second-cap").textContent = P.det === "color" ? "Mask: white pixels passed the color filter" : "Field map: what's really out there, seen from above";
+    $("cam-cap").textContent = P.det === "color" ? "What the camera sees. Boxes come from the mask" : `What the camera sees. Boxes reach the robot ${Math.round(latency() * 1000)} ms late at ${MODELS[P.model].fps} FPS`;
+    updateCode();
+  }
+  function updateCode() {
+    const c = (t) => `<span class="c">${t}</span>`;
+    $("code-color").innerHTML = `hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)\n` +
+      `mask = cv2.inRange(hsv, (${P.hueLo}, ${P.satMin}, ${P.valMin}), (${P.hueHi}, 255, 255))\n` +
+      `count, _, stats, _ = cv2.connectedComponentsWithStats(mask)\n\n` +
+      `for x, y, w, h, area in stats[1:]:   ${c("# stats[0] is the background")}\n    if area >= ${P.minArea}:\n        boxes.append((x, y, w, h))`;
+    const name = { nano: "yolov8n.pt", small: "yolov8s.pt", medium: "yolov8m.pt", large: "yolov8l.pt" }[P.model];
+    $("code-yolo").innerHTML = `model = YOLO("${name}")   ${c("# in practice, your own trained weights")}\nresults = model.predict(frame, conf=${P.conf.toFixed(2)}, iou=${P.iou.toFixed(2)})\n\nfor box in results[0].boxes:\n    x0, y0, x1, y1 = box.xyxy[0]\n    confidence = box.conf[0]`;
+  }
+  for (const k of SL) $(k).addEventListener("input", () => { P[k] = Number($(k).value); syncUI(); S.okHold = 0; });
+  // Each dot pushes the other instead of crossing it, so two stacked dots can always be pulled apart.
+  $("hueLo").addEventListener("input", () => { P.hueLo = Number($("hueLo").value); P.hueHi = Math.max(P.hueHi, P.hueLo); syncUI(); S.okHold = 0; });
+  $("hueHi").addEventListener("input", () => { P.hueHi = Number($("hueHi").value); P.hueLo = Math.min(P.hueLo, P.hueHi); syncUI(); S.okHold = 0; });
+  $("fan").addEventListener("change", (e) => { P.fan = e.target.checked; S.okHold = 0; });
+  $("round").addEventListener("change", (e) => { P.round = e.target.checked; S.okHold = 0; });
+  $("nms").addEventListener("change", (e) => { P.nms = e.target.checked; S.okHold = 0; });
+  $("grid").addEventListener("change", (e) => { P.grid = e.target.checked; });
+  $("truth").addEventListener("change", (e) => { P.truth = e.target.checked; });
+  document.querySelectorAll("[data-scene]").forEach((b) => b.addEventListener("click", () => setScene(b.dataset.scene)));
+  document.querySelectorAll("[data-det]").forEach((b) => b.addEventListener("click", () => { P.det = b.dataset.det; S.queue = []; S.dets = []; S.nextDet = S.t; syncUI(); }));
+  document.querySelectorAll("[data-light]").forEach((b) => b.addEventListener("click", () => { P.light = b.dataset.light; S.okHold = 0; syncUI(); }));
+  document.querySelectorAll("[data-model]").forEach((b) => b.addEventListener("click", () => { P.model = b.dataset.model; S.queue = []; S.nextDet = S.t; syncUI(); }));
+  $("start").addEventListener("click", startRound);
+  $("reset").addEventListener("click", () => { Object.assign(P, DEF); P.hueLo = 10; P.hueHi = 20; if (WT.free) setScene("bench"); else goStep(WT.i); });
+
+  // ---------- Guided steps ----------
+  const WT = { i: 0, free: false, done: false };
+  try { WT.free = localStorage.getItem("object-detection-lab-mode") === "free"; } catch (e) {}
+  const benchOK = () => S.E.n > 0 && S.E.tp === S.E.n && S.E.fp === 0;
+  const held = (sec) => S.okHold >= sec;
+  const setP = (o) => { Object.assign(P, o); };
+  const STEPS = [
+    { title: "Drag the two Hue dots until only the balls have green boxes",
+      text: "Every pixel in the image gets checked against a color range. White pixels on the mask passed; each white blob becomes a box. Right now the range lets everything colorful through. Hint: orange sits near hue 15.",
+      show: ["colorctl"],
+      enter() { setP({ ...DEF, hueLo: 0, hueHi: 179 }); setScene("bench"); },
+      check: () => benchOK() && held(0.6) },
+    { title: "Press Arena, then fix the Hue range again",
+      text: "Same balls, different lights. Arena LEDs are cooler than the shop lights, so the camera sees a different orange and your range misses it. Teams retune for this at every event. Sometimes between matches.",
+      show: ["colorctl", "world"],
+      enter() { setP({ light: "shop", fan: false, det: "color" }); setScene("bench"); },
+      check: () => P.light === "arena" && benchOK() && held(0.6) },
+    { title: "Tick Fans in orange shirts",
+      text: "A color filter only knows color. That shirt is the same orange as the ball, so no hue range can tell them apart. To fix this, the detector has to learn what a ball looks like. That's why we use deep learning.",
+      show: ["colorctl", "world", "fan"],
+      enter() { setP({ fan: false, det: "color", light: "arena" }); setScene("bench"); },
+      check: () => P.fan && S.E.fp > 0 },
+    { title: "Now YOLO: drag Confidence down to 0.05",
+      text: "YOLO splits the image into a grid, and every cell guesses boxes with a confidence score: 8,400 guesses for a 640 px image. Nearly all are junk, so we keep only guesses above a threshold. Lower it and see the junk.",
+      show: ["confctl", "grid"],
+      enter() { setP({ det: "yolo", fan: true, light: "shop", conf: 0.5, nms: false, grid: true, model: "medium" }); setScene("bench"); },
+      check: () => P.conf <= 0.06 },
+    { title: "Tick NMS",
+      text: "Nearby cells all spot the same ball, so one ball gets a stack of boxes. Non-maximum suppression keeps the most confident box and deletes any box that overlaps it too much.",
+      show: ["confctl", "nms", "grid"],
+      enter() { setP({ det: "yolo", fan: true, light: "shop", conf: 0.05, nms: false, grid: true }); setScene("bench"); },
+      check: () => P.nms },
+    { title: "Find the Confidence where every ball is green and nothing is red",
+      text: "Too low, and cones and fans get boxes. Too high, and the far ball vanishes, because small objects score lower. There's a window where it all works. Find it.",
+      show: ["confctl", "nms"],
+      enter() { setP({ det: "yolo", fan: true, light: "shop", conf: 0.1, nms: true, grid: false }); setScene("bench"); },
+      check: () => benchOK() && held(0.6) },
+    { title: "Press Start: confidence is at 0.10",
+      text: "Time to see what a wrong box costs. The robot chases the closest box, wherever it leads. Watch the map and the log.",
+      show: ["start", "confctl"],
+      enter() { setP({ det: "yolo", fan: true, light: "shop", conf: 0.1, nms: true, iou: 0.45, grid: false, model: "medium" }); setScene("match"); },
+      check: () => match.finished },
+    { title: "Press Start: same field, Large model",
+      text: "Bigger models tell cones from balls better, but run slower. Here it delivers 7 boxes a second, each one late. Watch a box trail its ball when the robot turns: the robot is steering toward where the ball used to be.",
+      show: ["start", "model", "confctl"],
+      enter() { setP({ det: "yolo", fan: true, light: "shop", conf: 0.4, nms: true, iou: 0.45, grid: false, model: "large" }); setScene("match"); },
+      check: () => match.finished && match.lastModel === "large" },
+    { title: "Beat it: 6 balls and zero mistakes",
+      text: "Pick a model and a confidence, then run a round. A wrong box costs a second. A missing box costs a ball you drive right past.",
+      show: ["start", "model", "confctl", "world"],
+      enter() { setP({ det: "yolo", fan: true, light: "shop", conf: 0.15, nms: true, iou: 0.45, grid: false, model: "medium" }); setScene("match"); },
+      check: () => match.finished && match.pieces >= 6 && match.mistakes === 0 },
+  ];
+
+  function applyVis() {
+    const show = WT.free ? null : STEPS[WT.i].show;
+    document.querySelectorAll("[data-g]").forEach((el) => el.classList.toggle("not-yet", !!show && !show.includes(el.dataset.g)));
+  }
+  function renderGuide() {
+    const last = WT.i === STEPS.length - 1;
+    $("g-free").setAttribute("aria-pressed", String(WT.free));
+    $("g-back").hidden = $("g-next").hidden = WT.free;
+    $("g-done").hidden = WT.free || !WT.done;
+    if (WT.free) {
+      $("g-count").textContent = "Free play";
+      $("g-title").textContent = "Every control is unlocked";
+      $("g-text").textContent = "Mix any detector, light and model. Go deeper, at the bottom, has ideas to try and the real code.";
+      $("g-free").textContent = "Back to steps";
+      $("g-free").classList.remove("primary");
+      return;
+    }
+    $("g-free").textContent = "Free play";
+    $("g-count").textContent = `Step ${WT.i + 1} of ${STEPS.length}`;
+    $("g-title").textContent = STEPS[WT.i].title;
+    $("g-text").textContent = WT.done && last ? "That's a robot you could send to an event. Try Free play: can the color detector do it? What about in the Dim gym?" : STEPS[WT.i].text;
+    $("g-back").disabled = WT.i === 0;
+    $("g-next").hidden = last;
+    $("g-next").classList.toggle("primary", WT.done && !last);
+    $("g-free").classList.toggle("primary", WT.done && last);
+  }
+  function goStep(i) { WT.i = i; WT.done = false; STEPS[i].enter(); renderGuide(); applyVis(); syncUI(); }
+  function setFree(on) {
+    WT.free = on;
+    try { localStorage.setItem("object-detection-lab-mode", on ? "free" : "guided"); } catch (e) {}
+    if (on) {
+      if (P.hueLo === 0 && P.hueHi === 179) { P.hueLo = 10; P.hueHi = 20; }
+      renderGuide(); applyVis(); syncUI();
+    } else goStep(WT.i);
+  }
+  function checkStep() {
+    if (WT.free || WT.done) return;
+    if (STEPS[WT.i].check()) { WT.done = true; renderGuide(); }
+  }
+  $("g-back").addEventListener("click", () => goStep(Math.max(0, WT.i - 1)));
+  $("g-next").addEventListener("click", () => goStep(Math.min(STEPS.length - 1, WT.i + 1)));
+  $("g-free").addEventListener("click", () => setFree(!WT.free));
+
+  // ---------- Main loop ----------
+  let last = null, acc = 0, frames = 0, sinceRender = 1;
+  function loop(now) {
+    if (last === null) last = now;
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    acc += dt;
+    let n = 0; while (acc >= DT && n < 8) { tick(); acc -= DT; n++; }
+    sinceRender += dt;
+    if (sinceRender >= 1 / 30) { sinceRender = 0; if (P.det !== "color") renderFrame(); draw(); }
+    if (benchOK()) S.okHold += dt; else S.okHold = 0;
+    if (++frames % 6 === 0) { updateBig(); checkStep(); }
+    requestAnimationFrame(loop);
+  }
+
+  new MutationObserver(() => { C = tokens(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { C = tokens(); });
+
+  world = makeWorld(BENCH);
+  if (WT.free) { Object.assign(P, DEF, { hueLo: 10, hueHi: 20 }); setScene("bench"); renderGuide(); applyVis(); } else goStep(0);
+  updateNote();
+
+  // For tests: run whole rounds as fast as the machine can, with no drawing.
+  window.__lab = {
+    P, S, match, WT, goStep, setScene, startRound,
+    get world() { return world; },
+    run(seconds) { const n = Math.round(seconds / DT); for (let i = 0; i < n; i++) tick(); },
+    round(settings) { Object.assign(P, settings); startRound(); while (match.running) tick(); return { pieces: match.pieces, mistakes: match.mistakes, wasted: match.wasted, precision: match.tp / Math.max(1, match.tp + match.fp), recall: match.tp / Math.max(1, match.tp + match.fn), log: match.log.map((e) => e.at + " " + e.text) }; },
+  };
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

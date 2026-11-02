@@ -5,6 +5,8 @@ hide_table_of_contents: true
 sidebar_position: 10
 ---
 
+import {LabLink} from '@site/src/components/LabLink';
+
 Object detection is a computer vision technique that allows a computer to identify and locate
 objects within an image. For our applications, this often means identifying game pieces or field elements.
 
@@ -222,3 +224,9 @@ The first time the detector loads it, it builds the TensorRT engine and saves it
 file, so later starts are fast. (The detector also accepts a `.trt` engine directly, but an engine only works
 on the same Jetson model and TensorRT version it was built with, so the `.onnx` file is the one to keep.) Building the engine can take a few minutes, so do it in the pits, not right
 before a match.
+
+## Try It: Object Detection Lab {#object-detection-lab}
+Tune a real color filter on camera pictures and see where it breaks, then adjust the confidence, NMS and model size of a simulated
+YOLO detector. A robot then plays 15 seconds of auto on your settings, so you can see what a wrong box costs.
+
+<LabLink slug="object-detection-lab" button />
