@@ -43,6 +43,14 @@ const labs = [
     ],
   },
   {
+    slug: 'object-detection-lab',
+    title: 'Object Detection Lab',
+    area: 'Vision',
+    icon: '🎯',
+    blurb: 'Tune a color filter and a YOLO detector, then watch the robot play 15 seconds of auto on what you tuned.',
+    docs: [{label: 'Object Detection', to: '/docs/software/vision/obj_det'}],
+  },
+  {
     slug: 'swerve-lab',
     title: 'Swerve Kinematics Lab',
     area: 'Drivetrain',
