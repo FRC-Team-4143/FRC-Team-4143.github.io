@@ -1,0 +1,165 @@
+---
+title: Debugging
+description: Use the VS Code debugger to stop code on any line, look at every variable, step through it and read a stack trace.
+sidebar_position: 3
+---
+
+# Debugging
+:::tip Why this matters on the robot
+Most robot bugs compile fine: the arm goes the wrong way, a sensor reads garbage, or a state machine never leaves a
+state. Robot code runs 50 times a second, so a `println` floods the console with thousands of lines. A debugger lets you
+stop on the exact loop where things go wrong and look at every value.
+:::
+:::warning Read first
+[VSCode](./vscode.mdx) for the editor itself, and the Java Basics pages through [Methods](../java/basics/methods.mdx)
+and [Loops](../java/basics/loops.mdx).
+:::
+
+Code that compiles isn't the same as code that works. Reading the code and guessing only gets you so far. A
+**debugger** lets you freeze a running program on any line and look inside: what's in every variable, which method
+called which, and what happens one line at a time.
+
+The debugger described here is the one built into VS Code. Scriptum's editor is the same one, so everything on this page
+works in both. One difference: in Scriptum the F-keys belong to your browser (F5 reloads the page), so use the toolbar
+buttons there instead.
+
+---
+
+## Breakpoints and the Debug button
+A **breakpoint** marks a line to stop on. Click just left of a line number and a red dot appears. When the program
+reaches that line, it stops *before* running it.
+
+Breakpoints only work when you start the program with **Debug**, not **Run**:
+- the small **Debug** link just above `public static void main`, or
+- the arrow next to the ▷ button at the top right of the file, then **Debug Java**, or
+- **F5** in desktop VS Code.
+
+When the program stops, the line it's on is highlighted and the debug toolbar appears at the top.
+
+---
+
+## Looking inside
+While the program is stopped:
+
+| Pane | Where | Shows |
+|---|---|---|
+| **Variables** | Run and Debug panel, left side | every variable in the current method, right now. Click the arrow next to an object or array to see inside it. |
+| **Watch** | same panel | expressions you type in yourself, like `speeds[i]` or `made / attempted`. They update every time the program stops. |
+| **Call Stack** | same panel | which method called which, newest on top. Click a line to look at that method's variables. |
+| **Hover** | in the code | point at a variable to see its value. |
+
+The Watch pane is great for questions like "why is this `if` false?": add each side of the comparison and the
+comparison itself, and look.
+
+---
+
+## Stepping
+The toolbar buttons move the program forward while you watch:
+
+| Button | Desktop key | Does |
+|---|---|---|
+| **Continue** | F5 | run until the next breakpoint (or the end) |
+| **Step Over** | F10 | run this line, then stop on the next one |
+| **Step Into** | F11 | go *inside* the method called on this line |
+| **Step Out** | Shift+F11 | finish the method you're in and stop back in its caller |
+| **Pause** | F6 | stop a program that's running, wherever it is right now |
+| **Stop** | Shift+F5 | end the program |
+
+A good habit: put a breakpoint a little before where you think the bug is, then Step Over one line at a time and watch
+the Variables pane. The bug is on the line where a value stops matching what you expected.
+
+---
+
+## Conditional breakpoints
+Sometimes the bug only happens on one pass out of hundreds. Pressing **Continue** 500 times would take forever.
+Right-click the red dot, choose **Edit Breakpoint**, and give it a condition:
+
+```text
+millivolts[i] < 0
+```
+
+Now it only stops when the condition is `true`. You can also choose **Hit Count** to stop on, say, the 100th time the
+line runs.
+
+---
+
+## A stuck program
+If a program never finishes, it's probably stuck in a loop. Start it with **Debug**, wait a second, and press **Pause**.
+The debugger shows exactly which line it's on. Step a few times and watch the loop variable: if it never changes, the
+loop never ends.
+
+```java
+int i = 0;
+while (i < readings.length) {
+    if (readings[i] < 0) {
+        continue;       // BUG: skips the i++ below, so i is stuck
+    }
+    count++;
+    i++;
+}
+```
+
+---
+
+## Reading a stack trace
+When code crashes, Java prints a **stack trace**:
+
+```text
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 5 out of bounds for length 5
+    at Scoring.pointsFor(Scoring.java:12)
+    at Scoring.total(Scoring.java:20)
+    at Main.main(Main.java:9)
+```
+
+Read it from the top:
+- The first line is **what** went wrong: the exception type and its message. Here, the code asked for item 5 of an
+  array that only has items 0 to 4.
+- Each `at` line is a method that was running, newest first. The top one that names **your** file is where it crashed.
+  In VS Code you can click it to jump there.
+- The lines below say how the program got there: `main` called `total`, which called `pointsFor`.
+
+Fix the **cause**, not the symptom. Wrapping the line in a `try`/`catch` makes the red text go away, but the wrong answer
+is still there. See [Exceptions](../java/advanced/exceptions.mdx) for when catching *is* the right fix.
+
+---
+
+## Debugging tips
+- **A method gets a copy of each number you pass it.** If a method changes its `double` parameter, the caller's variable
+  doesn't change. Step Into the method and Step Out again to see this happen.
+- **Compare `String`s with `.equals`, not `==`.** `==` asks "is this the same object?", and two `String`s with the same
+  letters can be different objects. The Watch pane shows `a == b` as `false` even when `a` and `b` look the same.
+- **Integer division drops the remainder.** `3 / 4` is `0`. Watch the expression to catch it.
+- **`println` is debugging too.** It's fine for a quick check. The debugger is faster once you're used to it, and it
+  doesn't fill the console.
+
+---
+
+## Debugging robot code
+The same debugger works on robot code. In desktop VS Code with the WPILib extension:
+- **WPILib: Simulate Robot Code** runs the robot code on your laptop in the simulator, and it stops on your breakpoints.
+  This is the safe way to debug.
+- **WPILib: Debug Robot Code** attaches the debugger to code running on the real robot.
+
+:::danger
+Never pause a real robot while its motors are running. When the code stops on a breakpoint, nothing is in control.
+Debug on a real robot only with the robot on blocks and someone at the Driver Station ready to disable.
+:::
+
+---
+
+## Quick reference
+
+| You want to... | Do |
+|---|---|
+| Stop on a line | click left of the line number for a red dot, then start with **Debug** |
+| Stop only sometimes | right-click the dot → **Edit Breakpoint** → a condition like `i == 42` |
+| See a value | Variables pane, hover, or add it to Watch |
+| Go one line forward | **Step Over** |
+| Go inside a method | **Step Into** |
+| Finish this method | **Step Out** |
+| Find where a program is stuck | **Debug**, then **Pause** |
+| Find where it crashed | the top `at` line of the stack trace that names your file |
+
+:::tip Practice in Scriptum
+Load the **Debugging** lesson in the Tools track.
+:::
