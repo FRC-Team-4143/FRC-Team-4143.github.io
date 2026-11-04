@@ -5,6 +5,8 @@ hide_table_of_contents: true
 sidebar_position: 3
 ---
 
+import TrainingSlides from '@site/src/components/TrainingSlides';
+
 import {LabLink} from '@site/src/components/LabLink';
 
 In this training module, we will explore the various sensors commonly used in FRC robots. 
@@ -19,7 +21,7 @@ Clean up noisy sensor readings with WPILib's filters and measure the lag each on
 
 ## Presentation
 
-<iframe src="https://docs.google.com/presentation/d/15roh_MWiJLf6-BS0euoHWwLT-ATVll2eb8UXwMUD-h0/embed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+<TrainingSlides deck={2} />
 
 ---
 
@@ -33,11 +35,20 @@ The exercises below are the **Sensors and Feedback** lesson in [Scriptum](https:
 ### Sensors
 - Convert the encoder readings (`getLeftPositionRad()`, `getRightPositionRad()`) from wheel radians to meters
     - meters = wheel radians * wheel radius (0.0762 m)
+    - Check it with the cross-out (railroad track) method: write each conversion as a fraction worth 1, cross out the units that cancel, and the unit left over is the unit of your answer
 - Show chassis speeds in AdvantageScope
     - Linear speed in m/s (forward / backward)
     - Angular speed in rad/s (rotation)
 - Show distance traveled by driving
     - Use encoders to measure distance
+    - `linear_speed` and `angular_speed` are local variables, made fresh each loop. `distance_meters_` is a field (a class member), so it keeps its value between loops and `autonomousPeriodic()` can read it. The trailing `_` is the team's naming for fields: never put `double` in front of it inside a method, or you make a new local that hides the field
+### Logging
+- Write the logging lines yourself: at the end of `robotPeriodic()`, add one `MwLog.log` line for each value
+    - `Robot/LinearSpeed` with `linear_speed` (m/s)
+    - `Robot/AngularSpeed` with `angular_speed` (rad/s)
+    - `Robot/Distance` with `distance_meters_` (m)
+    - Keys are case sensitive, so spell them exactly
+- Why it matters: the robot runs 50 loops a second and a match happens once, so the log is the only record of what the code measured. Log every new value before you trust it
 ### Conditions
 - Add a deadband so the robot ignores small stick drift
     - Declare a `DEADBAND` constant
@@ -54,6 +65,8 @@ The exercises below are the **Sensors and Feedback** lesson in [Scriptum](https:
 ## Related Documentation
 ### Software
 - [Variables and Data Types](../java/basics/vars-dt.mdx): Declaring variables and constants.
+- [Programming Standards](../java/basics/standards.mdx): How the team names locals, fields (trailing `_`), constants, methods and classes.
+- [AdvantageScope](../tools/ad-scope.mdx): Viewing the values you log with `MwLog.log`.
 - [Conditions](../java/basics/conditions.mdx): Explanation of conditional statements in programming.
 - [Control Types](../controls/system-control/control-types.mdx): Overview of different control types used in robotics.
 - [VSCode](../tools/vscode.mdx): Our primary Integrated Development Environment (IDE) for programming.

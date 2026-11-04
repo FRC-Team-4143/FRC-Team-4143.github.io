@@ -5,6 +5,8 @@ hide_table_of_contents: true
 sidebar_position: 2
 ---
 
+import TrainingSlides from '@site/src/components/TrainingSlides';
+
 import {LabLink} from '@site/src/components/LabLink';
 
 This is where the training meets the robot hardware. We start with how a command reaches a motor: the Driver Station, the radio, the roboRIO, the CAN bus and the motor controllers, and the tools that set CAN IDs. Then we explore the various motors and drivetrains commonly used in FRC robots.
@@ -18,14 +20,14 @@ Drive a simulated swerve robot with two joysticks and watch each module's angle 
 
 ## Presentation
 
-<iframe src="https://docs.google.com/presentation/d/1w8hXlJP0qUYArp84Vn3ATY2hBrz2xmEOppTNulvRPVQ/embed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+<TrainingSlides deck={1} />
 
 ---
 
 :::tip Do this lesson in Scriptum
 The exercises below are the **Motors and Drivetrains** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
 
-**New Java in this lesson:** calling methods, `double` variables and the arithmetic operators `+ - * /`.
+**New Java in this lesson:** calling methods, variables and the data types `int`, `double`, `boolean` and `String`, case sensitivity, the team's naming style (`snake_case` variables, `trailing_underscore_` fields, `SCREAMING_SNAKE_CASE` constants) and operators: `+ - * /` and the order they run in, whole-number division (`7 / 2` is `3`), the remainder `%`, and shortcuts like `+=` and `++`.
 :::
 
 :::info The training robot
@@ -62,7 +64,8 @@ The training robot has four Falcon 500 motors, each with a Talon FX built in. Ou
 - [Hardware Configurators](../tools/hw-config.mdx): Guide on how to configure hardware components in the FRC ecosystem.
 ### Software
 - [Variables and Data Types](../java/basics/vars-dt.mdx): Declaring variables and choosing a type.
-- [Operators](../java/basics/operators.mdx): Arithmetic and comparison operators.
+- [Operators](../java/basics/operators.mdx): Arithmetic, remainder, assignment and comparison operators.
+- [Programming Standards](../java/basics/standards.mdx): How the team names variables, constants, methods and classes.
 ### Software Tools
 - [VSCode](../tools/vscode.mdx): Our primary Integrated Development Environment (IDE) for programming.
 - [Driver Station](../tools/driver-station.mdx): Software used to control and monitor the robot during competitions.
