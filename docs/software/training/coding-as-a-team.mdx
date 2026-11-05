@@ -1,0 +1,53 @@
+---
+title: Coding as a Team
+description: "How the whole team works on one robot's code: git, GitHub issues and the project board, pull requests and code review."
+hide_table_of_contents: true
+sidebar_position: 12
+---
+
+import TrainingSlides from '@site/src/components/TrainingSlides';
+
+# Coding as a Team
+This is the last training session, and it is taught on the same day as Outreach and Branding. **Both sessions are required.**
+By now you can write robot code by yourself. This session is about writing it with twenty other people without stepping on each other.
+
+If you have only ever used Google Docs and Slides, git is a new idea, and that is fine. We start from something you already know: Google Docs'
+**Version history**. Git does the same job for code, with two differences. You decide when to save (a **commit**), and every save says why.
+Everyone also gets their own copy (a **branch**), so half-finished code never ends up on the robot someone else is testing.
+
+:::tip How a shop day works
+Mentors and senior students write most of the **issues** (one task or one bug each) and put them on the project board. When you come into the shop:
+1. Open the board and look in the **Ready** column.
+2. Pick an issue you think you can do, or one that sounds fun. New? Start with one labeled **good first issue**.
+3. Assign yourself and move it to **In progress**, so nobody else starts the same thing.
+4. Make a branch named `issue-<number>-short-name` from `develop`, then build, test and commit in small steps.
+5. Before you leave, push, even if you are not finished, and comment on the issue with what is done and what is left.
+6. When it is done, open a **pull request** with `Fixes #<number>` in the description. A mentor or senior reviews it, you answer the comments, and when it merges the issue closes itself.
+:::
+
+---
+
+## Presentation
+<TrainingSlides deck={10} />
+
+---
+
+## Exercises
+- Complete the **Git Basics** lesson in [Scriptum](https://scriptum.marswars.org)'s Tools track. Press **Verify** on each checkpoint:
+    - Your first commit, and a feature branch
+    - A merge, and a merge conflict you resolve
+    - Rebase, push, pull and stash
+- With a mentor, on a team repository on [GitHub](https://github.com/FRC-Team-4143):
+    - **Write an issue** for a small fix: a title that says what, a body that says why, and a **Done when** list. Put it on the board.
+    - **Open a pull request** from a branch named `issue-<number>-name`, with `Fixes #<number>` in the description. Wait for the checks to go green.
+    - **Review a teammate's pull request**: read Files changed, leave one kind, specific comment, then approve or request changes.
+
+---
+
+## Related Documentation
+### Version Control
+- [Git](../tools/git.mdx): Our version control system.
+- [GitHub](../tools/github.mdx): Issues, the project board, pull requests and code review.
+### Software Tools
+- [Using Scriptum](../tools/scriptum.mdx): Where the Git Basics lesson runs.
+- [VSCode](../tools/vscode.mdx): Its Source Control panel has a button for each git step.

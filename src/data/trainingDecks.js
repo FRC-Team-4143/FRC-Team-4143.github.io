@@ -11,4 +11,5 @@ export default {
   7: {name: 'State Machines and Commands', dark: '1SayijLCRkolsVwSPpAnR0TBdnJ9GcRBToPvXFwjzdhg', light: '18SKUxjFZ-f9CcAPiEhnSOsdCb8OYh_dumXdvQmcr9ig'},
   8: {name: 'Computer Vision', dark: '1Zg-g3rnQUHdOZYDrA3y7wi7wKJARXKMIgPF2eJeex3k', light: '1yrcQuk8gNZMlMMnAoO7KXXFJ1SyNnr4wdmW-KcVFFDU'},
   9: {name: 'Autonomous', dark: '1NaT6Gd7z4Mram3wj0j9IT0zeq2B7TZWkF1N4RQsRUqk', light: '1H9vciYPywkshXrjifBqalwWzx3CepTqAPRAtNHYMeQU'},
+  10: {name: 'Coding as a Team', dark: '1SKcalqvKF8nqpPIVx-6KpP-MdFBUIU4ZrUs-46N1bO0', light: '1A8Rj1tRmtjrlnFi_J_9rs0SIx5VhPrOAdz6jGQfoTqs'},
 };
