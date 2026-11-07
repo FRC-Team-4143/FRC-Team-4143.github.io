@@ -40,6 +40,12 @@ The training robot has four Falcon 500 motors, each with a Talon FX built in. Ou
 | 1 Falcon 500 | Indexer | 4:1 |
 :::
 
+:::note Building, deploying, and where main() went
+**Building** checks your Java and turns it into a program the robot can run. A mistake, like a missing semicolon, stops the build, and the console names the file and line to fix. **Deploying** copies that built program onto the robot's roboRIO. In Scriptum, **Start** builds your code and runs it on the simulated robot, so there is nothing to deploy. On a real robot, **Deploy Robot Code** in WPILib VS Code (Shift+F5) builds and then deploys. See [Build Tools](../robot_dev/wpilib.mdx#build-tools).
+
+The Java Basics lessons put your code inside `main()` in `Main.java`. A robot project still has a `Main.java`, but it has one line, `RobotBase.startRobot(Robot::new)`, which hands your `Robot` to WPILib. A robot program never ends, so WPILib keeps calling your methods, like `teleopPeriodic()` every 20 ms. Scriptum hides `Main.java` because you never change it. Your code goes in `Robot.java`.
+:::
+
 ## Exercises
 ### Motors
 - Read the controller sticks from your own code
