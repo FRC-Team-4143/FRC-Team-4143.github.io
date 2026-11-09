@@ -30,16 +30,6 @@ The exercises below are the **Motors and Drivetrains** lesson in [Scriptum](http
 **New Java in this lesson:** calling methods, variables and the data types `int`, `double`, `boolean` and `String`, giving every variable a value on the line where you declare it, case sensitivity, the team's naming style (`snake_case` variables, `trailing_underscore_` fields, `SCREAMING_SNAKE_CASE` constants) and operators: `+ - * /` and the order they run in, whole-number division (`7 / 2` is `3`), the remainder `%`, and shortcuts like `+=` and `++`.
 :::
 
-:::info The training robot
-The training robot has four Falcon 500 motors, each with a Talon FX built in. Our competition robots mostly use Kraken motors, and the code drives both the same way.
-
-| Motor | Job | Gear reduction |
-| --- | --- | --- |
-| 2 Falcon 500s, one per side | Drivetrain | 8.46:1 |
-| 1 Falcon 500 | Shooter flywheel | 1.04:1 |
-| 1 Falcon 500 | Indexer | 4:1 |
-:::
-
 :::note Building, deploying, and where main() went
 **Building** checks your Java and turns it into a program the robot can run. A mistake, like a missing semicolon, stops the build, and the console names the file and line to fix. **Deploying** copies that built program onto the robot's roboRIO. In Scriptum, **Start** builds your code and runs it on the simulated robot, so there is nothing to deploy. On a real robot, **Deploy Robot Code** in WPILib VS Code (Shift+F5) builds and then deploys. See [Build Tools](../robot_dev/wpilib.mdx#build-tools).
 
