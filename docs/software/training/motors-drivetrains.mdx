@@ -9,7 +9,7 @@ import TrainingSlides from '@site/src/components/TrainingSlides';
 
 import {LabLink} from '@site/src/components/LabLink';
 
-This is where the training meets the robot hardware. We start with how a command reaches a motor: the Driver Station, the radio, the roboRIO, the CAN bus and the motor controllers, and the tools that set CAN IDs. Then we explore the various motors and drivetrains commonly used in FRC robots.
+This is where the training meets the robot hardware. We start with how a command reaches a motor: the Driver Station, the radio, the roboRIO, the CAN bus and the motor controllers, and the tools that set CAN IDs. We look at the difference between a motor and its motor controller, and at motors like the Kraken and Falcon 500 that have the controller built in. Then we explore the various motors and drivetrains commonly used in FRC robots.
 We will also write our first Java: reading a controller and driving a simulated differential drive robot through MWLib, the team's robot library, so we never program a motor directly.
 
 :::tip Try it in the Swerve Kinematics Lab
@@ -27,17 +27,13 @@ Drive a simulated swerve robot with two joysticks and watch each module's angle 
 :::tip Do this lesson in Scriptum
 The exercises below are the **Motors and Drivetrains** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
 
-**New Java in this lesson:** planning in pseudocode (plain-English steps) before writing code, calling methods, variables and the data types `int`, `double`, `boolean` and `String`, case sensitivity, the team's naming style (`snake_case` variables, `trailing_underscore_` fields, `SCREAMING_SNAKE_CASE` constants) and operators: `+ - * /` and the order they run in, whole-number division (`7 / 2` is `3`), the remainder `%`, and shortcuts like `+=` and `++`.
+**New Java in this lesson:** planning in pseudocode (plain-English steps) before writing code, calling methods, variables and the data types `int`, `double`, `boolean` and `String`, giving every variable a value on the line where you declare it, case sensitivity, the team's naming style (`snake_case` variables, `trailing_underscore_` fields, `SCREAMING_SNAKE_CASE` constants) and operators: `+ - * /` and the order they run in, whole-number division (`7 / 2` is `3`), the remainder `%`, and shortcuts like `+=` and `++`.
 :::
 
-:::info The training robot
-The training robot has four Falcon 500 motors, each with a Talon FX built in. Our competition robots mostly use Kraken motors, and the code drives both the same way.
+:::note Building, deploying, and where main() went
+**Building** checks your Java and turns it into a program the robot can run. A mistake, like a missing semicolon, stops the build, and the console names the file and line to fix. **Deploying** copies that built program onto the robot's roboRIO. In Scriptum, **Start** builds your code and runs it on the simulated robot, so there is nothing to deploy. On a real robot, **Deploy Robot Code** in WPILib VS Code (Shift+F5) builds and then deploys. See [Build Tools](../robot_dev/wpilib.mdx#build-tools).
 
-| Motor | Job | Gear reduction |
-| --- | --- | --- |
-| 2 Falcon 500s, one per side | Drivetrain | 8.46:1 |
-| 1 Falcon 500 | Shooter flywheel | 1.04:1 |
-| 1 Falcon 500 | Indexer | 4:1 |
+The Java Basics lessons put your code inside `main()` in `Main.java`. A robot project still has a `Main.java`, but it has one line, `RobotBase.startRobot(Robot::new)`, which hands your `Robot` to WPILib. A robot program never ends, so WPILib keeps calling your methods, like `teleopPeriodic()` every 20 ms. Scriptum hides `Main.java` because you never change it. Your code goes in `Robot.java`.
 :::
 
 ## Exercises
@@ -47,7 +43,7 @@ Before you type any Java, write the steps in plain English (pseudocode). For dri
 
 ### Motors
 - Read the controller sticks from your own code
-    - Declare `double` variables and store the stick values in them
+    - Declare `double` variables and store the stick values in them on the same line
     - Remember that pushing a stick forward gives a negative number
 ### Drivetrains
 - Tank drive: the left stick drives the left side and the right stick drives the right side
