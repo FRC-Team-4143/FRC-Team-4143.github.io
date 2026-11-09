@@ -27,7 +27,7 @@ Drive a simulated swerve robot with two joysticks and watch each module's angle 
 :::tip Do this lesson in Scriptum
 The exercises below are the **Motors and Drivetrains** lesson in [Scriptum](https://scriptum.marswars.org). Open the lesson, start the simulated robot and follow its README. Each step is checked with the **Verify** button.
 
-**New Java in this lesson:** calling methods, variables and the data types `int`, `double`, `boolean` and `String`, giving every variable a value on the line where you declare it, case sensitivity, the team's naming style (`snake_case` variables, `trailing_underscore_` fields, `SCREAMING_SNAKE_CASE` constants) and operators: `+ - * /` and the order they run in, whole-number division (`7 / 2` is `3`), the remainder `%`, and shortcuts like `+=` and `++`.
+**New Java in this lesson:** planning in pseudocode (plain-English steps) before writing code, calling methods, variables and the data types `int`, `double`, `boolean` and `String`, giving every variable a value on the line where you declare it, case sensitivity, the team's naming style (`snake_case` variables, `trailing_underscore_` fields, `SCREAMING_SNAKE_CASE` constants) and operators: `+ - * /` and the order they run in, whole-number division (`7 / 2` is `3`), the remainder `%`, and shortcuts like `+=` and `++`.
 :::
 
 :::note Building, deploying, and where main() went
@@ -37,6 +37,10 @@ The Java Basics lessons put your code inside `main()` in `Main.java`. A robot pr
 :::
 
 ## Exercises
+:::tip Plan it first
+Before you type any Java, write the steps in plain English (pseudocode). For driving straight: read how far the left stick is pushed, flip it so up means forward, send that speed to both sides. Then turn each step into a line of code.
+:::
+
 ### Motors
 - Read the controller sticks from your own code
     - Declare `double` variables and store the stick values in them on the same line
