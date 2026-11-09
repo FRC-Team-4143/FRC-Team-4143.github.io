@@ -31,6 +31,10 @@ The exercises below are the **Sensors and Feedback** lesson in [Scriptum](https:
 **New Java in this lesson:** `if` / `else` statements, comparison operators, and `static final` constants.
 :::
 
+:::info The training robot's gearbox
+Each side of the drivetrain has a Falcon 500 driving the wheels through an **8.46:1** gearbox: the motor turns 8.46 times for every 1 turn of the wheel. The encoder sits inside the motor, so it counts motor turns. In the lesson you set `GEAR_RATIO` to 8.46 so the drivetrain can divide that out and report the wheel's angle.
+:::
+
 ## Exercises
 ### Sensors
 - Convert the encoder readings (`getLeftPositionRad()`, `getRightPositionRad()`) from wheel radians to meters

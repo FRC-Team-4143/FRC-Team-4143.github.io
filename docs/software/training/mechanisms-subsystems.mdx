@@ -23,6 +23,15 @@ The exercises below are the **Mechanisms and Subsystems** lesson in [Scriptum](h
 **New Java in this lesson:** enums and `switch`, inheritance (`extends` and `@Override`), constructors, and lists.
 :::
 
+:::info The training robot's shooter
+The shooter has two Falcon 500s, one for each mechanism. Both gear ratios are already in `ShooterConstants.java`, and you pass each one in when you build its mechanism.
+
+| Mechanism | Job | Gear reduction |
+| --- | --- | --- |
+| Flywheel | Spins fast to launch the game piece | 1.04:1 (`FLYWHEEL_GEAR_RATIO`) |
+| Roller (indexer) | Feeds the game piece into the flywheel | 4:1 (`ROLLER_GEAR_RATIO`) |
+:::
+
 ## Exercises
 ### Subsystems
 - Read the DrivetrainSubsystem: its states, its `switch`, and its `getInstance()`
