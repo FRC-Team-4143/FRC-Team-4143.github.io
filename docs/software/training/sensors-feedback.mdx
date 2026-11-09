@@ -40,6 +40,7 @@ Each side of the drivetrain has a Falcon 500 driving the wheels through an **8.4
 - Convert the encoder readings (`getLeftPositionRad()`, `getRightPositionRad()`) from wheel radians to meters
     - meters = wheel radians * wheel radius (0.0762 m)
     - Check it with the cross-out (railroad track) method: write each conversion as a fraction worth 1, cross out the units that cancel, and the unit left over is the unit of your answer
+    - Why radians: from rad/s, m/s takes two fractions (the gear ratio and the wheel radius). From a motor's RPM it takes four: ÷ 60 for seconds, × 2π for radians, then the gear ratio and the wheel radius. Same 6.0 m/s, two more places to slip
 - Show chassis speeds in AdvantageScope
     - Linear speed in m/s (forward / backward)
     - Angular speed in rad/s (rotation)
@@ -55,7 +56,7 @@ Each side of the drivetrain has a Falcon 500 driving the wheels through an **8.4
 - Why it matters: the robot runs 50 loops a second and a match happens once, so the log is the only record of what the code measured. Log every new value before you trust it
 ### Conditions
 - Add a deadband so the robot ignores small stick drift
-    - Declare a `DEADBAND` constant
+    - Declare a `DEADBAND` constant instead of a magic number: a bare `0.1` in the code says nothing about what it's for, and every copy has to be changed by hand
     - Use an `if` statement on each stick to set small values to zero
 ### Feedback
 - Implement a simple Bang Bang controller to drive 2 meters in autonomous
