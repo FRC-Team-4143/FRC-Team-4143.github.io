@@ -51,7 +51,7 @@ The exercises below are the **Sensors and Feedback** lesson in [Scriptum](https:
 - Why it matters: the robot runs 50 loops a second and a match happens once, so the log is the only record of what the code measured. Log every new value before you trust it
 ### Conditions
 - Add a deadband so the robot ignores small stick drift
-    - Declare a `DEADBAND` constant
+    - Declare a `DEADBAND` constant instead of a magic number: a bare `0.1` in the code says nothing about what it's for, and every copy has to be changed by hand
     - Use an `if` statement on each stick to set small values to zero
 ### Feedback
 - Implement a simple Bang Bang controller to drive 2 meters in autonomous
