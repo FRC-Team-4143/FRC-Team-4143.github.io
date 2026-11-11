@@ -32,7 +32,7 @@ The exercises below are the **Sensors and Feedback** lesson in [Scriptum](https:
 :::
 
 :::info The training robot's gearbox
-Each side of the drivetrain has a Falcon 500 driving the wheels through an **8.46:1** gearbox: the motor turns 8.46 times for every 1 turn of the wheel. The encoder sits inside the motor, so it counts motor turns. In the lesson you set `GEAR_RATIO` to 8.46 so the drivetrain can divide that out and report the wheel's angle.
+Each side of the drivetrain has a Falcon 500 driving the wheels through an **10.71:1** gearbox: the motor turns 10.71 times for every 1 turn of the wheel. The encoder sits inside the motor, so it counts motor turns. In the lesson you set `GEAR_RATIO` to 10.71 so the drivetrain can divide that out and report the wheel's angle.
 :::
 
 ## Exercises
@@ -40,7 +40,7 @@ Each side of the drivetrain has a Falcon 500 driving the wheels through an **8.4
 - Convert the encoder readings (`getLeftPositionRad()`, `getRightPositionRad()`) from wheel radians to meters
     - meters = wheel radians * wheel radius (0.0762 m)
     - Check it with the cross-out (railroad track) method: write each conversion as a fraction worth 1, cross out the units that cancel, and the unit left over is the unit of your answer
-    - Why radians: from rad/s, m/s takes two fractions (the gear ratio and the wheel radius). From a motor's RPM it takes four: ÷ 60 for seconds, × 2π for radians, then the gear ratio and the wheel radius. Same 6.0 m/s, two more places to slip
+    - Why radians: from rad/s, m/s takes two fractions (the gear ratio and the wheel radius). From a motor's RPM it takes four: ÷ 60 for seconds, × 2π for radians, then the gear ratio and the wheel radius. Same 4.75 m/s, two more places to slip
 - Show chassis speeds in AdvantageScope
     - Linear speed in m/s (forward / backward)
     - Angular speed in rad/s (rotation)
