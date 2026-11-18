@@ -8,6 +8,7 @@ sidebar_position: 5
 import TrainingSlides from '@site/src/components/TrainingSlides';
 
 import {LabLink} from '@site/src/components/LabLink';
+import pose2d_javadoc from '@site/static/img/software/training/pose2d-javadoc.png';
 
 # Objects and Odometry
 In this module we will cover the basics of Object Oriented Programming: classes, objects and `static` methods. We will then use WPILib classes for controlling a differential drive robot, including kinematics, a NavX gyro for the heading, and a pose estimator that tracks where the robot is. Finally, we will compare that estimate with the simulator's true position.
@@ -20,6 +21,22 @@ Watch wheel odometry drift as you drive, and see how vision corrects it. <LabLin
 
 ## Presentation
 <TrainingSlides deck={4} />
+
+---
+
+## Reading the WPILib Java docs
+We use lots of WPILib classes we didn't write ourselves: `Rotation2d`, `Pose2d`, `ChassisSpeeds` and more. To find out what one can do, look it up in the [WPILib Java docs](https://github.wpilib.org/allwpilib/docs/release/java/) (the "javadocs"). Every class has its own page. Type the class name into the **SEARCH** box at the top right.
+
+<img src={pose2d_javadoc} alt="The Pose2d page in the WPILib Java docs" style={{maxWidth: '800px', width: '100%', height: 'auto', objectFit: 'contain'}}/>
+
+Each page has three parts worth reading:
+1. **Class name and package.** The package is what goes in your `import` line. `Pose2d` is in `edu.wpi.first.math.geometry`, so you write `import edu.wpi.first.math.geometry.Pose2d;`
+2. **Constructors.** Every way to build one with `new`. A class can have more than one constructor; pick the one whose inputs you have. For a robot at x = 2 m, y = 1 m, facing left: `new Pose2d(2.0, 1.0, new Rotation2d(Math.PI / 2))`.
+3. **Methods.** Everything you can ask the object. The left column is the type the method hands back: `getX()` returns a `double` (the x position in meters), and `getRotation()` returns a `Rotation2d`.
+
+:::tip
+When you don't know what a method does, check the docs before asking. Dozer can help too, but the docs always match your WPILib version.
+:::
 
 ---
 
